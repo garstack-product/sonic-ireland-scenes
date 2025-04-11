@@ -22,11 +22,7 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
     <header className="sticky top-0 z-50 w-full bg-dark-500/80 backdrop-blur-md border-b border-white/10">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
-          <Link to="/" className="text-2xl font-bold text-white hover:text-gray-300 transition-colors">
-            SonicShots
-          </Link>
-
-          {isMobile ? (
+          {isMobile && (
             <button 
               onClick={handleToggleMenu} 
               className="p-2 text-white"
@@ -34,9 +30,15 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
-          ) : (
-            <NavMenu />
           )}
+          
+          <Link to="/" className="text-2xl font-bold text-white hover:text-gray-300 transition-colors">
+            Dirty Boots
+          </Link>
+
+          {!isMobile && <NavMenu />}
+          
+          {isMobile && <div />} {/* Empty div to maintain flexbox spacing */}
         </div>
       </div>
     </header>

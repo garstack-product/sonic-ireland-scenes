@@ -39,6 +39,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
               <div className="ml-4 mt-2 border-l-2 border-gray-700 pl-4 flex flex-col space-y-4 animate-fade-in">
                 <MobileNavLink to="/listings/concerts" onClick={onClose}>Concerts</MobileNavLink>
                 <MobileNavLink to="/listings/festivals" onClick={onClose}>Festivals</MobileNavLink>
+                <MobileNavLink to="/listings/just-announced" onClick={onClose}>Just Announced</MobileNavLink>
                 <MobileNavLink to="/listings/map" onClick={onClose}>Map</MobileNavLink>
               </div>
             )}
@@ -63,6 +64,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           
           <MobileNavLink to="/news" onClick={onClose}>News</MobileNavLink>
           <MobileNavLink to="/about" onClick={onClose}>About</MobileNavLink>
+          <MobileNavLink to="/login" onClick={onClose}>Login</MobileNavLink>
         </nav>
       </div>
     </div>

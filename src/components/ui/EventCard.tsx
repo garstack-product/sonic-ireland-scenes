@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Copy, Share2, Facebook, Twitter } from "lucide-react";
+import { Copy, Share2, Facebook, Twitter, Ticket } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -10,12 +10,13 @@ export interface EventCardProps {
   artist: string;
   venue: string;
   date: string;
+  time?: string;
   imageUrl: string;
   type: "concert" | "festival";
   category: "listing" | "review";
 }
 
-const EventCard = ({ id, title, artist, venue, date, imageUrl, type, category }: EventCardProps) => {
+const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, category }: EventCardProps) => {
   const [showShareMenu, setShowShareMenu] = useState(false);
   
   const basePath = category === "review" ? "reviews" : "listings";
@@ -46,7 +47,7 @@ const EventCard = ({ id, title, artist, venue, date, imageUrl, type, category }:
 
   return (
     <div className="group relative bg-dark-300 rounded-lg overflow-hidden shadow-md hover-effect">
-      <Link to={detailPath}>
+      <Link to={detailPath} target="_blank" rel="noopener noreferrer">
         <div className="aspect-[3/2] overflow-hidden">
           <img 
             src={imageUrl} 
@@ -60,7 +61,7 @@ const EventCard = ({ id, title, artist, venue, date, imageUrl, type, category }:
       <div className="p-4">
         <div className="flex justify-between items-start">
           <div>
-            <Link to={detailPath}>
+            <Link to={detailPath} target="_blank" rel="noopener noreferrer">
               <h3 className="text-lg font-medium text-white truncate group-hover:text-gray-300 transition-colors">
                 {title}
               </h3>
@@ -105,9 +106,40 @@ const EventCard = ({ id, title, artist, venue, date, imageUrl, type, category }:
           </div>
         </div>
         
-        <div className="mt-2 flex justify-between items-center text-sm text-gray-400">
+        <div className="mt-2 text-sm text-gray-400">
           <div>{venue}</div>
-          <div>{date}</div>
+          <div className="mt-1">
+            {date}
+            {time && <span> • {time}</span>}
+          </div>
+        </div>
+        
+        <div className="mt-3 flex justify-between items-center">
+          <div className="flex gap-2">
+            <button 
+              onClick={() => handleShare("facebook")}
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Share on Facebook"
+            >
+              <Facebook size={16} />
+            </button>
+            <button 
+              onClick={() => handleShare("twitter")}
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Share on X"
+            >
+              <Twitter size={16} />
+            </button>
+          </div>
+          
+          {category === "listing" && (
+            <button 
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Buy tickets"
+            >
+              <Ticket size={16} />
+            </button>
+          )}
         </div>
       </div>
     </div>

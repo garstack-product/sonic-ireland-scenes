@@ -7,6 +7,16 @@ const NavMenu = () => {
   const [showListingsSubmenu, setShowListingsSubmenu] = useState(false);
   const [showReviewsSubmenu, setShowReviewsSubmenu] = useState(false);
 
+  const toggleListingsSubmenu = () => {
+    setShowListingsSubmenu(!showListingsSubmenu);
+    if (showReviewsSubmenu) setShowReviewsSubmenu(false);
+  };
+
+  const toggleReviewsSubmenu = () => {
+    setShowReviewsSubmenu(!showReviewsSubmenu);
+    if (showListingsSubmenu) setShowListingsSubmenu(false);
+  };
+
   return (
     <nav className="hidden md:flex items-center space-x-8">
       <NavLink to="/">Home</NavLink>
@@ -14,9 +24,7 @@ const NavMenu = () => {
       <div className="relative group">
         <button 
           className="flex items-center space-x-1 text-white hover:text-gray-300 transition-colors"
-          onClick={() => setShowListingsSubmenu(!showListingsSubmenu)}
-          onMouseEnter={() => setShowListingsSubmenu(true)}
-          onMouseLeave={() => setShowListingsSubmenu(false)}
+          onClick={toggleListingsSubmenu}
         >
           <span>Listings</span>
           <ChevronDown size={16} />
@@ -25,11 +33,10 @@ const NavMenu = () => {
         {showListingsSubmenu && (
           <div 
             className="absolute left-0 top-full mt-2 w-48 rounded-md shadow-lg bg-dark-300 ring-1 ring-black ring-opacity-5 py-1 z-10"
-            onMouseEnter={() => setShowListingsSubmenu(true)}
-            onMouseLeave={() => setShowListingsSubmenu(false)}
           >
             <NavLink to="/listings/concerts" className="block px-4 py-2">Concerts</NavLink>
             <NavLink to="/listings/festivals" className="block px-4 py-2">Festivals</NavLink>
+            <NavLink to="/listings/just-announced" className="block px-4 py-2">Just Announced</NavLink>
             <NavLink to="/listings/map" className="block px-4 py-2">Map</NavLink>
           </div>
         )}
@@ -38,9 +45,7 @@ const NavMenu = () => {
       <div className="relative group">
         <button 
           className="flex items-center space-x-1 text-white hover:text-gray-300 transition-colors"
-          onClick={() => setShowReviewsSubmenu(!showReviewsSubmenu)}
-          onMouseEnter={() => setShowReviewsSubmenu(true)}
-          onMouseLeave={() => setShowReviewsSubmenu(false)}
+          onClick={toggleReviewsSubmenu}
         >
           <span>Reviews</span>
           <ChevronDown size={16} />
@@ -49,8 +54,6 @@ const NavMenu = () => {
         {showReviewsSubmenu && (
           <div 
             className="absolute left-0 top-full mt-2 w-48 rounded-md shadow-lg bg-dark-300 ring-1 ring-black ring-opacity-5 py-1 z-10"
-            onMouseEnter={() => setShowReviewsSubmenu(true)}
-            onMouseLeave={() => setShowReviewsSubmenu(false)}
           >
             <NavLink to="/reviews/concerts" className="block px-4 py-2">Concerts</NavLink>
             <NavLink to="/reviews/festivals" className="block px-4 py-2">Festivals</NavLink>
@@ -60,6 +63,7 @@ const NavMenu = () => {
       
       <NavLink to="/news">News</NavLink>
       <NavLink to="/about">About</NavLink>
+      <NavLink to="/login">Login</NavLink>
     </nav>
   );
 };

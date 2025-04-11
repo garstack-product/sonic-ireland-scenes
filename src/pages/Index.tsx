@@ -12,6 +12,7 @@ const featuredEvents = [
     artist: "Multiple Artists",
     venue: "Phoenix Park, Dublin",
     date: "July 15-17, 2025",
+    time: "12:00pm",
     imageUrl: "/placeholder.svg",
     type: "festival" as const,
     category: "listing" as const
@@ -22,6 +23,7 @@ const featuredEvents = [
     artist: "Vintage Trouble",
     venue: "3Arena, Dublin",
     date: "August 22, 2025",
+    time: "7:30pm",
     imageUrl: "/placeholder.svg",
     type: "concert" as const,
     category: "listing" as const
@@ -32,6 +34,7 @@ const featuredEvents = [
     artist: "DJ Pulse",
     venue: "The Academy, Dublin",
     date: "June 5, 2025",
+    time: "8:00pm",
     imageUrl: "/placeholder.svg",
     type: "concert" as const,
     category: "listing" as const
@@ -45,6 +48,7 @@ const recentReviews = [
     artist: "Leon Bridges",
     venue: "Olympia Theatre, Dublin",
     date: "April 10, 2025",
+    time: "8:00pm",
     imageUrl: "/placeholder.svg",
     type: "concert" as const,
     category: "review" as const
@@ -58,6 +62,42 @@ const recentReviews = [
     imageUrl: "/placeholder.svg",
     type: "festival" as const,
     category: "review" as const
+  }
+];
+
+const justAnnouncedEvents = [
+  {
+    id: "ja1",
+    title: "Just Announced: Rock Revival",
+    artist: "Thunder & Lightning",
+    venue: "Vicar Street, Dublin",
+    date: "September 18, 2025",
+    time: "8:30pm",
+    imageUrl: "/placeholder.svg",
+    type: "concert" as const,
+    category: "listing" as const
+  },
+  {
+    id: "ja2",
+    title: "Just Announced: Jazz Night",
+    artist: "The Jazz Collective",
+    venue: "National Concert Hall",
+    date: "October 5, 2025",
+    time: "7:00pm",
+    imageUrl: "/placeholder.svg",
+    type: "concert" as const,
+    category: "listing" as const
+  },
+  {
+    id: "ja3",
+    title: "Just Announced: Autumn Festival",
+    artist: "Various Artists",
+    venue: "Phoenix Park, Dublin",
+    date: "October 15-17, 2025",
+    time: "12:00pm",
+    imageUrl: "/placeholder.svg",
+    type: "festival" as const,
+    category: "listing" as const
   }
 ];
 
@@ -77,7 +117,7 @@ const HomePage = () => {
         
         <div className="relative z-10 text-center px-4 max-w-4xl">
           <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Capturing the Soul of Live Music
+            Dirty Boots
           </h1>
           <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
             Ireland's premier music photography and event guide for concerts and festivals
@@ -95,6 +135,18 @@ const HomePage = () => {
             </Button>
           </div>
         </div>
+      </section>
+      
+      {/* Just Announced */}
+      <section>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold text-white">Just Announced</h2>
+          <Link to="/listings/just-announced" className="flex items-center text-gray-400 hover:text-white transition-colors">
+            <span className="mr-2">View All</span>
+            <ArrowRight size={16} />
+          </Link>
+        </div>
+        <EventGrid events={justAnnouncedEvents} />
       </section>
       
       {/* Upcoming Events */}
