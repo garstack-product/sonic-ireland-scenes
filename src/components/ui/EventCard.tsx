@@ -2,7 +2,7 @@
 import { Link } from "react-router-dom";
 import { Copy, Share2, Facebook, Twitter } from "lucide-react";
 import { useState } from "react";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 export interface EventCardProps {
   id: string;
