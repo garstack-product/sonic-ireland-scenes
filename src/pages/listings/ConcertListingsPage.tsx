@@ -52,6 +52,8 @@ const ConcertListingsPage = () => {
         setConcertListings(sortedEvents);
         setGenres(Array.from(allGenres));
         setIsLoading(false);
+        
+        console.log(`Loaded ${sortedEvents.length} concerts`);
       } catch (error) {
         console.error("Error loading concert data:", error);
         toast.error("Failed to load concert data. Please try again later.");
@@ -146,7 +148,7 @@ const ConcertListingsPage = () => {
           </div>
           <Input
             type="text"
-            placeholder="Search by artist or venue..."
+            placeholder="Search by artist, title or venue..."
             className="pl-10 bg-dark-300 border-gray-700 text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

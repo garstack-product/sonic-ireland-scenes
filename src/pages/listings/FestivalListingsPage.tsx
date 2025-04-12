@@ -43,6 +43,7 @@ const FestivalListingsPage = () => {
         
         // Filter for festival events
         const festivals = events.filter(event => {
+          // Try to identify festivals by keywords in the title or genre
           const isFestival = 
             event.title?.toLowerCase().includes("festival") || 
             event.subgenre?.toLowerCase().includes("festival") ||
@@ -80,8 +81,9 @@ const FestivalListingsPage = () => {
   useEffect(() => {
     const filtered = festivalListings.filter(listing => {
       const matchesSearch = 
-        listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        listing.venue.toLowerCase().includes(searchTerm.toLowerCase());
+        listing.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        listing.artist?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        listing.venue?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesGenre = selectedGenre === "All Genres" || listing.genre === selectedGenre;
       
@@ -146,7 +148,7 @@ const FestivalListingsPage = () => {
           </div>
           <Input
             type="text"
-            placeholder="Search by name or location..."
+            placeholder="Search by name, artist or location..."
             className="pl-10 bg-dark-300 border-gray-700 text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

@@ -1,26 +1,47 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Check, Search, X } from "lucide-react";
 import { toast } from "sonner";
-
-// In a real app, this would come from an API or database
-const allEvents = [
-  { id: "1", title: "The Killers", artist: "The Killers", type: "concert" },
-  { id: "2", title: "Electric Picnic", artist: "Various Artists", type: "festival" },
-  { id: "3", title: "Longitude", artist: "Various Artists", type: "festival" },
-  { id: "4", title: "Arcade Fire", artist: "Arcade Fire", type: "concert" },
-];
+import { fetchTicketmasterEvents } from "@/services/api";
+import { EventCardProps } from "@/components/ui/EventCard";
 
 const ManageFeaturedEvents = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [featuredEvents, setFeaturedEvents] = useState<string[]>(["1"]); // IDs of featured events
+  const [featuredEvents, setFeaturedEvents] = useState<string[]>([]); // IDs of featured events
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [allEvents, setAllEvents] = useState<EventCardProps[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        setIsLoading(true);
+        const events = await fetchTicketmasterEvents();
+        setAllEvents(events);
+        
+        // Try to load saved featured events from localStorage
+        const savedFeaturedEvents = localStorage.getItem('featuredEvents');
+        if (savedFeaturedEvents) {
+          setFeaturedEvents(JSON.parse(savedFeaturedEvents));
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading events:', error);
+        toast.error('Failed to load events');
+        setIsLoading(false);
+      }
+    };
+    
+    loadEvents();
+  }, []);
 
   const filteredEvents = allEvents.filter(event => 
     event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.artist.toLowerCase().includes(searchTerm.toLowerCase())
+    event.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.venue.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const toggleFeature = (id: string) => {
@@ -35,11 +56,17 @@ const ManageFeaturedEvents = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // In a real app, this would send the data to the server
-    setTimeout(() => {
+    try {
+      // Save to localStorage
+      localStorage.setItem('featuredEvents', JSON.stringify(featuredEvents));
+      
       toast.success("Featured events updated successfully!");
+    } catch (error) {
+      console.error('Error saving featured events:', error);
+      toast.error('Failed to save featured events');
+    } finally {
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -60,39 +87,49 @@ const ManageFeaturedEvents = () => {
       </div>
       
       <form onSubmit={handleSubmit}>
-        <div className="space-y-2 max-h-96 overflow-y-auto mb-6">
-          {filteredEvents.map(event => (
-            <div 
-              key={event.id} 
-              className="flex justify-between items-center p-3 bg-dark-400 rounded-md"
-            >
-              <div>
-                <h3 className="text-white font-medium">{event.title}</h3>
-                <p className="text-gray-400 text-sm">{event.artist} • {event.type}</p>
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+          </div>
+        ) : (
+          <div className="space-y-2 max-h-96 overflow-y-auto mb-6">
+            {filteredEvents.length > 0 ? (
+              filteredEvents.map(event => (
+                <div 
+                  key={event.id} 
+                  className="flex justify-between items-center p-3 bg-dark-400 rounded-md"
+                >
+                  <div>
+                    <h3 className="text-white font-medium">{event.title}</h3>
+                    <p className="text-gray-400 text-sm">{event.artist} • {event.venue}</p>
+                    <p className="text-gray-400 text-sm">{event.date}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={featuredEvents.includes(event.id) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => toggleFeature(event.id)}
+                  >
+                    {featuredEvents.includes(event.id) ? (
+                      <><Check size={16} className="mr-2" /> Featured</>
+                    ) : (
+                      "Feature"
+                    )}
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4 text-gray-400">
+                No events found. Try a different search term.
               </div>
-              <Button
-                type="button"
-                variant={featuredEvents.includes(event.id) ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleFeature(event.id)}
-              >
-                {featuredEvents.includes(event.id) ? (
-                  <><Check size={16} className="mr-2" /> Featured</>
-                ) : (
-                  "Feature"
-                )}
-              </Button>
-            </div>
-          ))}
-          
-          {filteredEvents.length === 0 && (
-            <div className="text-center py-4 text-gray-400">
-              No events found. Try a different search term.
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
         
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          <p className="text-gray-400">
+            {featuredEvents.length} events selected as featured
+          </p>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Saving..." : "Save Changes"}
           </Button>

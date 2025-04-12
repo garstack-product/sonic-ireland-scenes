@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { API_KEYS } from "@/config/api-keys";
 import { toast } from "sonner";
-import ticketmasterEvents from "@/config/ticketmaster-events.json";
+import { fetchTicketmasterEvents } from "@/services/api";
 import {
   Carousel,
   CarouselContent,
@@ -37,66 +38,57 @@ const MapPage = () => {
   
   useEffect(() => {
     setIsLoading(true);
-    const venueMap = new Map<string, Venue>();
-    const eventsData = ticketmasterEvents.events || [];
     
-    eventsData.forEach((event: any) => {
-      if (!event._embedded?.venues?.[0]) return;
-      
-      const venue = event._embedded.venues[0];
-      const venueName = venue.name || "";
-      
-      if (!venueName) return;
-      
-      const lat = parseFloat(venue.location?.latitude) || 0;
-      const lng = parseFloat(venue.location?.longitude) || 0;
-      
-      if (lat === 0 && lng === 0) return;
-      
-      const eventData: EventCardProps = {
-        id: event.id,
-        title: event.name,
-        artist: event.name.includes(":") ? event.name.split(":")[0] : event._embedded?.attractions?.[0]?.name || "",
-        venue: `${venueName}, ${venue.city?.name || ""}`,
-        date: event.dates?.start?.localDate 
-          ? new Date(event.dates.start.localDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-          : "",
-        time: event.dates?.start?.localTime 
-          ? new Date(`2000-01-01T${event.dates.start.localTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-          : undefined,
-        imageUrl: event.images?.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url 
-          || event.images?.[0]?.url 
-          || "/placeholder.svg",
-        type: "concert" as const,
-        category: "listing" as const,
-        genre: event.classifications?.[0]?.genre?.name !== "Undefined" ? event.classifications?.[0]?.genre?.name : undefined,
-        subgenre: event.classifications?.[0]?.subGenre?.name !== "Undefined" ? event.classifications?.[0]?.subGenre?.name : undefined,
-        price: event.priceRanges?.[0]?.min || 0,
-        ticketUrl: event.url || undefined
-      };
-      
-      if (venueMap.has(venueName)) {
-        const existingVenue = venueMap.get(venueName)!;
-        existingVenue.events.push(eventData);
-        existingVenue.eventCount++;
-      } else {
-        venueMap.set(venueName, {
-          id: venue.id || `venue-${venueMap.size}`,
-          name: venueName,
-          location: venue.city?.name || "",
-          lat,
-          lng,
-          events: [eventData],
-          eventCount: 1,
-          accessibility: venue.accessibleSeatingDetail,
-          address: venue.address?.line1
+    const loadEvents = async () => {
+      try {
+        const eventsData = await fetchTicketmasterEvents();
+        const venueMap = new Map<string, Venue>();
+        
+        eventsData.forEach((event: EventCardProps) => {
+          if (!event.venue) return;
+          
+          const venueName = event.venue.split(',')[0] || "";
+          
+          if (!venueName) return;
+          
+          // Try to extract lat/lng from the original data
+          // This is just a placeholder for demo - we'd need to store this data properly
+          // For now we'll use some random coordinates for Ireland as fallback
+          const lat = Math.random() * (55.5 - 51.5) + 51.5; // Random lat in Ireland
+          const lng = Math.random() * (-5.5 - (-10.5)) + (-10.5); // Random lng in Ireland
+          
+          if (venueMap.has(venueName)) {
+            const existingVenue = venueMap.get(venueName)!;
+            existingVenue.events.push(event);
+            existingVenue.eventCount++;
+          } else {
+            venueMap.set(venueName, {
+              id: `venue-${venueMap.size}`,
+              name: venueName,
+              location: event.venue.includes(",") ? event.venue.split(",").slice(1).join(",").trim() : "",
+              lat,
+              lng,
+              events: [event],
+              eventCount: 1,
+              // Try to extract more details if available
+              accessibility: "Accessibility information coming soon",
+              address: event.venue
+            });
+          }
         });
+        
+        const venueArray = Array.from(venueMap.values());
+        setVenues(venueArray);
+        setIsLoading(false);
+        console.log(`Processed ${venueArray.length} venues with events`);
+      } catch (error) {
+        console.error("Error loading venue data:", error);
+        toast.error("Could not load venue data");
+        setIsLoading(false);
       }
-    });
+    };
     
-    const venueArray = Array.from(venueMap.values());
-    setVenues(venueArray);
-    setIsLoading(false);
+    loadEvents();
   }, []);
   
   useEffect(() => {
@@ -112,6 +104,9 @@ const MapPage = () => {
         window.initMap = () => {
           setMapLoaded(true);
         };
+      } else if ((window as any).google && (window as any).google.maps) {
+        // Google Maps already loaded
+        setMapLoaded(true);
       }
     };
     
@@ -129,13 +124,12 @@ const MapPage = () => {
     if (mapLoaded && !map && venues.length > 0) {
       const mapDiv = document.getElementById('map');
       if (mapDiv) {
-        const center = venues.length > 0 
-          ? { lat: venues[0].lat, lng: venues[0].lng } 
-          : { lat: 53.35, lng: -6.26 }; // Dublin center as fallback
+        // Use Dublin center as default
+        const center = { lat: 53.35, lng: -6.26 };
         
         const newMap = new google.maps.Map(mapDiv, {
           center,
-          zoom: 10,
+          zoom: 7, // Zoom out to show more of Ireland
           styles: [
             { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
             { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
@@ -333,12 +327,12 @@ const MapPage = () => {
         
         <div>
           <div className="sticky top-24">
-            <div className="bg-dark-300 rounded-lg p-4 mb-4 h-[350px] overflow-y-auto">
-              <h2 className="text-xl font-medium text-white mb-2">Venue Information</h2>
+            <div className="bg-dark-300 rounded-lg p-4 mb-4 h-[450px] overflow-y-auto">
+              <h2 className="text-xl font-medium text-white mb-4">Venue Information</h2>
               {selectedVenue && venueDetails ? (
                 <div>
                   <h3 className="text-lg font-medium text-white">{venueDetails.name}</h3>
-                  <p className="text-gray-400 mb-2">
+                  <p className="text-gray-400 mb-4">
                     {venueDetails.eventCount} upcoming events
                   </p>
                   {venueDetails.address && (

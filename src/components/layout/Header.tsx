@@ -26,7 +26,7 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
             Dirty Boots
           </Link>
           
-          {isMobile && (
+          {isMobile ? (
             <button 
               onClick={handleToggleMenu} 
               className="p-2 text-white mr-4"
@@ -34,9 +34,9 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
+          ) : (
+            <NavMenu />
           )}
-          
-          {!isMobile && <NavMenu />}
           
           <div className="flex-grow">
             {/* Spacer for right alignment */}

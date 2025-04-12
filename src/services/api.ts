@@ -55,10 +55,20 @@ const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
     const formattedDate = formatDate(startDate);
     const formattedTime = formatTime(startTime);
     
+    // Try to extract artist name from name or attractions
+    let artistName = "";
+    if (event._embedded?.attractions?.[0]?.name) {
+      artistName = event._embedded.attractions[0].name;
+    } else if (event.name && event.name.includes(":")) {
+      artistName = event.name.split(":")[0].trim();
+    } else {
+      artistName = event.name;
+    }
+    
     return {
       id: event.id || `custom-${Math.random().toString(36).substr(2, 9)}`,
-      title: event.name,
-      artist: event.name?.includes(":") ? event.name.split(":")[0] : event._embedded?.attractions?.[0]?.name || "",
+      title: event.name || "",
+      artist: artistName,
       venue: venueFull,
       date: formattedDate,
       time: formattedTime,
@@ -77,7 +87,7 @@ const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
 let ticketmasterCache: CachedData | null = null;
 let eventbriteCache: CachedData | null = null;
 
-// Load events from local JSON file and cache them
+// Fetch events directly from Ticketmaster API
 export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   // Check if we have cached data that's still valid
   if (ticketmasterCache && (Date.now() - ticketmasterCache.timestamp < CACHE_DURATION)) {
@@ -86,15 +96,28 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   }
   
   try {
-    console.log("Loading Ticketmaster data from local JSON file");
+    console.log("Fetching fresh Ticketmaster data");
     
-    // Access the events array from the imported JSON structure
-    // It's important to properly access the correct property based on the JSON structure
-    const eventsArray = ticketmasterEventsData.events || [];
+    // First try to fetch from the API
+    const apiUrl = `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&size=90&apikey=${API_KEYS.TICKETMASTER}`;
     
-    console.log(`Found ${eventsArray.length} events in JSON file`);
+    const response = await fetch(apiUrl);
     
-    // Map events from the JSON structure
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Check if we have events in the response
+    if (!data._embedded || !data._embedded.events) {
+      throw new Error("No events found in API response");
+    }
+    
+    const eventsArray = data._embedded.events;
+    console.log(`Found ${eventsArray.length} events from API`);
+    
+    // Map events
     const mappedEvents = mapTicketmasterEvents(eventsArray);
     
     console.log(`Mapped ${mappedEvents.length} events successfully`);
@@ -107,15 +130,38 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
     
     return mappedEvents;
   } catch (error) {
-    console.error("Error loading Ticketmaster data from local file:", error);
+    console.error("Error fetching Ticketmaster data from API:", error);
     
-    // Return cached data if available, even if expired
-    if (ticketmasterCache) {
-      console.log("Using expired Ticketmaster cache due to error");
-      return ticketmasterCache.data;
+    // If API fetch fails, try using the local JSON file as fallback
+    try {
+      console.log("Falling back to local JSON file");
+      const eventsArray = ticketmasterEventsData.events || [];
+      
+      console.log(`Found ${eventsArray.length} events in JSON file`);
+      
+      // Map events from the JSON structure
+      const mappedEvents = mapTicketmasterEvents(eventsArray);
+      
+      console.log(`Mapped ${mappedEvents.length} events successfully from local JSON`);
+      
+      // Update cache
+      ticketmasterCache = {
+        timestamp: Date.now(),
+        data: mappedEvents
+      };
+      
+      return mappedEvents;
+    } catch (fallbackError) {
+      console.error("Error loading from local file:", fallbackError);
+      
+      // Return cached data if available, even if expired
+      if (ticketmasterCache) {
+        console.log("Using expired Ticketmaster cache due to errors");
+        return ticketmasterCache.data;
+      }
+      
+      return [];
     }
-    
-    throw error;
   }
 };
 
