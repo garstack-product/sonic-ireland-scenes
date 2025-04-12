@@ -16,6 +16,7 @@ export interface EventCardProps {
   category: "listing" | "review";
   genre?: string;
   subgenre?: string;
+  price?: number; // Added price as an optional property
 }
 
 const EventCard = ({ 
