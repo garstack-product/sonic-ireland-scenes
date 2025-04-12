@@ -22,6 +22,10 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
     <header className="sticky top-0 z-50 w-full bg-dark-500/80 backdrop-blur-md border-b border-white/10">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center">
+          <Link to="/" className="text-2xl font-bold text-white hover:text-gray-300 transition-colors mr-8">
+            Dirty Boots
+          </Link>
+          
           {isMobile && (
             <button 
               onClick={handleToggleMenu} 
@@ -34,14 +38,8 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
           
           {!isMobile && <NavMenu />}
           
-          <div className="flex-grow flex justify-center">
-            <Link to="/" className="text-2xl font-bold text-white hover:text-gray-300 transition-colors">
-              Dirty Boots
-            </Link>
-          </div>
-          
-          <div>
-            {/* Right side area - could be used for user avatar, etc. */}
+          <div className="flex-grow">
+            {/* Spacer for right alignment */}
           </div>
         </div>
       </div>

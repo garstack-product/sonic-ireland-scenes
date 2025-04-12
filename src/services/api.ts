@@ -1,7 +1,7 @@
 
 import { API_KEYS } from "@/config/api-keys";
 import { EventCardProps } from "@/components/ui/EventCard";
-import ticketmasterEvents from "@/config/ticketmaster-events.json";
+import ticketmasterEventsData from "@/config/ticketmaster-events.json";
 
 interface CachedData {
   timestamp: number;
@@ -56,9 +56,9 @@ const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
     const formattedTime = formatTime(startTime);
     
     return {
-      id: event.id,
+      id: event.id || `custom-${Math.random().toString(36).substr(2, 9)}`,
       title: event.name,
-      artist: event.name.includes(":") ? event.name.split(":")[0] : event._embedded?.attractions?.[0]?.name || "",
+      artist: event.name?.includes(":") ? event.name.split(":")[0] : event._embedded?.attractions?.[0]?.name || "",
       venue: venueFull,
       date: formattedDate,
       time: formattedTime,
@@ -88,11 +88,16 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   try {
     console.log("Loading Ticketmaster data from local JSON file");
     
-    // Fix: Access the events array correctly from the JSON structure
-    const eventsData = ticketmasterEvents.events || [];
+    // Access the events array from the imported JSON structure
+    // It's important to properly access the correct property based on the JSON structure
+    const eventsArray = ticketmasterEventsData.events || [];
     
-    // Map events from the local JSON file
-    const mappedEvents = mapTicketmasterEvents(eventsData);
+    console.log(`Found ${eventsArray.length} events in JSON file`);
+    
+    // Map events from the JSON structure
+    const mappedEvents = mapTicketmasterEvents(eventsArray);
+    
+    console.log(`Mapped ${mappedEvents.length} events successfully`);
     
     // Update cache
     ticketmasterCache = {

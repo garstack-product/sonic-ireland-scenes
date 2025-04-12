@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
@@ -10,7 +11,8 @@ import { EventCardProps } from "@/components/ui/EventCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import ticketmasterEvents from "@/config/ticketmaster-events.json";
+import { fetchTicketmasterEvents } from "@/services/api";
+import { toast } from "sonner";
 
 const FestivalListingsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,74 +31,50 @@ const FestivalListingsPage = () => {
   const [visibleItemCount, setVisibleItemCount] = useState(80);
   
   useEffect(() => {
-    setIsLoading(true);
-    
-    const allGenres = new Set<string>();
-    allGenres.add("All Genres");
-    
-    const eventsData = ticketmasterEvents.events || [];
-    
-    const festivals = eventsData
-      .filter((event: any) => {
-        const isFestival = 
-          event.name?.toLowerCase().includes("festival") || 
-          event.classifications?.[0]?.subGenre?.name?.toLowerCase().includes("festival") ||
-          event.classifications?.[0]?.genre?.name?.toLowerCase().includes("festival");
+    const loadFestivals = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Get events from the API service
+        const events = await fetchTicketmasterEvents();
+        
+        const allGenres = new Set<string>();
+        allGenres.add("All Genres");
+        
+        // Filter for festival events
+        const festivals = events.filter(event => {
+          const isFestival = 
+            event.title?.toLowerCase().includes("festival") || 
+            event.subgenre?.toLowerCase().includes("festival") ||
+            event.genre?.toLowerCase().includes("festival");
+            
+          if (isFestival && event.genre && event.genre !== "Undefined") {
+            allGenres.add(event.genre);
+          }
           
-        return isFestival;
-      })
-      .map((event: any) => {
-        const genre = event.classifications?.[0]?.genre?.name || "";
-        const subgenre = event.classifications?.[0]?.subGenre?.name || "";
+          return isFestival;
+        });
         
-        if (genre && genre !== "Undefined") {
-          allGenres.add(genre);
-        }
+        // Sort festivals by date
+        const sortedFestivals = [...festivals].sort((a, b) => {
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateA.getTime() - dateB.getTime();
+        });
         
-        const venue = event._embedded?.venues?.[0]?.name || "";
-        const city = event._embedded?.venues?.[0]?.city?.name || "";
-        const venueFull = city ? `${venue}, ${city}` : venue;
+        setFestivalListings(sortedFestivals);
+        setGenres(Array.from(allGenres));
+        setIsLoading(false);
         
-        const imageUrl = event.images?.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url 
-          || event.images?.[0]?.url 
-          || "/placeholder.svg";
-          
-        const startDate = event.dates?.start?.localDate || "";
-        const formattedDate = startDate 
-          ? new Date(startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-          : "";
-          
-        const startTime = event.dates?.start?.localTime || "";
-        const formattedTime = startTime 
-          ? new Date(`2000-01-01T${startTime}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-          : undefined;
-        
-        return {
-          id: event.id,
-          title: event.name,
-          artist: "Multiple Artists",
-          venue: venueFull,
-          date: formattedDate,
-          time: formattedTime,
-          imageUrl: imageUrl,
-          type: "festival" as const,
-          category: "listing" as const,
-          genre: genre !== "Undefined" ? genre : undefined,
-          subgenre: subgenre !== "Undefined" ? subgenre : undefined,
-          price: event.priceRanges?.[0]?.min || 0,
-          ticketUrl: event.url
-        };
-      });
+        console.log(`Found ${sortedFestivals.length} festivals`);
+      } catch (error) {
+        console.error("Error loading festival data:", error);
+        toast.error("Failed to load festival data. Please try again later.");
+        setIsLoading(false);
+      }
+    };
     
-    const sortedFestivals = [...festivals].sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return dateA.getTime() - dateB.getTime();
-    });
-    
-    setFestivalListings(sortedFestivals);
-    setGenres(Array.from(allGenres));
-    setIsLoading(false);
+    loadFestivals();
   }, []);
   
   useEffect(() => {
