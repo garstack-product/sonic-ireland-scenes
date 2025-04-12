@@ -32,13 +32,13 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
             </button>
           )}
           
-          <Link to="/" className="text-2xl font-bold text-white hover:text-gray-300 transition-colors mr-6">
-            Dirty Boots
-          </Link>
-          
           {!isMobile && <NavMenu />}
           
-          <div className="flex-grow"></div>
+          <div className="flex-grow flex justify-center">
+            <Link to="/" className="text-2xl font-bold text-white hover:text-gray-300 transition-colors">
+              Dirty Boots
+            </Link>
+          </div>
           
           <div>
             {/* Right side area - could be used for user avatar, etc. */}

@@ -1,8 +1,9 @@
 
 import { Link } from "react-router-dom";
-import { Copy, Heart, Facebook, Twitter, Ticket, Smartphone } from "lucide-react";
-import { useState } from "react";
+import { Copy, Heart, Facebook, Twitter, Ticket, Smartphone, Euro } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface EventCardProps {
   id: string;
@@ -17,7 +18,7 @@ export interface EventCardProps {
   genre?: string;
   subgenre?: string;
   price?: number;
-  ticketUrl?: string; // Added ticket URL
+  ticketUrl?: string;
 }
 
 const EventCard = ({ 
@@ -32,13 +33,21 @@ const EventCard = ({
   category,
   genre,
   subgenre,
+  price,
   ticketUrl
 }: EventCardProps) => {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const { user, likeEvent, unlikeEvent, isEventLiked } = useAuth();
   
   const basePath = category === "review" ? "reviews" : "listings";
   const detailPath = `/${basePath}/${type}/${id}`;
+  
+  useEffect(() => {
+    if (user && id) {
+      setIsLiked(isEventLiked(id));
+    }
+  }, [user, id, isEventLiked]);
   
   const handleCopyLink = () => {
     const url = `${window.location.origin}${detailPath}`;
@@ -67,19 +76,26 @@ const EventCard = ({
   const handleToggleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsLiked(!isLiked);
     
-    // This is a placeholder - in a real app this would save to user profile
-    if (!isLiked) {
-      toast.success(`Added ${title} to your liked events`);
-    } else {
+    if (!user) {
+      toast.error("Please log in to like events");
+      return;
+    }
+    
+    if (isLiked) {
+      unlikeEvent(id);
+      setIsLiked(false);
       toast.success(`Removed ${title} from your liked events`);
+    } else {
+      likeEvent(id);
+      setIsLiked(true);
+      toast.success(`Added ${title} to your liked events`);
     }
   };
 
   return (
     <div className="group relative bg-dark-300 rounded-lg overflow-hidden shadow-md hover-effect">
-      <Link to={detailPath} target="_blank" rel="noopener noreferrer">
+      <Link to={detailPath}>
         <div className="aspect-[3/2] overflow-hidden relative">
           <img 
             src={imageUrl} 
@@ -125,7 +141,7 @@ const EventCard = ({
       <div className="p-4">
         <div className="flex justify-between items-start">
           <div>
-            <Link to={detailPath} target="_blank" rel="noopener noreferrer">
+            <Link to={detailPath}>
               <h3 className="text-lg font-medium text-white line-clamp-2 group-hover:text-gray-300 transition-colors min-h-[3.5rem]">
                 {title}
               </h3>
@@ -138,6 +154,12 @@ const EventCard = ({
           <div>{venue}</div>
           <div className="mt-1">{date}</div>
           {time && <div className="mt-0.5">{time}</div>}
+          {price !== undefined && price > 0 && (
+            <div className="mt-1 flex items-center">
+              <Euro size={14} className="mr-1" /> 
+              <span>{price.toFixed(2)}</span>
+            </div>
+          )}
         </div>
         
         <div className="mt-3 flex justify-between items-center">

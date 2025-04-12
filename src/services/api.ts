@@ -1,6 +1,7 @@
 
 import { API_KEYS } from "@/config/api-keys";
 import { EventCardProps } from "@/components/ui/EventCard";
+import ticketmasterEvents from "@/config/ticketmaster-events.json";
 
 interface CachedData {
   timestamp: number;
@@ -76,7 +77,7 @@ const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
 let ticketmasterCache: CachedData | null = null;
 let eventbriteCache: CachedData | null = null;
 
-// Fetch Ticketmaster events with caching
+// Load events from local JSON file and cache them
 export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   // Check if we have cached data that's still valid
   if (ticketmasterCache && (Date.now() - ticketmasterCache.timestamp < CACHE_DURATION)) {
@@ -85,23 +86,10 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   }
   
   try {
-    console.log("Fetching fresh Ticketmaster data");
-    const response = await fetch(
-      `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&classificationName=music&size=200&apikey=${API_KEYS.TICKETMASTER}`
-    );
+    console.log("Loading Ticketmaster data from local JSON file");
     
-    if (!response.ok) {
-      throw new Error('Failed to fetch data from Ticketmaster');
-    }
-    
-    const data = await response.json();
-    
-    // Handle case where no events are found
-    if (!data._embedded?.events) {
-      return [];
-    }
-    
-    const mappedEvents = mapTicketmasterEvents(data._embedded.events);
+    // Map events from the local JSON file
+    const mappedEvents = mapTicketmasterEvents(ticketmasterEvents);
     
     // Update cache
     ticketmasterCache = {
@@ -111,11 +99,11 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
     
     return mappedEvents;
   } catch (error) {
-    console.error("Error fetching Ticketmaster data:", error);
+    console.error("Error loading Ticketmaster data from local file:", error);
     
     // Return cached data if available, even if expired
     if (ticketmasterCache) {
-      console.log("Using expired Ticketmaster cache due to fetch error");
+      console.log("Using expired Ticketmaster cache due to error");
       return ticketmasterCache.data;
     }
     
@@ -150,7 +138,7 @@ export const fetchEventbriteEvents = async (): Promise<EventCardProps[]> => {
     
     // Return cached data if available, even if expired
     if (eventbriteCache) {
-      console.log("Using expired Eventbrite cache due to fetch error");
+      console.log("Using expired Eventbrite cache due to error");
       return eventbriteCache.data;
     }
     
