@@ -1,40 +1,38 @@
 
 import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   
-  const handleLogin = (e: React.FormEvent) => {
+  // Get the redirect path from location state or default to home
+  const from = (location.state as any)?.from?.pathname || "/";
+  
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    // Simulate login - in a real app, this would call your authentication API
-    setTimeout(() => {
-      if (email === "admin@example.com" && password === "password") {
-        toast.success("Login successful");
-        // Navigate to admin dashboard
-        // In a real app, you would save the authentication token and redirect
-      } else {
-        toast.error("Invalid email or password");
-      }
-      setIsLoading(false);
-    }, 1500);
+    const success = await login(email, password);
+    if (success) {
+      navigate(from, { replace: true });
+    }
   };
 
   return (
     <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-white">Admin Login</h2>
+          <h2 className="text-3xl font-bold text-white">Sign in</h2>
           <p className="mt-2 text-gray-400">
-            Sign in to manage your music photography content
+            Sign in to manage your music events
           </p>
         </div>
         
@@ -105,7 +103,15 @@ const LoginPage = () => {
           </form>
           
           <div className="mt-6 text-center text-sm text-gray-400">
-            <p>Demo credentials: admin@example.com / password</p>
+            <p>
+              Don't have an account?{" "}
+              <Link to="/register" className="text-white hover:underline">
+                Sign up
+              </Link>
+            </p>
+            <p className="mt-2">Demo credentials:</p>
+            <p>Admin: admin@example.com / admin</p>
+            <p>User: user@example.com / password</p>
           </div>
         </div>
       </div>

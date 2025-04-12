@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Copy, Share2, Facebook, Twitter, Ticket, Smartphone } from "lucide-react";
+import { Copy, Heart, Facebook, Twitter, Ticket, Smartphone } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -33,6 +33,7 @@ const EventCard = ({
   subgenre
 }: EventCardProps) => {
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
   
   const basePath = category === "review" ? "reviews" : "listings";
   const detailPath = `/${basePath}/${type}/${id}`;
@@ -59,6 +60,19 @@ const EventCard = ({
     }
     
     window.open(shareUrl, "_blank");
+  };
+
+  const handleToggleLike = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsLiked(!isLiked);
+    
+    // This is a placeholder - in a real app this would save to user profile
+    if (!isLiked) {
+      toast.success(`Added ${title} to your liked events`);
+    } else {
+      toast.success(`Removed ${title} from your liked events`);
+    }
   };
 
   return (
@@ -94,6 +108,15 @@ const EventCard = ({
               )}
             </div>
           )}
+          
+          <button 
+            onClick={handleToggleLike}
+            className={`absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-sm
+              ${isLiked ? 'bg-red-500/90 text-white' : 'bg-dark-500/80 text-white hover:bg-red-500/80'}`}
+            aria-label={isLiked ? "Unlike" : "Like"}
+          >
+            <Heart size={18} className={isLiked ? "fill-white" : ""} />
+          </button>
         </div>
       </Link>
       
@@ -123,7 +146,7 @@ const EventCard = ({
               aria-label="Share on Facebook"
               title="Share on Facebook"
             >
-              <Facebook size={16} />
+              <Facebook size={16} className="hover:fill-[#1877F2]" />
             </button>
             <button 
               onClick={() => handleShare("twitter")}
@@ -131,7 +154,7 @@ const EventCard = ({
               aria-label="Share on X"
               title="Share on X"
             >
-              <Twitter size={16} />
+              <Twitter size={16} className="hover:fill-[#1DA1F2]" />
             </button>
             <button 
               onClick={() => handleShare("whatsapp")}
@@ -139,7 +162,7 @@ const EventCard = ({
               aria-label="Share on WhatsApp"
               title="Share on WhatsApp"
             >
-              <Smartphone size={16} />
+              <Smartphone size={16} className="hover:fill-[#25D366]" />
             </button>
             <button 
               onClick={handleCopyLink}
@@ -147,17 +170,17 @@ const EventCard = ({
               aria-label="Copy Link"
               title="Copy Link"
             >
-              <Copy size={16} />
+              <Copy size={16} className="hover:fill-[#9b87f5]" />
             </button>
           </div>
           
           {category === "listing" && (
             <button 
-              className="text-gray-400 hover:text-[#ea384c] hover:fill-[#ea384c] transition-colors"
+              className="text-gray-400 hover:text-[#ea384c] transition-colors"
               aria-label="Buy tickets"
               title="Buy tickets"
             >
-              <Ticket size={16} />
+              <Ticket size={16} className="hover:fill-[#ea384c]" />
             </button>
           )}
         </div>
