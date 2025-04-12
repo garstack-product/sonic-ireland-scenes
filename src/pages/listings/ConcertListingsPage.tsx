@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
 import { Input } from "@/components/ui/input";
@@ -7,95 +7,129 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Search, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { EventCardProps } from "@/components/ui/EventCard";
+import { API_KEYS } from "@/config/api-keys";
+import { toast } from "sonner";
 
-// Mock data - this would come from the Ticketmaster/Eventbrite APIs
-const concertListings = [
-  {
-    id: "101",
-    title: "Soul & Jazz Night",
-    artist: "Norah Jones",
-    venue: "Olympia Theatre, Dublin",
-    date: "June 12, 2025",
-    imageUrl: "/placeholder.svg",
-    type: "concert" as const,
-    category: "listing" as const,
-    genre: "Jazz",
-    price: 65
-  },
-  {
-    id: "102",
-    title: "Rock Revival",
-    artist: "Foo Fighters",
-    venue: "3Arena, Dublin",
-    date: "July 22, 2025",
-    imageUrl: "/placeholder.svg",
-    type: "concert" as const,
-    category: "listing" as const,
-    genre: "Rock",
-    price: 85
-  },
-  {
-    id: "103",
-    title: "Electronic Beats",
-    artist: "Daft Punk Tribute",
-    venue: "The Academy, Dublin",
-    date: "May 18, 2025",
-    imageUrl: "/placeholder.svg",
-    type: "concert" as const,
-    category: "listing" as const,
-    genre: "Electronic",
-    price: 40
-  },
-  {
-    id: "104",
-    title: "Irish Folk Night",
-    artist: "The Chieftains",
-    venue: "National Concert Hall, Dublin",
-    date: "August 3, 2025",
-    imageUrl: "/placeholder.svg",
-    type: "concert" as const,
-    category: "listing" as const,
-    genre: "Folk",
-    price: 55
-  },
-  {
-    id: "105",
-    title: "Hip Hop Showcase",
-    artist: "Kendrick Lamar",
-    venue: "Malahide Castle, Dublin",
-    date: "June 30, 2025",
-    imageUrl: "/placeholder.svg",
-    type: "concert" as const,
-    category: "listing" as const,
-    genre: "Hip Hop",
-    price: 90
-  },
-  {
-    id: "106",
-    title: "Classical Evening",
-    artist: "Dublin Philharmonic Orchestra",
-    venue: "National Concert Hall, Dublin",
-    date: "May 26, 2025",
-    imageUrl: "/placeholder.svg",
-    type: "concert" as const,
-    category: "listing" as const,
-    genre: "Classical",
-    price: 60
-  }
-];
+// Format time from Ticketmaster API to readable format (e.g., "6:30pm")
+const formatTime = (time: string) => {
+  if (!time) return "";
+  const [hour, minute] = time.split(':');
+  const hourNum = parseInt(hour, 10);
+  const period = hourNum >= 12 ? 'pm' : 'am';
+  const hour12 = hourNum % 12 || 12; // Convert 0 to 12 for 12am
+  return `${hour12}:${minute}${period}`;
+};
 
-const genres = ["All Genres", "Rock", "Pop", "Electronic", "Hip Hop", "Jazz", "Classical", "Folk"];
+// Format date from Ticketmaster API to readable format (e.g., "January 1, 2025")
+const formatDate = (date: string) => {
+  if (!date) return "";
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(date).toLocaleDateString('en-US', options);
+};
 
 const ConcertListingsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
-  const [priceRange, setPriceRange] = useState([0, 100]);
+  const [priceRange, setPriceRange] = useState([0, 500]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [concertListings, setConcertListings] = useState<EventCardProps[]>([]);
+  const [genres, setGenres] = useState<string[]>(["All Genres"]);
+  
+  useEffect(() => {
+    const fetchConcerts = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Get events for Ireland (countryCode=IE)
+        const response = await fetch(
+          `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&classificationName=music&size=50&apikey=${API_KEYS.TICKETMASTER}`
+        );
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch data from Ticketmaster');
+        }
+        
+        const data = await response.json();
+        
+        // Handle case where no events are found
+        if (!data._embedded?.events) {
+          setConcertListings([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Extract all genres
+        const allGenres = new Set<string>();
+        allGenres.add("All Genres");
+        
+        // Map Ticketmaster events to our event format
+        const events = data._embedded.events.map((event: any) => {
+          // Extract genre and subgenre information
+          const genre = event.classifications?.[0]?.genre?.name || "";
+          const subgenre = event.classifications?.[0]?.subGenre?.name || "";
+          
+          if (genre && genre !== "Undefined") {
+            allGenres.add(genre);
+          }
+          
+          // Get venue info
+          const venue = event._embedded?.venues?.[0]?.name || "";
+          const city = event._embedded?.venues?.[0]?.city?.name || "";
+          const venueFull = city ? `${venue}, ${city}` : venue;
+          
+          // Get price info
+          const minPrice = event.priceRanges?.[0]?.min || 0;
+          const maxPrice = event.priceRanges?.[0]?.max || 0;
+          const priceDisplay = minPrice === maxPrice 
+            ? `€${minPrice.toFixed(2)}` 
+            : `€${minPrice.toFixed(2)} - €${maxPrice.toFixed(2)}`;
+            
+          // Get image
+          const imageUrl = event.images?.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url 
+            || event.images?.[0]?.url 
+            || "/placeholder.svg";
+            
+          // Get date and time
+          const startDate = event.dates?.start?.localDate || "";
+          const startTime = event.dates?.start?.localTime || "";
+          const formattedDate = formatDate(startDate);
+          const formattedTime = formatTime(startTime);
+          
+          return {
+            id: event.id,
+            title: event.name,
+            artist: event.name.includes(":") ? event.name.split(":")[0] : event._embedded?.attractions?.[0]?.name || "",
+            venue: venueFull,
+            date: formattedDate,
+            time: formattedTime,
+            imageUrl: imageUrl,
+            type: "concert" as const,
+            category: "listing" as const,
+            genre: genre !== "Undefined" ? genre : undefined,
+            subgenre: subgenre !== "Undefined" ? subgenre : undefined,
+            price: minPrice
+          };
+        });
+        
+        setConcertListings(events);
+        setGenres(Array.from(allGenres));
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching Ticketmaster data:", error);
+        toast.error("Failed to load concert data. Please try again later.");
+        setIsLoading(false);
+      }
+    };
+    
+    fetchConcerts();
+  }, []);
   
   const filteredListings = concertListings.filter(listing => {
     const matchesSearch = 
-      listing.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      listing.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      listing.venue.toLowerCase().includes(searchTerm.toLowerCase());
+      listing.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      listing.artist?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      listing.venue?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesGenre = selectedGenre === "All Genres" || listing.genre === selectedGenre;
     
@@ -144,10 +178,10 @@ const ConcertListingsPage = () => {
             <span>Price Range: €{priceRange[0]} - €{priceRange[1]}</span>
           </div>
           <Slider
-            defaultValue={[0, 100]}
+            defaultValue={[0, 500]}
             min={0}
-            max={100}
-            step={5}
+            max={500}
+            step={10}
             value={priceRange}
             onValueChange={setPriceRange}
             className="py-2"
@@ -156,17 +190,25 @@ const ConcertListingsPage = () => {
       </div>
       
       <div className="mb-6 flex justify-between items-center">
-        <p className="text-gray-400">{filteredListings.length} events found</p>
+        <p className="text-gray-400">
+          {isLoading ? "Loading events..." : `${filteredListings.length} events found`}
+        </p>
         <Button variant="outline" className="flex items-center space-x-2">
           <Calendar size={16} />
           <span>Date Range</span>
         </Button>
       </div>
       
-      <EventGrid 
-        events={filteredListings} 
-        emptyMessage="No concerts found matching your filters. Try adjusting your search."
-      />
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        </div>
+      ) : (
+        <EventGrid 
+          events={filteredListings} 
+          emptyMessage="No concerts found matching your filters. Try adjusting your search."
+        />
+      )}
     </div>
   );
 };

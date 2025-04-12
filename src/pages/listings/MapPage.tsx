@@ -1,10 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
 import { EventCardProps } from "@/components/ui/EventCard";
+import { API_KEYS } from "@/config/api-keys";
 
-// Mock venue data - this would normally come from your API
+// This will be replaced with real data from the Ticketmaster API
 const venues = [
   {
     id: "v1",
@@ -81,14 +82,189 @@ const venues = [
 const MapPage = () => {
   const [selectedVenue, setSelectedVenue] = useState<string | null>(null);
   const [venueEvents, setVenueEvents] = useState<EventCardProps[]>([]);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   
-  // For now, we'll just use a placeholder map
-  // In a real implementation, you would integrate with a mapping library like Mapbox or Google Maps
+  useEffect(() => {
+    const loadGoogleMaps = () => {
+      if (!document.getElementById('google-maps-script')) {
+        const script = document.createElement('script');
+        script.id = 'google-maps-script';
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEYS.GOOGLE_MAPS}&callback=initMap`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+        
+        window.initMap = () => {
+          setMapLoaded(true);
+        };
+      }
+    };
+    
+    loadGoogleMaps();
+    
+    return () => {
+      // Cleanup if needed
+      const script = document.getElementById('google-maps-script');
+      if (script) {
+        script.remove();
+      }
+    };
+  }, []);
+  
+  useEffect(() => {
+    if (mapLoaded && !map) {
+      const mapDiv = document.getElementById('map');
+      if (mapDiv) {
+        const newMap = new google.maps.Map(mapDiv, {
+          center: { lat: 53.35, lng: -6.26 }, // Dublin center
+          zoom: 12,
+          styles: [
+            { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+            {
+              featureType: "administrative.locality",
+              elementType: "labels.text.fill",
+              stylers: [{ color: "#d59563" }],
+            },
+            {
+              featureType: "poi",
+              elementType: "labels.text.fill",
+              stylers: [{ color: "#d59563" }],
+            },
+            {
+              featureType: "poi.park",
+              elementType: "geometry",
+              stylers: [{ color: "#263c3f" }],
+            },
+            {
+              featureType: "poi.park",
+              elementType: "labels.text.fill",
+              stylers: [{ color: "#6b9a76" }],
+            },
+            {
+              featureType: "road",
+              elementType: "geometry",
+              stylers: [{ color: "#38414e" }],
+            },
+            {
+              featureType: "road",
+              elementType: "geometry.stroke",
+              stylers: [{ color: "#212a37" }],
+            },
+            {
+              featureType: "road",
+              elementType: "labels.text.fill",
+              stylers: [{ color: "#9ca5b3" }],
+            },
+            {
+              featureType: "road.highway",
+              elementType: "geometry",
+              stylers: [{ color: "#746855" }],
+            },
+            {
+              featureType: "road.highway",
+              elementType: "geometry.stroke",
+              stylers: [{ color: "#1f2835" }],
+            },
+            {
+              featureType: "road.highway",
+              elementType: "labels.text.fill",
+              stylers: [{ color: "#f3d19c" }],
+            },
+            {
+              featureType: "transit",
+              elementType: "geometry",
+              stylers: [{ color: "#2f3948" }],
+            },
+            {
+              featureType: "transit.station",
+              elementType: "labels.text.fill",
+              stylers: [{ color: "#d59563" }],
+            },
+            {
+              featureType: "water",
+              elementType: "geometry",
+              stylers: [{ color: "#17263c" }],
+            },
+            {
+              featureType: "water",
+              elementType: "labels.text.fill",
+              stylers: [{ color: "#515c6d" }],
+            },
+            {
+              featureType: "water",
+              elementType: "labels.text.stroke",
+              stylers: [{ color: "#17263c" }],
+            },
+          ],
+        });
+        setMap(newMap);
+        
+        // Add markers for venues
+        const newMarkers = venues.map(venue => {
+          const marker = new google.maps.Marker({
+            position: { lat: venue.lat, lng: venue.lng },
+            map: newMap,
+            title: venue.name,
+            icon: {
+              path: google.maps.SymbolPath.CIRCLE,
+              scale: 10,
+              fillColor: "#8B5CF6",
+              fillOpacity: 0.8,
+              strokeWeight: 1,
+              strokeColor: "#FFFFFF",
+            }
+          });
+          
+          marker.addListener("click", () => {
+            handleVenueClick(venue.id);
+          });
+          
+          return marker;
+        });
+        
+        setMarkers(newMarkers);
+      }
+    }
+  }, [mapLoaded, map]);
+
   const handleVenueClick = (venueId: string) => {
     const venue = venues.find(v => v.id === venueId);
     if (venue) {
       setSelectedVenue(venue.name);
       setVenueEvents(venue.events);
+      
+      // Center map on selected venue
+      if (map) {
+        map.panTo({ lat: venue.lat, lng: venue.lng });
+        map.setZoom(14);
+      }
+      
+      // Highlight the selected marker
+      markers.forEach(marker => {
+        if (marker.getTitle() === venue.name) {
+          marker.setIcon({
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 12,
+            fillColor: "#D946EF",
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: "#FFFFFF",
+          });
+        } else {
+          marker.setIcon({
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 10,
+            fillColor: "#8B5CF6",
+            fillOpacity: 0.8,
+            strokeWeight: 1,
+            strokeColor: "#FFFFFF",
+          });
+        }
+      });
     }
   };
 
@@ -101,32 +277,12 @@ const MapPage = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          {/* Map Placeholder - This would be replaced with actual map component */}
-          <div className="bg-dark-300 rounded-lg p-4 h-[500px] flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-gray-400 mb-4">Venue Map (Placeholder)</p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {venues.map(venue => (
-                  <button
-                    key={venue.id}
-                    onClick={() => handleVenueClick(venue.id)}
-                    className={`p-4 rounded-lg text-left transition-colors ${
-                      selectedVenue === venue.name 
-                        ? 'bg-white/10 border border-white/20' 
-                        : 'bg-dark-200 hover:bg-dark-100'
-                    }`}
-                  >
-                    <h3 className="font-medium text-white">{venue.name}</h3>
-                    <p className="text-sm text-gray-400">{venue.location}</p>
-                    <div className="mt-2 text-sm">
-                      <span className="inline-block px-2 py-1 bg-dark-400 rounded text-gray-300">
-                        {venue.eventCount} events
-                      </span>
-                    </div>
-                  </button>
-                ))}
+          <div id="map" className="bg-dark-300 rounded-lg h-[500px] overflow-hidden">
+            {!mapLoaded && (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-gray-400">Loading map...</p>
               </div>
-            </div>
+            )}
           </div>
         </div>
         

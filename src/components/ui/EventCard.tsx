@@ -58,7 +58,6 @@ const EventCard = ({
     }
     
     window.open(shareUrl, "_blank");
-    setShowShareMenu(false);
   };
 
   return (
@@ -107,53 +106,6 @@ const EventCard = ({
             </Link>
             <p className="text-gray-400 text-sm">{artist}</p>
           </div>
-          
-          <div className="relative">
-            <button 
-              onClick={() => setShowShareMenu(!showShareMenu)} 
-              className="p-2 text-gray-400 hover:text-white transition-colors"
-              aria-label="Share options"
-            >
-              <Share2 size={18} />
-            </button>
-            
-            {showShareMenu && (
-              <div className="absolute right-0 top-full mt-2 w-40 rounded-md shadow-lg bg-dark-200 ring-1 ring-black ring-opacity-5 py-1 z-10">
-                <button 
-                  onClick={handleCopyLink}
-                  className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-dark-100"
-                  title="Copy Link"
-                >
-                  <Copy size={16} className="mr-2" />
-                  <span>Copy Link</span>
-                </button>
-                <button 
-                  onClick={() => handleShare("twitter")}
-                  className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-dark-100"
-                  title="Share on X"
-                >
-                  <Twitter size={16} className="mr-2" />
-                  <span>Share on X</span>
-                </button>
-                <button 
-                  onClick={() => handleShare("facebook")}
-                  className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-dark-100"
-                  title="Share on Facebook"
-                >
-                  <Facebook size={16} className="mr-2" />
-                  <span>Share on Facebook</span>
-                </button>
-                <button 
-                  onClick={() => handleShare("whatsapp")}
-                  className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-dark-100"
-                  title="Share on WhatsApp"
-                >
-                  <Smartphone size={16} className="mr-2" />
-                  <span>Share on WhatsApp</span>
-                </button>
-              </div>
-            )}
-          </div>
         </div>
         
         <div className="mt-2 text-sm text-gray-400">
@@ -166,7 +118,7 @@ const EventCard = ({
           <div className="flex gap-2">
             <button 
               onClick={() => handleShare("facebook")}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-[#1877F2] hover:fill-[#1877F2] transition-colors"
               aria-label="Share on Facebook"
               title="Share on Facebook"
             >
@@ -174,7 +126,7 @@ const EventCard = ({
             </button>
             <button 
               onClick={() => handleShare("twitter")}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-[#1DA1F2] hover:fill-[#1DA1F2] transition-colors"
               aria-label="Share on X"
               title="Share on X"
             >
@@ -182,17 +134,25 @@ const EventCard = ({
             </button>
             <button 
               onClick={() => handleShare("whatsapp")}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-[#25D366] hover:fill-[#25D366] transition-colors"
               aria-label="Share on WhatsApp"
               title="Share on WhatsApp"
             >
               <Smartphone size={16} />
             </button>
+            <button 
+              onClick={handleCopyLink}
+              className="text-gray-400 hover:text-[#9b87f5] hover:fill-[#9b87f5] transition-colors"
+              aria-label="Copy Link"
+              title="Copy Link"
+            >
+              <Copy size={16} />
+            </button>
           </div>
           
           {category === "listing" && (
             <button 
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-[#ea384c] hover:fill-[#ea384c] transition-colors"
               aria-label="Buy tickets"
               title="Buy tickets"
             >

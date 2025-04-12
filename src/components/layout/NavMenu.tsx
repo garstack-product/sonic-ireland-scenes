@@ -18,7 +18,7 @@ const NavMenu = () => {
   };
 
   return (
-    <nav className="hidden md:flex items-center space-x-8">
+    <nav className="hidden md:flex items-center space-x-8 ml-8">
       <NavLink to="/">Home</NavLink>
       
       <div className="relative group">
