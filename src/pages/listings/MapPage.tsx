@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
@@ -36,13 +35,12 @@ const MapPage = () => {
   const [venueDetails, setVenueDetails] = useState<Venue | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Process events from the JSON file to group by venue
   useEffect(() => {
     setIsLoading(true);
-    // Group events by venue and extract venue information
     const venueMap = new Map<string, Venue>();
+    const eventsData = ticketmasterEvents.events || [];
     
-    ticketmasterEvents.forEach((event: any) => {
+    eventsData.forEach((event: any) => {
       if (!event._embedded?.venues?.[0]) return;
       
       const venue = event._embedded.venues[0];
@@ -50,14 +48,11 @@ const MapPage = () => {
       
       if (!venueName) return;
       
-      // Extract location information
       const lat = parseFloat(venue.location?.latitude) || 0;
       const lng = parseFloat(venue.location?.longitude) || 0;
       
-      // Skip venues without proper coordinates
       if (lat === 0 && lng === 0) return;
       
-      // Format event data
       const eventData: EventCardProps = {
         id: event.id,
         title: event.name,
@@ -123,7 +118,6 @@ const MapPage = () => {
     loadGoogleMaps();
     
     return () => {
-      // Cleanup if needed
       const script = document.getElementById('google-maps-script');
       if (script) {
         script.remove();
@@ -225,20 +219,18 @@ const MapPage = () => {
         });
         setMap(newMap);
         
-        // Add markers for venues with heat map style (color based on event count)
         const newMarkers = venues.map(venue => {
-          // Determine color based on event count (heat map effect)
-          let fillColor = '#4ADE80'; // Green for venues with 1-2 events
+          let fillColor = '#4ADE80';
           let scale = 10;
           
           if (venue.eventCount > 10) {
-            fillColor = '#DC2626'; // Red for venues with many events
+            fillColor = '#DC2626';
             scale = 14;
           } else if (venue.eventCount > 5) {
-            fillColor = '#F97316'; // Orange for venues with moderate events
+            fillColor = '#F97316';
             scale = 12;
           } else if (venue.eventCount > 2) {
-            fillColor = '#FBBF24'; // Yellow for venues with few events
+            fillColor = '#FBBF24';
             scale = 11;
           }
           
@@ -275,13 +267,11 @@ const MapPage = () => {
       setVenueEvents(venue.events);
       setVenueDetails(venue);
       
-      // Center map on selected venue
       if (map) {
         map.panTo({ lat: venue.lat, lng: venue.lng });
         map.setZoom(14);
       }
       
-      // Highlight the selected marker
       markers.forEach(marker => {
         if (marker.getTitle()?.includes(venue.name)) {
           marker.setIcon({
@@ -293,20 +283,19 @@ const MapPage = () => {
             strokeColor: "#FFFFFF",
           });
         } else {
-          // Reset other markers to their original appearance based on event count
           const markerVenue = venues.find(v => marker.getTitle()?.includes(v.name));
           if (markerVenue) {
-            let fillColor = '#4ADE80'; // Green for venues with 1-2 events
+            let fillColor = '#4ADE80';
             let scale = 10;
             
             if (markerVenue.eventCount > 10) {
-              fillColor = '#DC2626'; // Red for venues with many events
+              fillColor = '#DC2626';
               scale = 14;
             } else if (markerVenue.eventCount > 5) {
-              fillColor = '#F97316'; // Orange for venues with moderate events
+              fillColor = '#F97316';
               scale = 12;
             } else if (markerVenue.eventCount > 2) {
-              fillColor = '#FBBF24'; // Yellow for venues with few events
+              fillColor = '#FBBF24';
               scale = 11;
             }
             

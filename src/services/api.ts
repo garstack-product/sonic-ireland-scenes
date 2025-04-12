@@ -88,8 +88,11 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   try {
     console.log("Loading Ticketmaster data from local JSON file");
     
+    // Fix: Access the events array correctly from the JSON structure
+    const eventsData = ticketmasterEvents.events || [];
+    
     // Map events from the local JSON file
-    const mappedEvents = mapTicketmasterEvents(ticketmasterEvents);
+    const mappedEvents = mapTicketmasterEvents(eventsData);
     
     // Update cache
     ticketmasterCache = {

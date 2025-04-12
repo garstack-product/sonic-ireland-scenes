@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
@@ -30,17 +29,15 @@ const FestivalListingsPage = () => {
   const [visibleItemCount, setVisibleItemCount] = useState(80);
   
   useEffect(() => {
-    // Load festivals from ticketmaster events JSON
     setIsLoading(true);
     
-    // Extract all genres
     const allGenres = new Set<string>();
     allGenres.add("All Genres");
     
-    // Process ticketmaster events to filter festivals
-    const festivals = ticketmasterEvents
+    const eventsData = ticketmasterEvents.events || [];
+    
+    const festivals = eventsData
       .filter((event: any) => {
-        // Check for festival-related keywords or classifications
         const isFestival = 
           event.name?.toLowerCase().includes("festival") || 
           event.classifications?.[0]?.subGenre?.name?.toLowerCase().includes("festival") ||
@@ -49,7 +46,6 @@ const FestivalListingsPage = () => {
         return isFestival;
       })
       .map((event: any) => {
-        // Extract genre and subgenre information
         const genre = event.classifications?.[0]?.genre?.name || "";
         const subgenre = event.classifications?.[0]?.subGenre?.name || "";
         
@@ -57,17 +53,14 @@ const FestivalListingsPage = () => {
           allGenres.add(genre);
         }
         
-        // Get venue info
         const venue = event._embedded?.venues?.[0]?.name || "";
         const city = event._embedded?.venues?.[0]?.city?.name || "";
         const venueFull = city ? `${venue}, ${city}` : venue;
         
-        // Get image
         const imageUrl = event.images?.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url 
           || event.images?.[0]?.url 
           || "/placeholder.svg";
           
-        // Get date and time
         const startDate = event.dates?.start?.localDate || "";
         const formattedDate = startDate 
           ? new Date(startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -95,7 +88,6 @@ const FestivalListingsPage = () => {
         };
       });
     
-    // Sort festivals by date
     const sortedFestivals = [...festivals].sort((a, b) => {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
@@ -107,7 +99,6 @@ const FestivalListingsPage = () => {
     setIsLoading(false);
   }, []);
   
-  // Filter festivals based on search, genre, price, and date range
   useEffect(() => {
     const filtered = festivalListings.filter(listing => {
       const matchesSearch = 
@@ -120,7 +111,6 @@ const FestivalListingsPage = () => {
         !listing.price || 
         (listing.price >= priceRange[0] && listing.price <= priceRange[1]);
       
-      // Check if event's date is within the selected date range
       let matchesDateRange = true;
       if (dateRange.from || dateRange.to) {
         const eventDate = new Date(listing.date);
@@ -138,11 +128,9 @@ const FestivalListingsPage = () => {
     });
     
     setFilteredListings(filtered);
-    // Reset visible item count when filters change
     setVisibleItemCount(80);
   }, [festivalListings, searchTerm, selectedGenre, priceRange, dateRange]);
   
-  // Update displayed listings based on visible item count
   useEffect(() => {
     setDisplayedListings(filteredListings.slice(0, visibleItemCount));
   }, [filteredListings, visibleItemCount]);
@@ -173,7 +161,6 @@ const FestivalListingsPage = () => {
         subtitle="Discover upcoming festivals in Ireland from Ticketmaster and Eventbrite"
       />
       
-      {/* Filter Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
