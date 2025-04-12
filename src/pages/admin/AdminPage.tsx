@@ -2,10 +2,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PageHeader } from "@/components/ui/PageHeader";
+import PageHeader from "@/components/ui/PageHeader";
 import AddConcertReview from "./AddConcertReview";
 import AddFestivalReview from "./AddFestivalReview";
 import AddNewsItem from "./AddNewsItem";
+import ManageFeaturedEvents from "./ManageFeaturedEvents";
 
 const AdminPage = () => {
   const [isLoggedIn] = useState(true); // In a real app, this would be managed by auth state
@@ -39,6 +40,7 @@ const AdminPage = () => {
             <TabsTrigger value="concert-reviews">Concert Reviews</TabsTrigger>
             <TabsTrigger value="festival-reviews">Festival Reviews</TabsTrigger>
             <TabsTrigger value="news">News</TabsTrigger>
+            <TabsTrigger value="featured">Featured Events</TabsTrigger>
           </TabsList>
           
           <TabsContent value="concert-reviews">
@@ -51,6 +53,10 @@ const AdminPage = () => {
           
           <TabsContent value="news">
             <AddNewsItem />
+          </TabsContent>
+          
+          <TabsContent value="featured">
+            <ManageFeaturedEvents />
           </TabsContent>
         </Tabs>
       </div>

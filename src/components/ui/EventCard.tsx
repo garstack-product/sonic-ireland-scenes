@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { Copy, Share2, Facebook, Twitter, Ticket } from "lucide-react";
+import { Copy, Share2, Facebook, Twitter, Ticket, Smartphone } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -14,9 +14,23 @@ export interface EventCardProps {
   imageUrl: string;
   type: "concert" | "festival";
   category: "listing" | "review";
+  genre?: string;
+  subgenre?: string;
 }
 
-const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, category }: EventCardProps) => {
+const EventCard = ({ 
+  id, 
+  title, 
+  artist, 
+  venue, 
+  date, 
+  time, 
+  imageUrl, 
+  type, 
+  category,
+  genre,
+  subgenre
+}: EventCardProps) => {
   const [showShareMenu, setShowShareMenu] = useState(false);
   
   const basePath = category === "review" ? "reviews" : "listings";
@@ -39,6 +53,8 @@ const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, categ
       shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     } else if (platform === "facebook") {
       shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    } else if (platform === "whatsapp") {
+      shareUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
     }
     
     window.open(shareUrl, "_blank");
@@ -48,13 +64,36 @@ const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, categ
   return (
     <div className="group relative bg-dark-300 rounded-lg overflow-hidden shadow-md hover-effect">
       <Link to={detailPath} target="_blank" rel="noopener noreferrer">
-        <div className="aspect-[3/2] overflow-hidden">
+        <div className="aspect-[3/2] overflow-hidden relative">
           <img 
             src={imageUrl} 
             alt={title} 
             className="w-full h-full object-cover transition-transform group-hover:scale-105"
             loading="lazy"
           />
+          
+          {(genre || subgenre) && (
+            <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+              {genre && (
+                <Link 
+                  to={`/listings/${type}?genre=${encodeURIComponent(genre)}`}
+                  className="px-2 py-1 text-xs font-medium bg-dark-500/80 text-white rounded backdrop-blur-sm hover:bg-dark-400"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {genre}
+                </Link>
+              )}
+              {subgenre && (
+                <Link 
+                  to={`/listings/${type}?subgenre=${encodeURIComponent(subgenre)}`}
+                  className="px-2 py-1 text-xs font-medium bg-dark-500/80 text-white rounded backdrop-blur-sm hover:bg-dark-400"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {subgenre}
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </Link>
       
@@ -83,6 +122,7 @@ const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, categ
                 <button 
                   onClick={handleCopyLink}
                   className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-dark-100"
+                  title="Copy Link"
                 >
                   <Copy size={16} className="mr-2" />
                   <span>Copy Link</span>
@@ -90,6 +130,7 @@ const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, categ
                 <button 
                   onClick={() => handleShare("twitter")}
                   className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-dark-100"
+                  title="Share on X"
                 >
                   <Twitter size={16} className="mr-2" />
                   <span>Share on X</span>
@@ -97,9 +138,18 @@ const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, categ
                 <button 
                   onClick={() => handleShare("facebook")}
                   className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-dark-100"
+                  title="Share on Facebook"
                 >
                   <Facebook size={16} className="mr-2" />
                   <span>Share on Facebook</span>
+                </button>
+                <button 
+                  onClick={() => handleShare("whatsapp")}
+                  className="flex items-center w-full px-4 py-2 text-sm text-white hover:bg-dark-100"
+                  title="Share on WhatsApp"
+                >
+                  <Smartphone size={16} className="mr-2" />
+                  <span>Share on WhatsApp</span>
                 </button>
               </div>
             )}
@@ -108,10 +158,8 @@ const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, categ
         
         <div className="mt-2 text-sm text-gray-400">
           <div>{venue}</div>
-          <div className="mt-1">
-            {date}
-            {time && <span> • {time}</span>}
-          </div>
+          <div className="mt-1">{date}</div>
+          {time && <div className="mt-0.5">{time}</div>}
         </div>
         
         <div className="mt-3 flex justify-between items-center">
@@ -120,6 +168,7 @@ const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, categ
               onClick={() => handleShare("facebook")}
               className="text-gray-400 hover:text-white transition-colors"
               aria-label="Share on Facebook"
+              title="Share on Facebook"
             >
               <Facebook size={16} />
             </button>
@@ -127,8 +176,17 @@ const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, categ
               onClick={() => handleShare("twitter")}
               className="text-gray-400 hover:text-white transition-colors"
               aria-label="Share on X"
+              title="Share on X"
             >
               <Twitter size={16} />
+            </button>
+            <button 
+              onClick={() => handleShare("whatsapp")}
+              className="text-gray-400 hover:text-white transition-colors"
+              aria-label="Share on WhatsApp"
+              title="Share on WhatsApp"
+            >
+              <Smartphone size={16} />
             </button>
           </div>
           
@@ -136,6 +194,7 @@ const EventCard = ({ id, title, artist, venue, date, time, imageUrl, type, categ
             <button 
               className="text-gray-400 hover:text-white transition-colors"
               aria-label="Buy tickets"
+              title="Buy tickets"
             >
               <Ticket size={16} />
             </button>

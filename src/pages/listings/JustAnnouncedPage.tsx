@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { PageHeader } from "@/components/ui/PageHeader";
+import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
 
 // Mock data - in a real app, this would come from the Ticketmaster & Eventbrite APIs

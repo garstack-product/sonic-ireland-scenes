@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const NavMenu = () => {
   const [showListingsSubmenu, setShowListingsSubmenu] = useState(false);
@@ -25,9 +25,11 @@ const NavMenu = () => {
         <button 
           className="flex items-center space-x-1 text-white hover:text-gray-300 transition-colors"
           onClick={toggleListingsSubmenu}
+          aria-expanded={showListingsSubmenu}
+          aria-haspopup="true"
         >
           <span>Listings</span>
-          <ChevronDown size={16} />
+          {showListingsSubmenu ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
         
         {showListingsSubmenu && (
@@ -46,9 +48,11 @@ const NavMenu = () => {
         <button 
           className="flex items-center space-x-1 text-white hover:text-gray-300 transition-colors"
           onClick={toggleReviewsSubmenu}
+          aria-expanded={showReviewsSubmenu}
+          aria-haspopup="true"
         >
           <span>Reviews</span>
-          <ChevronDown size={16} />
+          {showReviewsSubmenu ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
         
         {showReviewsSubmenu && (
