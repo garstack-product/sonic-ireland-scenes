@@ -10,7 +10,7 @@ import {
 
 interface SocialLink {
   name: string;
-  url: string;
+  url: string | null;
   icon: React.ReactNode;
   color: string;
 }
@@ -20,16 +20,19 @@ interface SocialIconsProps {
 }
 
 const SocialIcons: React.FC<SocialIconsProps> = ({ links }) => {
-  if (!links || links.length === 0) return null;
+  // Filter out null/undefined URLs
+  const validLinks = links.filter(link => link.url);
+  
+  if (!validLinks || validLinks.length === 0) return null;
 
   return (
     <div className="flex flex-wrap gap-3 mt-4">
       <TooltipProvider>
-        {links.map((link, index) => (
+        {validLinks.map((link, index) => (
           <Tooltip key={index}>
             <TooltipTrigger asChild>
               <a
-                href={link.url}
+                href={link.url || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center w-10 h-10 rounded-full bg-dark-400 hover:bg-dark-300 transition-colors"

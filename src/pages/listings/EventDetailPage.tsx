@@ -8,6 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import EventGrid from "@/components/ui/EventGrid";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { fetchArtistData, fetchVenueEvents } from "@/services/api";
+import SocialIcons, { getSocialLinksFromData } from "@/components/ui/SocialIcons";
+import SocialShareButtons from "@/components/ui/SocialShareButtons";
 
 interface EventDetail {
   id: string;
@@ -26,13 +28,6 @@ interface EventDetail {
   ticketUrl?: string;
   venueMapUrl?: string;
   type: "concert" | "festival";
-}
-
-interface SocialLink {
-  name: string;
-  url: string;
-  icon: React.ReactNode;
-  color: string;
 }
 
 const EventDetailPage = () => {
@@ -57,8 +52,6 @@ const EventDetailPage = () => {
       try {
         setIsLoading(true);
         
-        // In a real app, we would fetch this specific event by ID
-        // For now, we'll simulate with the API or mock
         const response = await fetch(
           `https://app.ticketmaster.com/discovery/v2/events/${id}.json?apikey=${API_KEYS.TICKETMASTER}`
         );
@@ -69,7 +62,6 @@ const EventDetailPage = () => {
         
         const data = await response.json();
         
-        // Extract and format all the event details
         const venue = data._embedded?.venues?.[0] || {};
         const priceRanges = data.priceRanges || [];
         
@@ -125,12 +117,10 @@ const EventDetailPage = () => {
         setEvent(eventDetail);
         setIsLoading(false);
         
-        // Once we have the event, fetch artist data
         if (artist) {
           fetchArtistInfo(artist);
         }
         
-        // Fetch other events at this venue
         if (venue.name) {
           fetchEventsAtVenue(venue.name);
         }
@@ -162,9 +152,8 @@ const EventDetailPage = () => {
     try {
       setIsLoadingVenueEvents(true);
       const events = await fetchVenueEvents(venueName);
-      // Filter out current event from the list
       const otherEvents = events.filter(evt => evt.id !== id);
-      setVenueEvents(otherEvents.slice(0, 4)); // Limit to 4 events
+      setVenueEvents(otherEvents.slice(0, 4));
     } catch (error) {
       console.error(`Error fetching events for venue ${venueName}:`, error);
     } finally {
@@ -207,94 +196,7 @@ const EventDetailPage = () => {
     toast.success("Link copied to clipboard");
   };
 
-  const getSocialLinks = (): SocialLink[] => {
-    if (!artistData || !artistData.links) return [];
-    
-    const links: SocialLink[] = [];
-    
-    if (artistData.links.website) {
-      links.push({
-        name: "Website",
-        url: artistData.links.website,
-        icon: <Globe size={18} />,
-        color: "#4a5568"
-      });
-    }
-    
-    if (artistData.links.facebook) {
-      links.push({
-        name: "Facebook",
-        url: artistData.links.facebook,
-        icon: <ExternalLink size={18} />,
-        color: "#1877F2"
-      });
-    }
-    
-    if (artistData.links.twitter) {
-      links.push({
-        name: "Twitter",
-        url: artistData.links.twitter,
-        icon: <ExternalLink size={18} />,
-        color: "#1DA1F2"
-      });
-    }
-    
-    if (artistData.links.instagram) {
-      links.push({
-        name: "Instagram",
-        url: artistData.links.instagram,
-        icon: <ExternalLink size={18} />,
-        color: "#E1306C"
-      });
-    }
-    
-    if (artistData.links.spotify) {
-      links.push({
-        name: "Spotify",
-        url: artistData.links.spotify,
-        icon: <Music size={18} />,
-        color: "#1DB954"
-      });
-    }
-    
-    if (artistData.links.youtube) {
-      links.push({
-        name: "YouTube",
-        url: artistData.links.youtube,
-        icon: <ExternalLink size={18} />,
-        color: "#FF0000"
-      });
-    }
-    
-    if (artistData.links.itunes) {
-      links.push({
-        name: "iTunes",
-        url: artistData.links.itunes,
-        icon: <Music size={18} />,
-        color: "#EA4CC0"
-      });
-    }
-    
-    if (artistData.links.musicbrainz) {
-      links.push({
-        name: "MusicBrainz",
-        url: artistData.links.musicbrainz,
-        icon: <Music size={18} />,
-        color: "#BA478F"
-      });
-    }
-    
-    if (artistData.links.wikipedia) {
-      links.push({
-        name: "Wikipedia",
-        url: artistData.links.wikipedia,
-        icon: <ExternalLink size={18} />,
-        color: "#000000"
-      });
-    }
-    
-    return links;
-  };
+  const socialLinks = getSocialLinksFromData(artistData);
 
   if (isLoading) {
     return (
@@ -313,13 +215,10 @@ const EventDetailPage = () => {
     );
   }
 
-  const socialLinks = getSocialLinks();
-
   return (
     <div className="bg-dark-400 min-h-screen py-8">
       <div className="container mx-auto px-4">
         <div className="bg-dark-300 rounded-lg overflow-hidden shadow-lg">
-          {/* Hero image */}
           <div className="h-[30vh] md:h-[40vh] relative">
             <img 
               src={event.imageUrl} 
@@ -349,14 +248,11 @@ const EventDetailPage = () => {
             </div>
           </div>
           
-          {/* Artist and Details section */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-6 md:p-8">
-            {/* Artist Section */}
             <div className="md:col-span-3">
               <h3 className="text-2xl text-white font-semibold mb-6">Artist Information</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Artist Image */}
                 <div>
                   <div className="rounded-lg overflow-hidden mb-4">
                     <img 
@@ -366,27 +262,11 @@ const EventDetailPage = () => {
                     />
                   </div>
                   
-                  {/* Social Links */}
                   {socialLinks.length > 0 && (
-                    <div className="grid grid-cols-2 gap-2">
-                      {socialLinks.map((link, index) => (
-                        <a 
-                          key={index}
-                          href={link.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 px-3 py-2 bg-dark-400 rounded hover:bg-dark-500 transition-colors"
-                          style={{ color: link.color }}
-                        >
-                          {link.icon}
-                          <span className="text-sm">{link.name}</span>
-                        </a>
-                      ))}
-                    </div>
+                    <SocialIcons links={socialLinks} />
                   )}
                 </div>
                 
-                {/* Artist Bio and Event Info */}
                 <div className="md:col-span-2">
                   <div className="mb-6">
                     <h4 className="text-lg text-white font-medium mb-3">{event.artist}</h4>
@@ -419,7 +299,7 @@ const EventDetailPage = () => {
                     <p className="text-gray-300 whitespace-pre-line">{event.description}</p>
                   </div>
                   
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap items-center gap-4">
                     {event.ticketUrl && (
                       <Button 
                         className="flex items-center justify-center gap-2 bg-white text-dark-500 hover:bg-gray-200"
@@ -441,25 +321,19 @@ const EventDetailPage = () => {
                       {liked ? 'Saved' : 'Save Event'}
                     </Button>
                     
-                    <Button 
-                      variant="outline" 
-                      className="flex items-center justify-center gap-2"
-                      onClick={handleShare}
-                    >
-                      <Share2 size={18} />
-                      Share
-                    </Button>
+                    <SocialShareButtons 
+                      title={event.title} 
+                      url={window.location.href} 
+                    />
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Venue Section */}
             <div className="md:col-span-3 mt-8">
               <h3 className="text-2xl text-white font-semibold mb-6">Venue Information</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Venue Details */}
                 <div className="bg-dark-400 p-6 rounded-lg">
                   <h4 className="text-lg text-white font-medium mb-4">{event.venue}</h4>
                   {event.address && <p className="text-gray-300 mb-2">{event.address}</p>}
@@ -481,7 +355,6 @@ const EventDetailPage = () => {
                   )}
                 </div>
                 
-                {/* Venue Map */}
                 <div className="md:col-span-2">
                   <div className="bg-dark-400 rounded-lg overflow-hidden h-80">
                     <iframe
@@ -498,7 +371,6 @@ const EventDetailPage = () => {
               </div>
             </div>
             
-            {/* Other Events at this Venue */}
             {venueEvents.length > 0 && (
               <div className="md:col-span-3 mt-8">
                 <h3 className="text-2xl text-white font-semibold mb-6">More Events at {event.venue}</h3>

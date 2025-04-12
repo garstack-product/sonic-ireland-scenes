@@ -19,6 +19,8 @@ export interface EventCardProps {
   subgenre?: string;
   price?: number;
   ticketUrl?: string;
+  rawDate?: string; // Raw date for filtering
+  onSaleDate?: string | null; // When tickets went on sale
 }
 
 const EventCard = ({ 

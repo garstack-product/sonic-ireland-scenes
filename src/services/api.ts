@@ -6,10 +6,24 @@ import ticketmasterEventsData from "@/config/ticketmaster-events.json";
 interface CachedData {
   timestamp: number;
   data: EventCardProps[];
+  lastFetchDate?: string;
 }
 
 // Cache duration in milliseconds (1 hour)
 const CACHE_DURATION = 60 * 60 * 1000;
+
+// List of sports genres/subgenres to filter out
+const SPORTS_GENRES = [
+  'Rugby',
+  'GAA',
+  'Football',
+  'Sports',
+  'Basketball',
+  'Soccer',
+  'Baseball',
+  'Hockey',
+  'Cricket',
+];
 
 // Format time from API to readable format (e.g., "6:30pm")
 const formatTime = (time: string) => {
@@ -28,59 +42,76 @@ const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-US', options);
 };
 
+// Check if an event is a sports event
+const isSportsEvent = (event: any): boolean => {
+  const genre = event.classifications?.[0]?.genre?.name || "";
+  const subgenre = event.classifications?.[0]?.subGenre?.name || "";
+  const segment = event.classifications?.[0]?.segment?.name || "";
+  
+  return SPORTS_GENRES.some(sportGenre => 
+    genre.includes(sportGenre) || 
+    subgenre.includes(sportGenre) || 
+    segment.includes(sportGenre)
+  );
+};
+
 // Map Ticketmaster events to our application format
 const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
-  return events.map((event: any) => {
-    // Extract genre and subgenre information
-    const genre = event.classifications?.[0]?.genre?.name || "";
-    const subgenre = event.classifications?.[0]?.subGenre?.name || "";
-    
-    // Get venue info
-    const venue = event._embedded?.venues?.[0]?.name || "";
-    const city = event._embedded?.venues?.[0]?.city?.name || "";
-    const venueFull = city ? `${venue}, ${city}` : venue;
-    
-    // Get price info
-    const minPrice = event.priceRanges?.[0]?.min || 0;
-    const maxPrice = event.priceRanges?.[0]?.max || 0;
-    
-    // Get image
-    const imageUrl = event.images?.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url 
-      || event.images?.[0]?.url 
-      || "/placeholder.svg";
+  return events
+    .filter(event => !isSportsEvent(event))
+    .map((event: any) => {
+      // Extract genre and subgenre information
+      const genre = event.classifications?.[0]?.genre?.name || "";
+      const subgenre = event.classifications?.[0]?.subGenre?.name || "";
       
-    // Get date and time
-    const startDate = event.dates?.start?.localDate || "";
-    const startTime = event.dates?.start?.localTime || "";
-    const formattedDate = formatDate(startDate);
-    const formattedTime = formatTime(startTime);
-    
-    // Try to extract artist name from name or attractions
-    let artistName = "";
-    if (event._embedded?.attractions?.[0]?.name) {
-      artistName = event._embedded.attractions[0].name;
-    } else if (event.name && event.name.includes(":")) {
-      artistName = event.name.split(":")[0].trim();
-    } else {
-      artistName = event.name;
-    }
-    
-    return {
-      id: event.id || `custom-${Math.random().toString(36).substr(2, 9)}`,
-      title: event.name || "",
-      artist: artistName,
-      venue: venueFull,
-      date: formattedDate,
-      time: formattedTime,
-      imageUrl: imageUrl,
-      type: "concert" as const,
-      category: "listing" as const,
-      genre: genre !== "Undefined" ? genre : undefined,
-      subgenre: subgenre !== "Undefined" ? subgenre : undefined,
-      price: minPrice,
-      ticketUrl: event.url // Add ticket URL
-    };
-  });
+      // Get venue info
+      const venue = event._embedded?.venues?.[0]?.name || "";
+      const city = event._embedded?.venues?.[0]?.city?.name || "";
+      const venueFull = city ? `${venue}, ${city}` : venue;
+      
+      // Get price info
+      const minPrice = event.priceRanges?.[0]?.min || 0;
+      const maxPrice = event.priceRanges?.[0]?.max || 0;
+      
+      // Get image
+      const imageUrl = event.images?.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url 
+        || event.images?.[0]?.url 
+        || "/placeholder.svg";
+        
+      // Get date and time
+      const startDate = event.dates?.start?.localDate || "";
+      const startTime = event.dates?.start?.localTime || "";
+      const formattedDate = formatDate(startDate);
+      const formattedTime = formatTime(startTime);
+      
+      // Try to extract artist name from name or attractions
+      let artistName = "";
+      if (event._embedded?.attractions?.[0]?.name) {
+        artistName = event._embedded.attractions[0].name;
+      } else if (event.name && event.name.includes(":")) {
+        artistName = event.name.split(":")[0].trim();
+      } else {
+        artistName = event.name;
+      }
+      
+      return {
+        id: event.id || `custom-${Math.random().toString(36).substr(2, 9)}`,
+        title: event.name || "",
+        artist: artistName,
+        venue: venueFull,
+        date: formattedDate,
+        time: formattedTime,
+        imageUrl: imageUrl,
+        type: "concert" as const,
+        category: "listing" as const,
+        genre: genre !== "Undefined" ? genre : undefined,
+        subgenre: subgenre !== "Undefined" ? subgenre : undefined,
+        price: minPrice,
+        ticketUrl: event.url, // Add ticket URL
+        rawDate: startDate, // Add raw date for filtering
+        onSaleDate: event.sales?.public?.startDateTime || null // When tickets went on sale
+      };
+    });
 };
 
 // Cache storage
@@ -122,10 +153,14 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
     
     console.log(`Mapped ${mappedEvents.length} events successfully`);
     
+    // Store current fetch date for "just announced" logic
+    const currentDate = new Date().toISOString();
+    
     // Update cache
     ticketmasterCache = {
       timestamp: Date.now(),
-      data: mappedEvents
+      data: mappedEvents,
+      lastFetchDate: currentDate
     };
     
     return mappedEvents;
@@ -135,7 +170,10 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
     // If API fetch fails, try using the local JSON file as fallback
     try {
       console.log("Falling back to local JSON file");
-      const eventsArray = ticketmasterEventsData.events || [];
+      // Extract the events array from the JSON structure
+      const eventsArray = Array.isArray(ticketmasterEventsData) 
+        ? ticketmasterEventsData 
+        : ticketmasterEventsData.events || [];
       
       console.log(`Found ${eventsArray.length} events in JSON file`);
       
@@ -200,6 +238,50 @@ export const fetchEventbriteEvents = async (): Promise<EventCardProps[]> => {
   }
 };
 
+// Get the just announced events (not visible in previous API calls)
+export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
+  const events = await fetchAllEvents();
+  
+  // Get events with recent on sale dates (within last 7 days) or newly discovered events
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  return events.filter(event => {
+    if (event.onSaleDate) {
+      const onSaleDate = new Date(event.onSaleDate);
+      return onSaleDate > sevenDaysAgo;
+    }
+    return false;
+  }).slice(0, 8); // Limit to 8 events
+};
+
+// Get upcoming events in the next X days
+export const fetchUpcomingEvents = async (days: number = 3): Promise<EventCardProps[]> => {
+  const events = await fetchAllEvents();
+  
+  const today = new Date();
+  const futureDate = new Date();
+  futureDate.setDate(today.getDate() + days);
+  
+  return events.filter(event => {
+    if (!event.rawDate) return false;
+    
+    const eventDate = new Date(event.rawDate);
+    return eventDate >= today && eventDate <= futureDate;
+  }).slice(0, 12); // Limit to 12 events for carousel
+};
+
+// Get featured events from local storage
+export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
+  const allEvents = await fetchAllEvents();
+  const savedFeaturedIds = localStorage.getItem('featuredEvents');
+  
+  if (!savedFeaturedIds) return [];
+  
+  const featuredIds = JSON.parse(savedFeaturedIds);
+  return allEvents.filter(event => featuredIds.includes(event.id));
+};
+
 // Fetch events from all sources
 export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
   try {
@@ -210,8 +292,9 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
     
     // Combine and sort by date (newest first)
     return [...ticketmasterEvents, ...eventbriteEvents].sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
+      if (!a.rawDate || !b.rawDate) return 0;
+      const dateA = new Date(a.rawDate);
+      const dateB = new Date(b.rawDate);
       return dateA.getTime() - dateB.getTime();
     });
   } catch (error) {
@@ -224,21 +307,21 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
 export const fetchArtistData = async (artistName: string) => {
   try {
     // In a real app, this would fetch from a music API like MusicBrainz, Spotify, etc.
-    // For demo purposes, we'll return mock data
+    // For demo purposes, we'll return mock data with realistic URLs
     return {
       name: artistName,
       bio: `${artistName} is a renowned artist with a unique sound that blends various genres into an unforgettable musical experience.`,
       imageUrl: "https://images.unsplash.com/photo-1501612780327-45045538702b?q=80&w=1470&auto=format&fit=crop",
       links: {
-        website: "https://example.com",
-        facebook: "https://facebook.com",
-        twitter: "https://twitter.com",
-        instagram: "https://instagram.com",
-        spotify: "https://spotify.com",
-        youtube: "https://youtube.com",
-        itunes: "https://music.apple.com",
-        musicbrainz: "https://musicbrainz.org",
-        wikipedia: "https://wikipedia.org"
+        website: artistName.toLowerCase().includes("primal") ? "https://www.primalscream.net/" : null,
+        facebook: artistName.toLowerCase().includes("primal") ? "https://www.facebook.com/primalscreamofficial" : null,
+        twitter: artistName.toLowerCase().includes("primal") ? "https://twitter.com/ScreamOfficial" : null,
+        wikipedia: artistName.toLowerCase().includes("primal") ? "https://en.wikipedia.org/wiki/Primal_Scream" : null,
+        instagram: null,
+        spotify: null,
+        youtube: null,
+        itunes: null,
+        musicbrainz: null
       }
     };
   } catch (error) {

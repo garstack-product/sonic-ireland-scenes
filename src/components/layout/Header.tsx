@@ -29,7 +29,7 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
           {isMobile ? (
             <button 
               onClick={handleToggleMenu} 
-              className="p-2 text-white mr-4"
+              className="p-2 text-white ml-auto"
               aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -37,10 +37,6 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
           ) : (
             <NavMenu />
           )}
-          
-          <div className="flex-grow">
-            {/* Spacer for right alignment */}
-          </div>
         </div>
       </div>
     </header>
