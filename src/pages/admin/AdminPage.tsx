@@ -31,7 +31,7 @@ const AdminPage = () => {
     <div className="container mx-auto px-4 py-8">
       <PageHeader
         title="Admin Dashboard"
-        description="Manage content for Dirty Boots"
+        subtitle="Manage content for Dirty Boots"
       />
       
       <div className="mt-8">

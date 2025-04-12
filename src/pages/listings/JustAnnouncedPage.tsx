@@ -47,7 +47,7 @@ const JustAnnouncedPage = () => {
     <div className="container mx-auto px-4 py-8">
       <PageHeader
         title="Just Announced"
-        description="Check out the latest concert and festival announcements"
+        subtitle="Check out the latest concert and festival announcements"
       />
       
       <div className="mt-8">
