@@ -16,7 +16,8 @@ export interface EventCardProps {
   category: "listing" | "review";
   genre?: string;
   subgenre?: string;
-  price?: number; // Added price as an optional property
+  price?: number;
+  ticketUrl?: string; // Added ticket URL
 }
 
 const EventCard = ({ 
@@ -30,7 +31,8 @@ const EventCard = ({
   type, 
   category,
   genre,
-  subgenre
+  subgenre,
+  ticketUrl
 }: EventCardProps) => {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
@@ -124,7 +126,7 @@ const EventCard = ({
         <div className="flex justify-between items-start">
           <div>
             <Link to={detailPath} target="_blank" rel="noopener noreferrer">
-              <h3 className="text-lg font-medium text-white truncate group-hover:text-gray-300 transition-colors">
+              <h3 className="text-lg font-medium text-white line-clamp-2 group-hover:text-gray-300 transition-colors min-h-[3.5rem]">
                 {title}
               </h3>
             </Link>
@@ -174,14 +176,18 @@ const EventCard = ({
             </button>
           </div>
           
-          {category === "listing" && (
-            <button 
+          {category === "listing" && ticketUrl && (
+            <a 
+              href={ticketUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-gray-400 hover:text-[#ea384c] transition-colors"
               aria-label="Buy tickets"
               title="Buy tickets"
+              onClick={(e) => e.stopPropagation()}
             >
               <Ticket size={16} className="hover:fill-[#ea384c]" />
-            </button>
+            </a>
           )}
         </div>
       </div>
