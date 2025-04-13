@@ -43,10 +43,25 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
   const allEvents = await fetchAllEvents();
   const savedFeaturedIds = localStorage.getItem('featuredEvents');
   
-  if (!savedFeaturedIds) return [];
+  if (!savedFeaturedIds) {
+    // Use some default events as featured if none are set
+    return allEvents.slice(0, 4);
+  }
   
-  const featuredIds = JSON.parse(savedFeaturedIds);
-  return allEvents.filter(event => featuredIds.includes(event.id));
+  try {
+    const featuredIds = JSON.parse(savedFeaturedIds);
+    const featured = allEvents.filter(event => featuredIds.includes(event.id));
+    
+    // If no matched events found, return some defaults
+    if (featured.length === 0) {
+      return allEvents.slice(0, 4);
+    }
+    
+    return featured;
+  } catch (error) {
+    console.error("Error parsing featured events:", error);
+    return allEvents.slice(0, 4);
+  }
 };
 
 // Fetch events from all sources
@@ -56,6 +71,8 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
       fetchTicketmasterEvents(),
       fetchEventbriteEvents()
     ]);
+    
+    console.log(`Got ${ticketmasterEvents.length} Ticketmaster events and ${eventbriteEvents.length} Eventbrite events`);
     
     // Combine and sort by date (newest first)
     return [...ticketmasterEvents, ...eventbriteEvents].sort((a, b) => {

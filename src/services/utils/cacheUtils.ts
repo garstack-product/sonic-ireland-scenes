@@ -20,3 +20,45 @@ export let eventbriteCache: CachedData | null = {
   timestamp: 0,
   data: []
 };
+
+// Helper functions for local storage
+export const saveToLocalStorage = (key: string, data: any): void => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error(`Error saving ${key} to localStorage:`, error);
+  }
+};
+
+export const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (error) {
+    console.error(`Error reading ${key} from localStorage:`, error);
+  }
+  return defaultValue;
+};
+
+// Clear cache for a specific provider
+export const clearCache = (provider: 'ticketmaster' | 'eventbrite'): void => {
+  if (provider === 'ticketmaster') {
+    ticketmasterCache = {
+      timestamp: 0,
+      data: []
+    };
+  } else if (provider === 'eventbrite') {
+    eventbriteCache = {
+      timestamp: 0,
+      data: []
+    };
+  }
+};
+
+// Clear all caches
+export const clearAllCaches = (): void => {
+  clearCache('ticketmaster');
+  clearCache('eventbrite');
+};

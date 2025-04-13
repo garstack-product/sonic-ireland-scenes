@@ -22,7 +22,15 @@ const HomeHeroSection = ({ featuredEvents, isLoading }: HomeHeroSectionProps) =>
       </div>
       
       <div className="relative z-10 text-center px-4 max-w-5xl w-full">
-        <FeaturedEventsCarousel events={featuredEvents} isLoading={isLoading} />
+        <div className="bg-dark-500/80 backdrop-blur-md p-6 rounded-lg">
+          <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">
+            Dirty Boots
+          </h1>
+          <p className="text-lg text-gray-200 mb-6 max-w-2xl mx-auto">
+            Ireland's premier music photography and event guide for concerts and festivals
+          </p>
+          <FeaturedEventsCarousel events={featuredEvents} isLoading={isLoading} />
+        </div>
       </div>
     </section>
   );

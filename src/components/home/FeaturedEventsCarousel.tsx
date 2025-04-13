@@ -27,18 +27,16 @@ const FeaturedEventsCarousel = ({ events, isLoading }: FeaturedEventsCarouselPro
   if (events.length === 0) {
     return (
       <div>
-        <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-          Dirty Boots
-        </h1>
-        <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
-          Ireland's premier music photography and event guide for concerts and festivals
+        <h2 className="text-xl font-bold text-white mb-4">No Featured Events</h2>
+        <p className="text-gray-300">
+          Visit the admin page to set featured events
         </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-dark-500/80 backdrop-blur-md p-6 rounded-lg">
+    <div>
       <h2 className="text-2xl font-bold text-white mb-4">Featured Events</h2>
       <Carousel className="w-full">
         <CarouselContent>

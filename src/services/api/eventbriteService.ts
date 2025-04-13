@@ -70,6 +70,38 @@ export const fetchEventbriteEvents = async (): Promise<EventCardProps[]> => {
         ticketUrl: "https://www.eventbrite.com/e/electric-ireland-tickets-345678",
         rawDate: "2025-06-05",
         onSaleDate: "2025-04-05T08:00:00Z"
+      },
+      {
+        id: "eb-456789",
+        title: "Singer-Songwriter Showcase",
+        artist: "Various Artists",
+        venue: "Whelan's, Dublin",
+        date: "May 25, 2025",
+        time: "8:00pm",
+        imageUrl: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=1470&auto=format&fit=crop",
+        type: "concert",
+        category: "listing",
+        genre: "Acoustic",
+        price: 15,
+        ticketUrl: "https://www.eventbrite.com/e/singer-songwriter-showcase-tickets-456789",
+        rawDate: "2025-05-25",
+        onSaleDate: "2025-04-01T10:00:00Z"
+      },
+      {
+        id: "eb-567890",
+        title: "Galway International Arts Festival",
+        artist: "Various International Artists",
+        venue: "Various Venues, Galway",
+        date: "July 12-25, 2025",
+        time: "Various Times",
+        imageUrl: "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?q=80&w=1470&auto=format&fit=crop",
+        type: "festival",
+        category: "listing",
+        genre: "Arts",
+        price: 0,
+        ticketUrl: "https://www.eventbrite.com/e/galway-international-arts-festival-tickets-567890",
+        rawDate: "2025-07-12",
+        onSaleDate: "2025-03-01T09:00:00Z"
       }
     ];
     
