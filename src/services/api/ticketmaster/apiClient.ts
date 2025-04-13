@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import { isSportsEvent } from "../../utils/filterUtils";
 
 // Check for API key
 export const getTicketmasterApiKey = (): string | null => {
@@ -32,7 +33,14 @@ export const fetchFromTicketmasterApi = async (endpoint: string, params: Record<
       throw new Error(`API request failed with status ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    
+    // Filter out sports events if this is an events endpoint
+    if (endpoint.includes('events') && data._embedded && data._embedded.events) {
+      data._embedded.events = data._embedded.events.filter((event: any) => !isSportsEvent(event));
+    }
+    
+    return data;
   } catch (error) {
     console.error(`Error fetching from Ticketmaster API (${endpoint}):`, error);
     throw error;

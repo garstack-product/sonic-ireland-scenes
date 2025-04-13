@@ -112,29 +112,55 @@ async function fetchTicketmasterEvents() {
     // Fetch events from Ticketmaster API
     console.log("Fetching events from Ticketmaster API...");
     
-    // Include only music, arts, and attraction events (exclude sports)
-    const response = await fetch(
-      `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&size=200&classificationName=music,arts,theatre,festival&apikey=${ticketmasterApiKey}`
-    );
+    // Modified to fetch more events by making multiple API calls
+    const fetchAllPages = async () => {
+      let allEvents = [];
+      let page = 0;
+      const pageSize = 200; // Maximum allowed by Ticketmaster API
+      let totalPages = 1;
+      
+      do {
+        console.log(`Fetching page ${page + 1} of events...`);
+        const response = await fetch(
+          `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&size=${pageSize}&page=${page}&classificationName=music,arts,theatre,festival&apikey=${ticketmasterApiKey}`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`API request failed with status ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (!data._embedded || !data._embedded.events) {
+          console.warn(`No events found on page ${page}`);
+          break;
+        }
+        
+        // Add events from this page
+        allEvents = [...allEvents, ...data._embedded.events];
+        
+        // Update pagination info
+        page++;
+        totalPages = data.page?.totalPages || 1;
+        
+        // Avoid hitting rate limits
+        if (page < totalPages) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      } while (page < totalPages && page < 5); // Limit to 5 pages (1000 events) to avoid timeouts
+      
+      return allEvents;
+    };
     
-    if (!response.ok) {
-      throw new Error(`API request failed with status ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
-    if (!data._embedded || !data._embedded.events) {
-      console.warn("No events found in Ticketmaster response");
-      throw new Error("No events found in API response");
-    }
+    const events = await fetchAllPages();
     
     // Filter out any sports events that might have slipped through the classification filter
-    const events = data._embedded.events.filter(event => !isSportsEvent(event));
-    console.log(`Found ${events.length} non-sports events from Ticketmaster`);
+    const filteredEvents = events.filter(event => !isSportsEvent(event));
+    console.log(`Found ${filteredEvents.length} non-sports events from Ticketmaster`);
     
     // Process venues first to avoid foreign key issues
     const venues = new Map();
-    for (const event of events) {
+    for (const event of filteredEvents) {
       if (event._embedded?.venues?.[0]) {
         const venue = event._embedded.venues[0];
         venues.set(venue.id, {
@@ -172,7 +198,7 @@ async function fetchTicketmasterEvents() {
     }
     
     // Process events
-    const processedEvents = events.map(event => {
+    const processedEvents = filteredEvents.map(event => {
       // Extract venue info
       const venue = event._embedded?.venues?.[0];
       const venueId = venue?.id;

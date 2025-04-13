@@ -2,6 +2,7 @@
 import React, { useEffect, useRef } from "react";
 import { Venue } from "@/types/venue";
 import { MapMarkerReference } from "@/types/venue";
+import { MapPin, Music, Star, Theater } from "lucide-react";
 
 interface VenueMapProps {
   venues: Venue[];
@@ -180,6 +181,35 @@ const VenueMap = ({ venues, selectedVenue, onVenueSelect }: VenueMapProps) => {
     return Math.min(Math.max(baseSize + (eventCount / maxEvents) * 20, baseSize), 30);
   };
   
+  // Create custom venue icon
+  const createVenueIcon = (venue: Venue, isSelected: boolean, size: number) => {
+    const { google } = window;
+    const eventCount = venue.eventCount;
+    
+    // SVG path for different venue types
+    // Using a simple svg icon that resembles a venue/building
+    const svgSize = isSelected ? size * 1.5 : size;
+    const scale = svgSize / 24; // Normalize to 24px base size
+    
+    // Colors based on selection status
+    const fillColor = isSelected ? "#FF0000" : "#FF5A5F";
+    const strokeColor = "#FFFFFF";
+    
+    // Create an SVG icon for the marker
+    const svgMarker = {
+      path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
+      fillColor: fillColor,
+      fillOpacity: 0.9,
+      strokeWeight: 2,
+      strokeColor: strokeColor,
+      rotation: 0,
+      scale: scale,
+      anchor: new google.maps.Point(12, 22),
+    };
+    
+    return svgMarker;
+  };
+  
   const addMarkerToMap = (venue: Venue, isSelected: boolean) => {
     if (!googleMapRef.current) return;
     
@@ -188,15 +218,8 @@ const VenueMap = ({ venues, selectedVenue, onVenueSelect }: VenueMapProps) => {
     // Calculate marker size based on number of events
     const markerSize = calculateMarkerSize(venue.eventCount);
     
-    // Custom marker icon based on selection status and event count
-    const markerIcon = {
-      path: google.maps.SymbolPath.CIRCLE,
-      fillColor: isSelected ? "#FF0000" : "#FF5A5F",
-      fillOpacity: 0.9,
-      scale: isSelected ? markerSize * 1.2 : markerSize,
-      strokeColor: "#FFF",
-      strokeWeight: 2,
-    };
+    // Create custom marker icon
+    const markerIcon = createVenueIcon(venue, isSelected, markerSize);
     
     const marker = new google.maps.Marker({
       position: { lat: venue.latitude, lng: venue.longitude },
