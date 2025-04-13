@@ -3,9 +3,9 @@ import { useState, useEffect } from "react";
 import { fetchJustAnnouncedEvents, fetchUpcomingEvents, fetchFeaturedEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { toast } from "sonner";
-import HomeHeroSection from "@/components/home/HomeHeroSection";
 import EventsSection from "@/components/home/EventsSection";
 import NewsletterSection from "@/components/home/NewsletterSection";
+import FeaturedEventsSection from "@/components/home/FeaturedEventsSection";
 
 const HomePage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -69,8 +69,8 @@ const HomePage = () => {
 
   return (
     <div className="space-y-20">
-      {/* Hero Section with Featured Events Carousel */}
-      <HomeHeroSection 
+      {/* Featured Events Section (replacing Hero Section) */}
+      <FeaturedEventsSection 
         featuredEvents={featuredEvents} 
         isLoading={isLoading} 
       />

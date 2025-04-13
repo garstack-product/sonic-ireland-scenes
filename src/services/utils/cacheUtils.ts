@@ -49,11 +49,13 @@ export const clearCache = (provider: 'ticketmaster' | 'eventbrite'): void => {
       timestamp: 0,
       data: []
     };
+    saveToLocalStorage('ticketmasterCache', ticketmasterCache);
   } else if (provider === 'eventbrite') {
     eventbriteCache = {
       timestamp: 0,
       data: []
     };
+    saveToLocalStorage('eventbriteCache', eventbriteCache);
   }
 };
 
@@ -62,3 +64,12 @@ export const clearAllCaches = (): void => {
   clearCache('ticketmaster');
   clearCache('eventbrite');
 };
+
+// Load caches from localStorage on module init
+export const initCaches = (): void => {
+  ticketmasterCache = getFromLocalStorage<CachedData>('ticketmasterCache', ticketmasterCache);
+  eventbriteCache = getFromLocalStorage<CachedData>('eventbriteCache', eventbriteCache);
+};
+
+// Initialize caches
+initCaches();
