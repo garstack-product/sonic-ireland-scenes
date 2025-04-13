@@ -33,6 +33,16 @@ const ManageFeaturedEvents = () => {
           setFeaturedEvents(JSON.parse(savedFeaturedEvents));
         }
         
+        // Load hidden events
+        const { data: hiddenEventsData } = await supabase
+          .from('events')
+          .select('id')
+          .eq('is_hidden', true);
+          
+        if (hiddenEventsData) {
+          setHiddenEvents(hiddenEventsData.map(event => event.id));
+        }
+        
         // Get last sync info
         await getLastSyncInfo();
         
@@ -99,24 +109,43 @@ const ManageFeaturedEvents = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsSubmitting(true);
+      
       // Save to localStorage
       localStorage.setItem('featuredEvents', JSON.stringify(featuredEvents));
       localStorage.setItem('hiddenEvents', JSON.stringify(hiddenEvents));
       
-      // Update events in Supabase
-      const { error } = await supabase
-        .from('events')
-        .upsert(
-          hiddenEvents.map(id => ({ id, is_hidden: true })),
-          { onConflict: 'id' }
-        );
+      // Update events in Supabase - fixed by updating each event individually
+      // This ensures we're including all required fields in the update
+      for (const eventId of hiddenEvents) {
+        const { error } = await supabase
+          .from('events')
+          .update({ is_hidden: true })
+          .eq('id', eventId);
+          
+        if (error) throw error;
+      }
       
-      if (error) throw error;
+      // Set all other events as visible
+      const visibleEvents = allEvents
+        .filter(event => !hiddenEvents.includes(event.id))
+        .map(event => event.id);
+        
+      for (const eventId of visibleEvents) {
+        const { error } = await supabase
+          .from('events')
+          .update({ is_hidden: false })
+          .eq('id', eventId);
+          
+        if (error) throw error;
+      }
       
       toast.success("Events updated successfully!");
     } catch (error) {
       console.error('Error saving events:', error);
       toast.error('Failed to save events');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

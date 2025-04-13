@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink } from "lucide-react";
+import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink, Facebook, Instagram, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
