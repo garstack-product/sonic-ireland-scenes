@@ -49,35 +49,41 @@ async function fetchTicketmasterEvents() {
   console.log("Starting Ticketmaster sync...");
   
   // Check if update is needed (24 hour cache)
-  const { data: shouldUpdate, error: updateError } = await supabase.rpc(
-    'should_update_cache',
-    { cache_id: 'ticketmaster', interval_hours: 24 }
-  );
-  
-  if (updateError) {
-    console.error("Error checking cache status:", updateError);
-    throw updateError;
-  }
-  
-  if (!shouldUpdate) {
-    console.log("Cache is still fresh, skipping update");
+  try {
+    const { data: shouldUpdate, error: updateError } = await supabase.rpc(
+      'should_update_cache',
+      { cache_id: 'ticketmaster', interval_hours: 24 }
+    );
     
-    // Return existing data count
-    const { data: cacheMeta } = await supabase
-      .from('cache_metadata')
-      .select('record_count')
-      .eq('id', 'ticketmaster')
-      .single();
+    if (updateError) {
+      console.error("Error checking cache status:", updateError);
+      throw updateError;
+    }
+    
+    if (!shouldUpdate) {
+      console.log("Cache is still fresh, skipping update");
       
-    return { 
-      refreshed: false, 
-      count: cacheMeta?.record_count || 0,
-      message: "Using cached data"
-    };
+      // Return existing data count
+      const { data: cacheMeta } = await supabase
+        .from('cache_metadata')
+        .select('record_count')
+        .eq('id', 'ticketmaster')
+        .single();
+        
+      return { 
+        refreshed: false, 
+        count: cacheMeta?.record_count || 0,
+        message: "Using cached data"
+      };
+    }
+  } catch (error) {
+    console.error("Error checking cache:", error);
+    // Continue with update as fallback
   }
 
   try {
     // Fetch events from Ticketmaster API
+    console.log("Fetching events from Ticketmaster API...");
     const response = await fetch(
       `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&size=200&apikey=${ticketmasterApiKey}`
     );
@@ -181,6 +187,14 @@ async function fetchTicketmasterEvents() {
         eventType = "festival";
       }
       
+      // Create properly formatted datetime string for raw_date
+      const rawDateTime = event.dates?.start?.dateTime || event.dates?.start?.localDate;
+      const rawDate = rawDateTime ? new Date(rawDateTime).toISOString() : null;
+      
+      // Create properly formatted datetime string for on_sale_date
+      const onSaleDateTime = event.sales?.public?.startDateTime;
+      const onSaleDate = onSaleDateTime ? new Date(onSaleDateTime).toISOString() : null;
+      
       return {
         id: event.id,
         title: event.name,
@@ -189,8 +203,8 @@ async function fetchTicketmasterEvents() {
         venue_id: venueId,
         date: formattedDate,
         time: formattedTime,
-        raw_date: event.dates?.start?.dateTime || event.dates?.start?.localDate,
-        on_sale_date: event.sales?.public?.startDateTime,
+        raw_date: rawDate,
+        on_sale_date: onSaleDate,
         image_url: imageUrl,
         ticket_url: event.url,
         genre: genre !== "Undefined" ? genre : null,
@@ -203,6 +217,7 @@ async function fetchTicketmasterEvents() {
     });
     
     // Insert events into database
+    console.log(`Inserting ${processedEvents.length} events into database...`);
     const { error: eventsError } = await supabase
       .from('events')
       .upsert(processedEvents, { 

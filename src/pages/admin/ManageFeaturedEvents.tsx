@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, Search, X } from "lucide-react";
+import { Check, Loader2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { fetchAllEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
@@ -14,6 +14,7 @@ const ManageFeaturedEvents = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allEvents, setAllEvents] = useState<EventCardProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -75,8 +76,14 @@ const ManageFeaturedEvents = () => {
   // Manual sync function
   const handleSyncEvents = async () => {
     try {
+      setIsSyncing(true);
       toast.info("Syncing Ticketmaster events...");
+      
       const response = await fetch('https://eckohtoprkgolyjdiown.supabase.co/functions/v1/ticketmaster-sync');
+      if (!response.ok) {
+        throw new Error(`Sync failed with status: ${response.status}`);
+      }
+      
       const result = await response.json();
       
       if (result.error) {
@@ -93,6 +100,8 @@ const ManageFeaturedEvents = () => {
     } catch (error) {
       console.error("Error syncing events:", error);
       toast.error(`Sync failed: ${error.message}`);
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -105,9 +114,16 @@ const ManageFeaturedEvents = () => {
           variant="outline" 
           size="sm" 
           onClick={handleSyncEvents}
-          disabled={isLoading}
+          disabled={isLoading || isSyncing}
         >
-          {isLoading ? "Syncing..." : "Sync Ticketmaster"}
+          {isSyncing ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Syncing...
+            </>
+          ) : (
+            "Sync Ticketmaster"
+          )}
         </Button>
       </div>
       
@@ -169,7 +185,14 @@ const ManageFeaturedEvents = () => {
             {featuredEvents.length} events selected as featured
           </p>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save Changes"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save Changes"
+            )}
           </Button>
         </div>
       </form>
