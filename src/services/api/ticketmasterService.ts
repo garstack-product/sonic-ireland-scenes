@@ -1,7 +1,12 @@
 
 import { EventCardProps } from "@/components/ui/EventCard";
-import { ticketmasterToEventCard } from "../mappers/ticketmasterMapper";
-import { ticketmasterCache, CACHE_DURATION, saveToLocalStorage } from "../utils/cacheUtils";
+import { mapTicketmasterEvents } from "../mappers/ticketmasterMapper";
+import { 
+  ticketmasterCache, 
+  CACHE_DURATION, 
+  updateTicketmasterCache, 
+  saveToLocalStorage 
+} from "../utils/cacheUtils";
 import { toast } from "sonner";
 
 // Sample data for fallback
@@ -15,7 +20,6 @@ const sampleTicketmasterEvents: EventCardProps[] = [
     time: "6:30 PM",
     imageUrl: "/placeholder.svg",
     type: "concert",
-    source: "ticketmaster",
     rawDate: "2025-08-30T18:30:00Z",
     onSaleDate: "2025-04-01T09:00:00Z"
   },
@@ -28,7 +32,6 @@ const sampleTicketmasterEvents: EventCardProps[] = [
     time: "7:00 PM",
     imageUrl: "/placeholder.svg",
     type: "concert",
-    source: "ticketmaster",
     rawDate: "2025-06-28T19:00:00Z",
     onSaleDate: "2025-04-10T10:00:00Z"
   },
@@ -40,7 +43,6 @@ const sampleTicketmasterEvents: EventCardProps[] = [
     date: "September 5-7, 2025",
     imageUrl: "/placeholder.svg",
     type: "festival",
-    source: "ticketmaster",
     rawDate: "2025-09-05T12:00:00Z",
     onSaleDate: "2025-03-15T09:00:00Z"
   },
@@ -53,7 +55,6 @@ const sampleTicketmasterEvents: EventCardProps[] = [
     time: "8:00 PM",
     imageUrl: "/placeholder.svg",
     type: "concert",
-    source: "ticketmaster",
     rawDate: "2025-05-15T20:00:00Z",
     onSaleDate: "2025-04-05T09:00:00Z"
   }
@@ -99,16 +100,11 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
     }
     
     // Map Ticketmaster events to our EventCard format
-    const events = data._embedded.events.map(ticketmasterToEventCard);
+    const events = mapTicketmasterEvents(data._embedded.events);
     
-    // Update cache
-    ticketmasterCache = {
-      timestamp: now,
-      data: events,
-      lastFetchDate: new Date().toISOString()
-    };
+    // Update cache using the new function
+    updateTicketmasterCache(events, now, new Date().toISOString());
     
-    saveToLocalStorage('ticketmasterCache', ticketmasterCache);
     console.log("Fetched", events.length, "events from Ticketmaster API");
     
     return events;
@@ -124,14 +120,13 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
     // If API request fails and no cache, use sample data
     console.log("Using sample Ticketmaster data as fallback");
     
-    // Store the sample data in cache to avoid repeated API failures
-    ticketmasterCache = {
-      timestamp: now - CACHE_DURATION + 60000, // Set to expire soon but not immediately
-      data: sampleTicketmasterEvents,
-      lastFetchDate: new Date().toISOString()
-    };
+    // Store the sample data in cache using the new function
+    updateTicketmasterCache(
+      sampleTicketmasterEvents,
+      now - CACHE_DURATION + 60000, // Set to expire soon but not immediately
+      new Date().toISOString()
+    );
     
-    saveToLocalStorage('ticketmasterCache', ticketmasterCache);
     toast.error("Couldn't connect to Ticketmaster API, using sample data");
     
     return sampleTicketmasterEvents;
@@ -166,7 +161,7 @@ export const fetchTicketmasterEvent = async (eventId: string): Promise<EventCard
     }
     
     const data = await response.json();
-    return ticketmasterToEventCard(data);
+    return mapTicketmasterEvents([data])[0];
   } catch (error) {
     console.error("Error fetching Ticketmaster event:", error);
     

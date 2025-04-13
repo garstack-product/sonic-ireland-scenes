@@ -1,7 +1,11 @@
 
 import { EventCardProps } from "@/components/ui/EventCard";
-import { eventbriteToEventCard } from "../mappers/eventbriteMapper";
-import { eventbriteCache, CACHE_DURATION, saveToLocalStorage } from "../utils/cacheUtils";
+import { mapEventbriteEvents } from "../mappers/eventbriteMapper";
+import { 
+  eventbriteCache, 
+  CACHE_DURATION, 
+  updateEventbriteCache 
+} from "../utils/cacheUtils";
 import { toast } from "sonner";
 
 // Sample data for fallback
@@ -14,7 +18,6 @@ const sampleEventbriteEvents: EventCardProps[] = [
     date: "August 1-3, 2025",
     imageUrl: "/placeholder.svg",
     type: "festival",
-    source: "eventbrite",
     rawDate: "2025-08-01T12:00:00Z",
     onSaleDate: "2025-02-15T09:00:00Z"
   },
@@ -26,7 +29,6 @@ const sampleEventbriteEvents: EventCardProps[] = [
     date: "July 5-7, 2025",
     imageUrl: "/placeholder.svg",
     type: "festival",
-    source: "eventbrite",
     rawDate: "2025-07-05T12:00:00Z",
     onSaleDate: "2025-01-30T09:00:00Z"
   },
@@ -39,7 +41,6 @@ const sampleEventbriteEvents: EventCardProps[] = [
     time: "5:00 PM",
     imageUrl: "/placeholder.svg",
     type: "concert",
-    source: "eventbrite",
     rawDate: "2025-06-22T17:00:00Z",
     onSaleDate: "2025-04-12T10:00:00Z"
   },
@@ -51,7 +52,6 @@ const sampleEventbriteEvents: EventCardProps[] = [
     date: "June 20-22, 2025",
     imageUrl: "/placeholder.svg",
     type: "festival",
-    source: "eventbrite",
     rawDate: "2025-06-20T12:00:00Z",
     onSaleDate: "2025-03-01T09:00:00Z"
   }
@@ -76,14 +76,9 @@ export const fetchEventbriteEvents = async (): Promise<EventCardProps[]> => {
     // in a frontend-only application. We're using sample data for now.
     console.log("Using sample Eventbrite data");
     
-    // Update cache with sample data
-    eventbriteCache = {
-      timestamp: now,
-      data: sampleEventbriteEvents,
-      lastFetchDate: new Date().toISOString()
-    };
+    // Update cache with sample data using the new function
+    updateEventbriteCache(sampleEventbriteEvents, now, new Date().toISOString());
     
-    saveToLocalStorage('eventbriteCache', eventbriteCache);
     return sampleEventbriteEvents;
   } catch (error) {
     console.error("Error with Eventbrite data:", error);

@@ -21,6 +21,7 @@ export interface EventCardProps {
   ticketUrl?: string;
   rawDate?: string; // Raw date for filtering
   onSaleDate?: string | null; // When tickets went on sale
+  source?: string; // Source of the event (ticketmaster, eventbrite, etc.)
 }
 
 const EventCard = ({ 

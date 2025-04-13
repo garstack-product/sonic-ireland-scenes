@@ -61,3 +61,8 @@ export const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
       };
     });
 };
+
+export const ticketmasterToEventCard = (event: any): EventCardProps => {
+  const mapped = mapTicketmasterEvents([event]);
+  return mapped.length > 0 ? mapped[0] : null;
+};

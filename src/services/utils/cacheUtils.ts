@@ -5,6 +5,7 @@ export interface CachedData {
   timestamp: number;
   data: EventCardProps[];
   lastFetchDate?: string;
+  source?: string;
 }
 
 // Cache duration in milliseconds (24 hours)
@@ -40,6 +41,26 @@ export const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
     console.error(`Error reading ${key} from localStorage:`, error);
   }
   return defaultValue;
+};
+
+// Update ticketmaster cache with new data
+export const updateTicketmasterCache = (data: EventCardProps[], timestamp: number, lastFetchDate?: string): void => {
+  ticketmasterCache = {
+    timestamp,
+    data,
+    lastFetchDate
+  };
+  saveToLocalStorage('ticketmasterCache', ticketmasterCache);
+};
+
+// Update eventbrite cache with new data
+export const updateEventbriteCache = (data: EventCardProps[], timestamp: number, lastFetchDate?: string): void => {
+  eventbriteCache = {
+    timestamp,
+    data,
+    lastFetchDate
+  };
+  saveToLocalStorage('eventbriteCache', eventbriteCache);
 };
 
 // Clear cache for a specific provider

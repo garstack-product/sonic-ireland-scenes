@@ -47,3 +47,8 @@ export const mapEventbriteEvents = (events: any[]): EventCardProps[] => {
       };
     });
 };
+
+export const eventbriteToEventCard = (event: any): EventCardProps => {
+  const mapped = mapEventbriteEvents([event]);
+  return mapped.length > 0 ? mapped[0] : null;
+};
