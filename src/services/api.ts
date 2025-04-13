@@ -3,6 +3,7 @@ import { EventCardProps } from "@/components/ui/EventCard";
 import { fetchTicketmasterEvents, fetchTicketmasterEvent } from "./api/ticketmasterService";
 import { fetchArtistData } from "./api/artistService";
 import { getTicketmasterCache } from "./utils/cacheUtils";
+import { supabase } from "@/integrations/supabase/client";
 
 // Get the just announced events (not visible in previous API calls)
 export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
@@ -63,23 +64,61 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
   }
 };
 
-// Fetch events from Ticketmaster
+// Fetch events from database
 export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
   try {
-    const ticketmasterEvents = await fetchTicketmasterEvents();
+    console.log("Fetching events from Supabase database...");
     
-    console.log(`Got ${ticketmasterEvents.length} Ticketmaster events`);
+    // Try to trigger a sync first (this will only update if data is stale)
+    try {
+      const syncResponse = await fetch('https://eckohtoprkgolyjdiown.supabase.co/functions/v1/ticketmaster-sync');
+      const syncResult = await syncResponse.json();
+      console.log("Sync result:", syncResult);
+    } catch (syncError) {
+      console.warn("Background sync failed, proceeding with existing data:", syncError);
+    }
     
-    // Sort by date (newest first)
-    return ticketmasterEvents.sort((a, b) => {
-      if (!a.rawDate || !b.rawDate) return 0;
-      const dateA = new Date(a.rawDate);
-      const dateB = new Date(b.rawDate);
-      return dateA.getTime() - dateB.getTime();
-    });
+    // Query events from Supabase
+    const { data: events, error } = await supabase
+      .from('events')
+      .select('*')
+      .order('raw_date', { ascending: true });
+    
+    if (error) {
+      console.error("Error fetching events from database:", error);
+      // Fallback to the original Ticketmaster API service
+      return fetchTicketmasterEvents();
+    }
+
+    if (!events || events.length === 0) {
+      console.log("No events found in database, falling back to API");
+      return fetchTicketmasterEvents();
+    }
+    
+    console.log(`Got ${events.length} events from database`);
+    
+    // Map database events to EventCardProps format
+    return events.map(event => ({
+      id: event.id,
+      title: event.title,
+      artist: event.artist || '',
+      venue: event.venue || '',
+      date: event.date || '',
+      time: event.time || '',
+      imageUrl: event.image_url || '/placeholder.svg',
+      type: (event.type as 'concert' | 'festival') || 'concert',
+      category: 'listing' as const,
+      genre: event.genre || undefined,
+      subgenre: event.subgenre || undefined,
+      price: event.price || undefined,
+      ticketUrl: event.ticket_url || undefined,
+      rawDate: event.raw_date || undefined,
+      onSaleDate: event.on_sale_date || null
+    }));
   } catch (error) {
-    console.error("Error fetching events:", error);
-    throw error;
+    console.error("Error in fetchAllEvents:", error);
+    // Fallback to the original Ticketmaster service
+    return fetchTicketmasterEvents();
   }
 };
 

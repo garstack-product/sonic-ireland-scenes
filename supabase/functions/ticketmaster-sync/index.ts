@@ -1,0 +1,283 @@
+
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.6';
+
+// Supabase client
+const supabaseUrl = 'https://eckohtoprkgolyjdiown.supabase.co';
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Ticketmaster API key
+const ticketmasterApiKey = 'ARUuNeTjV7x8sxiLzbu94m0GOF5HwI3n';
+
+// CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Handle CORS preflight requests
+async function handleCors(req: Request) {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+  return null;
+}
+
+// Helper function to format dates
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+// Helper function to format times
+function formatTime(timeStr: string) {
+  if (!timeStr) return '';
+  const [hours, minutes] = timeStr.split(':');
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minutes} ${ampm}`;
+}
+
+// Main function to fetch and update events
+async function fetchTicketmasterEvents() {
+  console.log("Starting Ticketmaster sync...");
+  
+  // Check if update is needed (24 hour cache)
+  const { data: shouldUpdate, error: updateError } = await supabase.rpc(
+    'should_update_cache',
+    { cache_id: 'ticketmaster', interval_hours: 24 }
+  );
+  
+  if (updateError) {
+    console.error("Error checking cache status:", updateError);
+    throw updateError;
+  }
+  
+  if (!shouldUpdate) {
+    console.log("Cache is still fresh, skipping update");
+    
+    // Return existing data count
+    const { data: cacheMeta } = await supabase
+      .from('cache_metadata')
+      .select('record_count')
+      .eq('id', 'ticketmaster')
+      .single();
+      
+    return { 
+      refreshed: false, 
+      count: cacheMeta?.record_count || 0,
+      message: "Using cached data"
+    };
+  }
+
+  try {
+    // Fetch events from Ticketmaster API
+    const response = await fetch(
+      `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&size=200&apikey=${ticketmasterApiKey}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`API request failed with status ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data._embedded || !data._embedded.events) {
+      console.warn("No events found in Ticketmaster response");
+      throw new Error("No events found in API response");
+    }
+    
+    const events = data._embedded.events;
+    console.log(`Found ${events.length} events from Ticketmaster`);
+    
+    // Process venues first to avoid foreign key issues
+    const venues = new Map();
+    for (const event of events) {
+      if (event._embedded?.venues?.[0]) {
+        const venue = event._embedded.venues[0];
+        venues.set(venue.id, {
+          id: venue.id,
+          name: venue.name,
+          city: venue.city?.name,
+          address: venue.address?.line1,
+          postal_code: venue.postalCode,
+          state: venue.state?.name,
+          country: venue.country?.name,
+          latitude: venue.location?.latitude,
+          longitude: venue.location?.longitude,
+          url: venue.url,
+          image_url: venue.images?.[0]?.url,
+          raw_data: venue
+        });
+      }
+    }
+    
+    console.log(`Processing ${venues.size} unique venues`);
+    
+    // Insert venues into database
+    if (venues.size > 0) {
+      const { error: venuesError } = await supabase
+        .from('venues')
+        .upsert(Array.from(venues.values()), { 
+          onConflict: 'id',
+          ignoreDuplicates: false
+        });
+      
+      if (venuesError) {
+        console.error("Error inserting venues:", venuesError);
+        throw venuesError;
+      }
+    }
+    
+    // Process events
+    const processedEvents = events.map(event => {
+      // Extract venue info
+      const venue = event._embedded?.venues?.[0];
+      const venueId = venue?.id;
+      const venueName = venue?.name || "";
+      const city = venue?.city?.name || "";
+      const venueFull = city ? `${venueName}, ${city}` : venueName;
+      
+      // Get best image (prefer large 16:9 ratio)
+      const imageUrl = 
+        event.images?.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url ||
+        event.images?.find((img: any) => img.width > 500)?.url ||
+        event.images?.[0]?.url ||
+        "/placeholder.svg";
+      
+      // Get date and time
+      const startDate = event.dates?.start?.localDate;
+      const startTime = event.dates?.start?.localTime;
+      const formattedDate = formatDate(startDate);
+      const formattedTime = formatTime(startTime);
+      
+      // Get genre info
+      const genre = event.classifications?.[0]?.genre?.name;
+      const subgenre = event.classifications?.[0]?.subGenre?.name;
+      
+      // Get price info
+      const price = event.priceRanges?.[0]?.min;
+      
+      // Try to extract artist name
+      let artistName = "";
+      if (event._embedded?.attractions?.[0]?.name) {
+        artistName = event._embedded.attractions[0].name;
+      } else if (event.name && event.name.includes(":")) {
+        artistName = event.name.split(":")[0].trim();
+      } else {
+        artistName = event.name;
+      }
+      
+      // Compute event type
+      let eventType = "concert";
+      if (event.name?.toLowerCase().includes("festival") || 
+          event.classifications?.[0]?.subGenre?.name?.toLowerCase().includes("festival")) {
+        eventType = "festival";
+      }
+      
+      return {
+        id: event.id,
+        title: event.name,
+        artist: artistName,
+        venue: venueFull,
+        venue_id: venueId,
+        date: formattedDate,
+        time: formattedTime,
+        raw_date: event.dates?.start?.dateTime || event.dates?.start?.localDate,
+        on_sale_date: event.sales?.public?.startDateTime,
+        image_url: imageUrl,
+        ticket_url: event.url,
+        genre: genre !== "Undefined" ? genre : null,
+        subgenre: subgenre !== "Undefined" ? subgenre : null,
+        price: price || null,
+        type: eventType,
+        description: event.info || null,
+        raw_data: event
+      };
+    });
+    
+    // Insert events into database
+    const { error: eventsError } = await supabase
+      .from('events')
+      .upsert(processedEvents, { 
+        onConflict: 'id',
+        ignoreDuplicates: false
+      });
+    
+    if (eventsError) {
+      console.error("Error inserting events:", eventsError);
+      throw eventsError;
+    }
+    
+    // Update cache metadata
+    await supabase.rpc(
+      'update_cache_metadata',
+      { 
+        cache_id: 'ticketmaster', 
+        source: 'ticketmaster',
+        count: processedEvents.length,
+        status: 'success'
+      }
+    );
+    
+    return { 
+      refreshed: true, 
+      count: processedEvents.length,
+      message: "Successfully refreshed events"
+    };
+    
+  } catch (error) {
+    console.error("Error syncing Ticketmaster data:", error);
+    
+    // Update cache metadata with error status
+    await supabase.rpc(
+      'update_cache_metadata',
+      { 
+        cache_id: 'ticketmaster', 
+        source: 'ticketmaster',
+        status: `error: ${error.message}`
+      }
+    );
+    
+    throw error;
+  }
+}
+
+// Handle HTTP requests
+Deno.serve(async (req) => {
+  // Handle CORS
+  const corsResponse = await handleCors(req);
+  if (corsResponse) return corsResponse;
+  
+  try {
+    // Only allow GET requests
+    if (req.method !== 'GET') {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Fetch and update events
+    const result = await fetchTicketmasterEvents();
+    
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+    
+  } catch (error) {
+    console.error("Error in ticketmaster-sync function:", error);
+    
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+});

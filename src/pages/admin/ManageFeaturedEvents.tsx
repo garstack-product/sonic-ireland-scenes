@@ -1,10 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Check, Search, X } from "lucide-react";
 import { toast } from "sonner";
-import { fetchTicketmasterEvents } from "@/services/api";
+import { fetchAllEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
+import { supabase } from "@/integrations/supabase/client";
 
 const ManageFeaturedEvents = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,8 +19,8 @@ const ManageFeaturedEvents = () => {
     const loadEvents = async () => {
       try {
         setIsLoading(true);
-        // Load events from Ticketmaster
-        const events = await fetchTicketmasterEvents();
+        // Load events from database
+        const events = await fetchAllEvents();
         
         setAllEvents(events);
         
@@ -70,9 +72,44 @@ const ManageFeaturedEvents = () => {
     }
   };
 
+  // Manual sync function
+  const handleSyncEvents = async () => {
+    try {
+      toast.info("Syncing Ticketmaster events...");
+      const response = await fetch('https://eckohtoprkgolyjdiown.supabase.co/functions/v1/ticketmaster-sync');
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      toast.success(`Sync complete: ${result.refreshed ? 'Data refreshed' : 'Using cached data'} (${result.count} events)`);
+      
+      // Reload events
+      setIsLoading(true);
+      const events = await fetchAllEvents();
+      setAllEvents(events);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error syncing events:", error);
+      toast.error(`Sync failed: ${error.message}`);
+    }
+  };
+
   return (
     <div className="bg-dark-300 p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold text-white mb-6">Manage Featured Events</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-semibold text-white">Manage Featured Events</h2>
+        
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={handleSyncEvents}
+          disabled={isLoading}
+        >
+          {isLoading ? "Syncing..." : "Sync Ticketmaster"}
+        </Button>
+      </div>
       
       <div className="mb-6 relative">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

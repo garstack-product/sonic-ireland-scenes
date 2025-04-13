@@ -9,13 +9,223 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cache_metadata: {
+        Row: {
+          id: string
+          last_updated: string
+          record_count: number | null
+          source: string
+          status: string | null
+        }
+        Insert: {
+          id: string
+          last_updated: string
+          record_count?: number | null
+          source: string
+          status?: string | null
+        }
+        Update: {
+          id?: string
+          last_updated?: string
+          record_count?: number | null
+          source?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          artist: string | null
+          created_at: string
+          date: string | null
+          description: string | null
+          genre: string | null
+          id: string
+          image_url: string | null
+          on_sale_date: string | null
+          price: number | null
+          raw_data: Json | null
+          raw_date: string | null
+          subgenre: string | null
+          ticket_url: string | null
+          time: string | null
+          title: string
+          type: string | null
+          updated_at: string
+          venue: string | null
+          venue_id: string | null
+        }
+        Insert: {
+          artist?: string | null
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          genre?: string | null
+          id: string
+          image_url?: string | null
+          on_sale_date?: string | null
+          price?: number | null
+          raw_data?: Json | null
+          raw_date?: string | null
+          subgenre?: string | null
+          ticket_url?: string | null
+          time?: string | null
+          title: string
+          type?: string | null
+          updated_at?: string
+          venue?: string | null
+          venue_id?: string | null
+        }
+        Update: {
+          artist?: string | null
+          created_at?: string
+          date?: string | null
+          description?: string | null
+          genre?: string | null
+          id?: string
+          image_url?: string | null
+          on_sale_date?: string | null
+          price?: number | null
+          raw_data?: Json | null
+          raw_date?: string | null
+          subgenre?: string | null
+          ticket_url?: string | null
+          time?: string | null
+          title?: string
+          type?: string | null
+          updated_at?: string
+          venue?: string | null
+          venue_id?: string | null
+        }
+        Relationships: []
+      }
+      user_favorite_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorite_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_favorite_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events_with_venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venues: {
+        Row: {
+          address: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          latitude: number | null
+          longitude: number | null
+          name: string
+          postal_code: string | null
+          raw_data: Json | null
+          state: string | null
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          postal_code?: string | null
+          raw_data?: Json | null
+          state?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          postal_code?: string | null
+          raw_data?: Json | null
+          state?: string | null
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      events_with_venues: {
+        Row: {
+          address: string | null
+          artist: string | null
+          city: string | null
+          date: string | null
+          genre: string | null
+          id: string | null
+          image_url: string | null
+          latitude: number | null
+          longitude: number | null
+          on_sale_date: string | null
+          price: number | null
+          raw_date: string | null
+          subgenre: string | null
+          ticket_url: string | null
+          time: string | null
+          title: string | null
+          type: string | null
+          venue: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
-      [_ in never]: never
+      should_update_cache: {
+        Args: { cache_id: string; interval_hours: number }
+        Returns: boolean
+      }
+      update_cache_metadata: {
+        Args: {
+          cache_id: string
+          source: string
+          count?: number
+          status?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -7,6 +7,7 @@ import {
   getTicketmasterCache
 } from "../utils/cacheUtils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // Sample data for fallback
 const sampleTicketmasterEvents: EventCardProps[] = [
@@ -118,7 +119,45 @@ const sampleTicketmasterEvents: EventCardProps[] = [
 export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   console.log("Fetching events from Ticketmaster...");
   
-  // Check if we have valid cached data
+  // First try to get data from Supabase
+  try {
+    console.log("Checking database for events...");
+    
+    // Query events from Supabase
+    const { data: events, error } = await supabase
+      .from('events')
+      .select('*')
+      .order('raw_date', { ascending: true });
+    
+    if (error) {
+      console.error("Error fetching events from database:", error);
+    } else if (events && events.length > 0) {
+      console.log(`Found ${events.length} events in database`);
+      
+      // Map database events to EventCardProps format
+      return events.map(event => ({
+        id: event.id,
+        title: event.title,
+        artist: event.artist || '',
+        venue: event.venue || '',
+        date: event.date || '',
+        time: event.time || '',
+        imageUrl: event.image_url || '/placeholder.svg',
+        type: (event.type as 'concert' | 'festival') || 'concert',
+        category: 'listing' as const,
+        genre: event.genre || undefined,
+        subgenre: event.subgenre || undefined,
+        price: event.price || undefined,
+        ticketUrl: event.ticket_url || undefined,
+        rawDate: event.raw_date || undefined,
+        onSaleDate: event.on_sale_date || null
+      }));
+    }
+  } catch (dbError) {
+    console.error("Database fetch failed, trying API directly:", dbError);
+  }
+  
+  // If no data from database, check cache
   const now = Date.now();
   const cache = getTicketmasterCache();
   
@@ -132,6 +171,48 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   }
   
   try {
+    // Try to initiate a sync first
+    try {
+      console.log("Initiating Ticketmaster sync...");
+      const syncResponse = await fetch('https://eckohtoprkgolyjdiown.supabase.co/functions/v1/ticketmaster-sync');
+      const syncResult = await syncResponse.json();
+      console.log("Sync result:", syncResult);
+      
+      // If sync successful, try to fetch from database again
+      if (syncResult.count > 0) {
+        const { data: refreshedEvents } = await supabase
+          .from('events')
+          .select('*')
+          .order('raw_date', { ascending: true });
+          
+        if (refreshedEvents && refreshedEvents.length > 0) {
+          console.log(`Got ${refreshedEvents.length} refreshed events from database`);
+          
+          // Map database events to EventCardProps format
+          return refreshedEvents.map(event => ({
+            id: event.id,
+            title: event.title,
+            artist: event.artist || '',
+            venue: event.venue || '',
+            date: event.date || '',
+            time: event.time || '',
+            imageUrl: event.image_url || '/placeholder.svg',
+            type: (event.type as 'concert' | 'festival') || 'concert',
+            category: 'listing' as const,
+            genre: event.genre || undefined,
+            subgenre: event.subgenre || undefined,
+            price: event.price || undefined,
+            ticketUrl: event.ticket_url || undefined,
+            rawDate: event.raw_date || undefined,
+            onSaleDate: event.on_sale_date || null
+          }));
+        }
+      }
+    } catch (syncError) {
+      console.error("Error during sync:", syncError);
+    }
+    
+    // As a last resort, try direct API call
     const apiKey = window.API_KEYS?.ticketmaster;
     
     if (!apiKey) {
@@ -193,8 +274,35 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
 // Function to fetch a specific event from Ticketmaster API
 export const fetchTicketmasterEvent = async (eventId: string): Promise<EventCardProps | null> => {
   try {
+    // Try to get from database first
+    const { data: event, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', eventId)
+      .single();
+      
+    if (!error && event) {
+      return {
+        id: event.id,
+        title: event.title,
+        artist: event.artist || '',
+        venue: event.venue || '',
+        date: event.date || '',
+        time: event.time || '',
+        imageUrl: event.image_url || '/placeholder.svg',
+        type: (event.type as 'concert' | 'festival') || 'concert',
+        category: 'listing' as const,
+        genre: event.genre || undefined,
+        subgenre: event.subgenre || undefined,
+        price: event.price || undefined,
+        ticketUrl: event.ticket_url || undefined,
+        rawDate: event.raw_date || undefined,
+        onSaleDate: event.on_sale_date || null
+      };
+    }
+    
+    // If not in database, check cache
     const cache = getTicketmasterCache();
-    // First check if the event is in the cache
     if (cache && cache.data.length > 0) {
       const cachedEvent = cache.data.find(event => event.id === eventId);
       if (cachedEvent) {
