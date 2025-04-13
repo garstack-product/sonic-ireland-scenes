@@ -17,11 +17,6 @@ export let ticketmasterCache: CachedData | null = {
   data: []
 };
 
-export let eventbriteCache: CachedData | null = {
-  timestamp: 0,
-  data: []
-};
-
 // Helper functions for local storage
 export const saveToLocalStorage = (key: string, data: any): void => {
   try {
@@ -48,11 +43,6 @@ export const getTicketmasterCache = (): CachedData => {
   return ticketmasterCache || { timestamp: 0, data: [] };
 };
 
-// Get eventbrite cache
-export const getEventbriteCache = (): CachedData => {
-  return eventbriteCache || { timestamp: 0, data: [] };
-};
-
 // Update ticketmaster cache with new data
 export const updateTicketmasterCache = (data: EventCardProps[], timestamp: number, lastFetchDate?: string): void => {
   ticketmasterCache = {
@@ -63,43 +53,18 @@ export const updateTicketmasterCache = (data: EventCardProps[], timestamp: numbe
   saveToLocalStorage('ticketmasterCache', ticketmasterCache);
 };
 
-// Update eventbrite cache with new data
-export const updateEventbriteCache = (data: EventCardProps[], timestamp: number, lastFetchDate?: string): void => {
-  eventbriteCache = {
-    timestamp,
-    data,
-    lastFetchDate
+// Clear cache for ticketmaster
+export const clearCache = (): void => {
+  ticketmasterCache = {
+    timestamp: 0,
+    data: []
   };
-  saveToLocalStorage('eventbriteCache', eventbriteCache);
+  saveToLocalStorage('ticketmasterCache', ticketmasterCache);
 };
 
-// Clear cache for a specific provider
-export const clearCache = (provider: 'ticketmaster' | 'eventbrite'): void => {
-  if (provider === 'ticketmaster') {
-    ticketmasterCache = {
-      timestamp: 0,
-      data: []
-    };
-    saveToLocalStorage('ticketmasterCache', ticketmasterCache);
-  } else if (provider === 'eventbrite') {
-    eventbriteCache = {
-      timestamp: 0,
-      data: []
-    };
-    saveToLocalStorage('eventbriteCache', eventbriteCache);
-  }
-};
-
-// Clear all caches
-export const clearAllCaches = (): void => {
-  clearCache('ticketmaster');
-  clearCache('eventbrite');
-};
-
-// Load caches from localStorage on module init
+// Load cache from localStorage on module init
 export const initCaches = (): void => {
   ticketmasterCache = getFromLocalStorage<CachedData>('ticketmasterCache', ticketmasterCache);
-  eventbriteCache = getFromLocalStorage<CachedData>('eventbriteCache', eventbriteCache);
 };
 
 // Initialize caches

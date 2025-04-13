@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Check, Search, X } from "lucide-react";
 import { toast } from "sonner";
-import { fetchTicketmasterEvents, fetchEventbriteEvents } from "@/services/api";
+import { fetchTicketmasterEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
 
 const ManageFeaturedEvents = () => {
@@ -18,15 +17,10 @@ const ManageFeaturedEvents = () => {
     const loadEvents = async () => {
       try {
         setIsLoading(true);
-        // Load events from both sources
-        const [tmEvents, ebEvents] = await Promise.all([
-          fetchTicketmasterEvents(),
-          fetchEventbriteEvents()
-        ]);
+        // Load events from Ticketmaster
+        const events = await fetchTicketmasterEvents();
         
-        // Combine events
-        const combinedEvents = [...tmEvents, ...ebEvents];
-        setAllEvents(combinedEvents);
+        setAllEvents(events);
         
         // Try to load saved featured events from localStorage
         const savedFeaturedEvents = localStorage.getItem('featuredEvents');
