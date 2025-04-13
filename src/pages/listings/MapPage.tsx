@@ -222,28 +222,60 @@ const MapPage = () => {
             });
             
             // Add marker
-            addMarkerToMap(updatedVenue);
+            addMarkerToMap(updatedVenue, false);
           } else {
-            console.error(`Geocoding failed for ${address}: ${status}`);
-            // Still add marker with default Dublin coordinates
-            addMarkerToMap(venue);
+            // Try to geocode with just the venue and country if city fails
+            geocoder.geocode({ address: `${venue.name}, Ireland` }, (resultsRetry: any, statusRetry: any) => {
+              if (statusRetry === 'OK' && resultsRetry[0]) {
+                const location = resultsRetry[0].geometry.location;
+                
+                // Update venue with accurate coordinates
+                const updatedVenue = { 
+                  ...venue, 
+                  latitude: location.lat(), 
+                  longitude: location.lng() 
+                };
+                
+                // Update venues array
+                setVenues(prev => {
+                  const newVenues = [...prev];
+                  newVenues[index] = updatedVenue;
+                  return newVenues;
+                });
+                
+                // Add marker
+                addMarkerToMap(updatedVenue, false);
+              } else {
+                console.error(`Geocoding failed for ${address}: ${status}`);
+                // Still add marker with default Dublin coordinates
+                addMarkerToMap(venue, false);
+              }
+            });
           }
         });
       }, index * 200); // Stagger requests
     });
   };
   
-  const addMarkerToMap = (venue: Venue) => {
+  const addMarkerToMap = (venue: Venue, isSelected: boolean) => {
     if (!googleMapRef.current) return;
     
     const { google } = window;
     
-    // Custom marker icon
+    // Remove existing marker for this venue if any
+    const existingMarkerIndex = markersRef.current.findIndex(m => m.venue.id === venue.id);
+    if (existingMarkerIndex !== -1) {
+      markersRef.current[existingMarkerIndex].marker.setMap(null);
+      markersRef.current[existingMarkerIndex].infoWindow.close();
+      markersRef.current.splice(existingMarkerIndex, 1);
+    }
+    
+    // Custom marker icon based on selection status
     const markerIcon = {
       path: google.maps.SymbolPath.CIRCLE,
-      fillColor: "#FF5A5F",
+      fillColor: isSelected ? "#FF0000" : "#FF5A5F",
       fillOpacity: 0.9,
-      scale: 10,
+      scale: isSelected ? 12 : 10,
       strokeColor: "#FFF",
       strokeWeight: 2,
     };
@@ -253,7 +285,7 @@ const MapPage = () => {
       map: googleMapRef.current,
       title: venue.name,
       icon: markerIcon,
-      animation: google.maps.Animation.DROP,
+      animation: isSelected ? google.maps.Animation.BOUNCE : google.maps.Animation.DROP,
     });
     
     // Create info window
@@ -279,8 +311,30 @@ const MapPage = () => {
       setSelectedVenue(venue);
       setShowEvents(true);
       
+      // Update marker appearance
+      markersRef.current.forEach(m => {
+        if (m.venue.id === venue.id) {
+          // Update to selected style
+          m.marker.setIcon({
+            ...markerIcon,
+            fillColor: "#FF0000",
+            scale: 12
+          });
+          m.marker.setAnimation(google.maps.Animation.BOUNCE);
+        } else {
+          // Reset others to default style
+          m.marker.setIcon({
+            ...markerIcon,
+            fillColor: "#FF5A5F",
+            scale: 10
+          });
+          m.marker.setAnimation(null);
+        }
+      });
+      
       // Pan to marker
       googleMapRef.current.panTo({ lat: venue.latitude, lng: venue.longitude });
+      googleMapRef.current.setZoom(14);
     });
     
     // Save reference
@@ -291,21 +345,30 @@ const MapPage = () => {
     setSelectedVenue(venue);
     setShowEvents(true);
     
-    // Find the marker for this venue and trigger its click event
-    const markerObj = markersRef.current.find(m => m.venue.id === venue.id);
-    if (markerObj && googleMapRef.current) {
-      // Close other info windows
-      markersRef.current.forEach(m => m.infoWindow.close());
-      
-      // Open this info window
-      markerObj.infoWindow.open(googleMapRef.current, markerObj.marker);
-      
-      // Pan to marker
-      googleMapRef.current.panTo({ 
-        lat: venue.latitude, 
-        lng: venue.longitude 
+    // Update all markers to reset their styles
+    if (markersRef.current.length > 0 && googleMapRef.current) {
+      markersRef.current.forEach(m => {
+        // Reset all markers
+        const { google } = window;
+        addMarkerToMap(m.venue, m.venue.id === venue.id);
       });
-      googleMapRef.current.setZoom(14);
+      
+      // Find the marker for this venue and trigger its click event
+      const markerObj = markersRef.current.find(m => m.venue.id === venue.id);
+      if (markerObj && googleMapRef.current) {
+        // Close other info windows
+        markersRef.current.forEach(m => m.infoWindow.close());
+        
+        // Open this info window
+        markerObj.infoWindow.open(googleMapRef.current, markerObj.marker);
+        
+        // Pan to marker
+        googleMapRef.current.panTo({ 
+          lat: venue.latitude, 
+          lng: venue.longitude 
+        });
+        googleMapRef.current.setZoom(14);
+      }
     }
   };
   
@@ -313,9 +376,21 @@ const MapPage = () => {
     setShowEvents(false);
     setSelectedVenue(null);
     
-    // Close all info windows
-    if (markersRef.current) {
-      markersRef.current.forEach(m => m.infoWindow.close());
+    // Reset all markers
+    if (markersRef.current.length > 0) {
+      const { google } = window;
+      markersRef.current.forEach(m => {
+        m.infoWindow.close();
+        m.marker.setIcon({
+          path: google.maps.SymbolPath.CIRCLE,
+          fillColor: "#FF5A5F",
+          fillOpacity: 0.9,
+          scale: 10,
+          strokeColor: "#FFF",
+          strokeWeight: 2,
+        });
+        m.marker.setAnimation(null);
+      });
     }
     
     // Reset map view
@@ -354,9 +429,9 @@ const MapPage = () => {
                 Events at {selectedVenue.name}
               </h3>
               
-              <div className="space-y-4">
+              <div className="space-y-4 w-full">
                 {selectedVenue.events.map(event => (
-                  <Card key={event.id} className="bg-dark-400 border-gray-700">
+                  <Card key={event.id} className="bg-dark-400 border-gray-700 w-full">
                     <CardContent className="p-0">
                       <Link to={`/listings/${event.type}/${event.id}`} className="block">
                         <div className="p-4">

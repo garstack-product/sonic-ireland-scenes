@@ -33,8 +33,8 @@ const HomePage = () => {
         const justAnnounced = await fetchJustAnnouncedEvents();
         setJustAnnouncedEvents(justAnnounced);
         
-        // Load upcoming events (next 3 days)
-        const upcoming = await fetchUpcomingEvents(3);
+        // Load upcoming events (next 7 days)
+        const upcoming = await fetchUpcomingEvents(7);
         setUpcomingEvents(upcoming);
         
         // Load featured events
@@ -119,13 +119,6 @@ const HomePage = () => {
         </div>
         
         <div className="relative z-10 text-center px-4 max-w-5xl w-full">
-          <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-            Dirty Boots
-          </h1>
-          <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
-            Ireland's premier music photography and event guide for concerts and festivals
-          </p>
-          
           {/* Featured Events Carousel */}
           {isLoading ? (
             <div className="flex justify-center py-6">
@@ -137,17 +130,25 @@ const HomePage = () => {
               {renderEventCarousel(featuredEvents, "Featured")}
             </div>
           ) : (
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button asChild size="lg" className="bg-white text-dark-500 hover:bg-gray-200">
-                <Link to="/listings/concerts">
-                  Explore Events
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/reviews/concerts">
-                  Read Reviews
-                </Link>
-              </Button>
+            <div>
+              <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
+                Dirty Boots
+              </h1>
+              <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
+                Ireland's premier music photography and event guide for concerts and festivals
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-4">
+                <Button asChild size="lg" className="bg-white text-dark-500 hover:bg-gray-200">
+                  <Link to="/listings/concerts">
+                    Explore Events
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <Link to="/reviews/concerts">
+                    Read Reviews
+                  </Link>
+                </Button>
+              </div>
             </div>
           )}
         </div>
@@ -171,10 +172,10 @@ const HomePage = () => {
         )}
       </section>
       
-      {/* Upcoming Events (Next 3 Days) */}
+      {/* This Week's Events */}
       <section>
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-white">Upcoming Events (Next 3 Days)</h2>
+          <h2 className="text-2xl font-bold text-white">This Week's Events</h2>
           <Link to="/listings/concerts" className="flex items-center text-gray-400 hover:text-white transition-colors">
             <span className="mr-2">View All</span>
             <ArrowRight size={16} />

@@ -9,8 +9,8 @@ interface CachedData {
   lastFetchDate?: string;
 }
 
-// Cache duration in milliseconds (1 hour)
-const CACHE_DURATION = 60 * 60 * 1000;
+// Cache duration in milliseconds (24 hours)
+const CACHE_DURATION = 24 * 60 * 60 * 1000;
 
 // List of sports genres/subgenres to filter out
 const SPORTS_GENRES = [
@@ -51,7 +51,8 @@ const isSportsEvent = (event: any): boolean => {
   return SPORTS_GENRES.some(sportGenre => 
     genre.includes(sportGenre) || 
     subgenre.includes(sportGenre) || 
-    segment.includes(sportGenre)
+    segment.includes(sportGenre) ||
+    segment === "Sports"
   );
 };
 
@@ -114,6 +115,52 @@ const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
     });
 };
 
+// Map Eventbrite events to our application format
+const mapEventbriteEvents = (events: any[]): EventCardProps[] => {
+  return events
+    .filter(event => {
+      // Filter only music events from Eventbrite
+      const categoryId = event.category_id;
+      // Music category in Eventbrite is typically 103
+      return categoryId === "103" || 
+             event.name?.text?.toLowerCase().includes("music") ||
+             event.name?.text?.toLowerCase().includes("concert") ||
+             event.name?.text?.toLowerCase().includes("festival");
+    })
+    .map((event: any) => {
+      // Get image
+      const imageUrl = event.logo?.url || "/placeholder.svg";
+      
+      // Get date and time
+      const startDate = event.start?.local?.split('T')[0] || "";
+      const startTime = event.start?.local?.split('T')[1]?.substring(0, 5) || "";
+      const formattedDate = formatDate(startDate);
+      const formattedTime = formatTime(startTime);
+      
+      // Get venue info
+      const venue = event.venue?.name || "";
+      const city = event.venue?.address?.city || "Dublin";
+      const venueFull = city ? `${venue}, ${city}` : venue;
+      
+      return {
+        id: `eb-${event.id}` || `custom-${Math.random().toString(36).substr(2, 9)}`,
+        title: event.name?.text || "",
+        artist: event.organizer?.name || "",
+        venue: venueFull,
+        date: formattedDate,
+        time: formattedTime,
+        imageUrl: imageUrl,
+        type: "concert" as const,
+        category: "listing" as const,
+        genre: "Music",
+        price: event.ticket_availability?.minimum_ticket_price?.major_value || 0,
+        ticketUrl: event.url,
+        rawDate: startDate,
+        onSaleDate: event.published || null
+      };
+    });
+};
+
 // Cache storage
 let ticketmasterCache: CachedData | null = null;
 let eventbriteCache: CachedData | null = null;
@@ -130,7 +177,7 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
     console.log("Fetching fresh Ticketmaster data");
     
     // First try to fetch from the API
-    const apiUrl = `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&size=90&apikey=${API_KEYS.TICKETMASTER}`;
+    const apiUrl = `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&size=300&apikey=${API_KEYS.TICKETMASTER}`;
     
     const response = await fetch(apiUrl);
     
@@ -173,7 +220,7 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
       // Extract the events array from the JSON structure
       const eventsArray = Array.isArray(ticketmasterEventsData) 
         ? ticketmasterEventsData 
-        : ticketmasterEventsData.events || [];
+        : (ticketmasterEventsData as any)._embedded?.events || [];
       
       console.log(`Found ${eventsArray.length} events in JSON file`);
       
@@ -203,7 +250,7 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   }
 };
 
-// Fetch Eventbrite events (placeholder for now)
+// Fetch Eventbrite events
 export const fetchEventbriteEvents = async (): Promise<EventCardProps[]> => {
   // Check if we have cached data that's still valid
   if (eventbriteCache && (Date.now() - eventbriteCache.timestamp < CACHE_DURATION)) {
@@ -213,10 +260,64 @@ export const fetchEventbriteEvents = async (): Promise<EventCardProps[]> => {
   
   try {
     console.log("Fetching fresh Eventbrite data");
-    // Note: Eventbrite API integration would go here
-    // This is a placeholder until we have a proper Eventbrite integration
     
-    const mockEventbriteEvents: EventCardProps[] = [];
+    // Use a proxy or backend function to fetch Eventbrite events (client-side CORS issues)
+    const apiUrl = `https://www.eventbriteapi.com/v3/events/search/?location.address=ireland&categories=103&token=${API_KEYS.EVENTBRITE}`;
+    
+    // Note: In a real app, this would need to go through a server proxy due to CORS
+    // For demo purposes, we're returning mock data
+    
+    // Mock Eventbrite events for now - in production this should use real API data
+    const mockEventbriteEvents: EventCardProps[] = [
+      {
+        id: "eb-123456",
+        title: "Irish Folk Music Festival",
+        artist: "Various Irish Artists",
+        venue: "The Button Factory, Dublin",
+        date: "May 15, 2025",
+        time: "7:00pm",
+        imageUrl: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1470&auto=format&fit=crop",
+        type: "concert",
+        category: "listing",
+        genre: "Folk",
+        price: 25,
+        ticketUrl: "https://www.eventbrite.com/e/irish-folk-music-festival-tickets-123456",
+        rawDate: "2025-05-15",
+        onSaleDate: "2025-03-15T10:00:00Z"
+      },
+      {
+        id: "eb-234567",
+        title: "Dublin Jazz Night",
+        artist: "Dublin Jazz Ensemble",
+        venue: "The Sugar Club, Dublin",
+        date: "May 20, 2025",
+        time: "8:30pm",
+        imageUrl: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1374&auto=format&fit=crop",
+        type: "concert",
+        category: "listing",
+        genre: "Jazz",
+        price: 18,
+        ticketUrl: "https://www.eventbrite.com/e/dublin-jazz-night-tickets-234567",
+        rawDate: "2025-05-20",
+        onSaleDate: "2025-03-20T09:00:00Z"
+      },
+      {
+        id: "eb-345678",
+        title: "Electric Ireland",
+        artist: "Various Electronic Artists",
+        venue: "District 8, Dublin",
+        date: "June 5, 2025",
+        time: "10:00pm",
+        imageUrl: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?q=80&w=1470&auto=format&fit=crop",
+        type: "festival",
+        category: "listing",
+        genre: "Electronic",
+        price: 45,
+        ticketUrl: "https://www.eventbrite.com/e/electric-ireland-tickets-345678",
+        rawDate: "2025-06-05",
+        onSaleDate: "2025-04-05T08:00:00Z"
+      }
+    ];
     
     // Update cache
     eventbriteCache = {
@@ -256,7 +357,7 @@ export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
 };
 
 // Get upcoming events in the next X days
-export const fetchUpcomingEvents = async (days: number = 3): Promise<EventCardProps[]> => {
+export const fetchUpcomingEvents = async (days: number = 7): Promise<EventCardProps[]> => {
   const events = await fetchAllEvents();
   
   const today = new Date();
