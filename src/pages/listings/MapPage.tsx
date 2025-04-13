@@ -1,13 +1,13 @@
 
 import { useState, useEffect, useRef } from "react";
-import { fetchTicketmasterEvents } from "@/services/api";
+import { fetchAllEvents } from "@/services/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pin, ChevronRight, MapPin } from "lucide-react";
-import EventCard, { EventCardProps } from "@/components/ui/EventCard";
-import { toast } from "sonner";
+import { ChevronRight, MapPin, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageHeader from "@/components/ui/PageHeader";
+import { toast } from "sonner";
+import EventCard, { EventCardProps } from "@/components/ui/EventCard";
 
 interface Venue {
   id: string;
@@ -15,6 +15,7 @@ interface Venue {
   city: string;
   latitude: number;
   longitude: number;
+  eventCount: number;
   events: EventCardProps[];
 }
 
@@ -34,12 +35,13 @@ const MapPage = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const [mapInitialized, setMapInitialized] = useState(false);
 
   useEffect(() => {
     const loadEvents = async () => {
       try {
         setIsLoading(true);
-        const eventData = await fetchTicketmasterEvents();
+        const eventData = await fetchAllEvents();
         setEvents(eventData);
         
         // Group events by venue and extract venue information
@@ -58,6 +60,7 @@ const MapPage = () => {
               // We'll properly geocode these
               latitude: 53.3498, // Default Dublin latitude
               longitude: -6.2603, // Default Dublin longitude
+              eventCount: 0,
               events: []
             });
           }
@@ -65,6 +68,7 @@ const MapPage = () => {
           // Add event to the venue
           const venue = venuesMap.get(venueName)!;
           venue.events.push(event);
+          venue.eventCount += 1;
         });
         
         // Convert map to array
@@ -95,7 +99,7 @@ const MapPage = () => {
       window.initMap = initializeMap;
       
       document.head.appendChild(script);
-    } else {
+    } else if (!mapInitialized) {
       initializeMap();
     }
   };
@@ -192,6 +196,7 @@ const MapPage = () => {
     };
     
     googleMapRef.current = new google.maps.Map(mapRef.current, mapOptions);
+    setMapInitialized(true);
     
     // Create a geocoder instance
     const geocoder = new google.maps.Geocoder();
@@ -256,6 +261,17 @@ const MapPage = () => {
     });
   };
   
+  const calculateMarkerSize = (eventCount: number) => {
+    // Base size for venues with 1 event
+    const baseSize = 10;
+    
+    // Find maximum events for any venue to normalize
+    const maxEvents = Math.max(...venues.map(v => v.eventCount), 1);
+    
+    // Calculate size based on event count (min 10, max 30)
+    return Math.min(Math.max(baseSize + (eventCount / maxEvents) * 20, baseSize), 30);
+  };
+  
   const addMarkerToMap = (venue: Venue, isSelected: boolean) => {
     if (!googleMapRef.current) return;
     
@@ -269,12 +285,15 @@ const MapPage = () => {
       markersRef.current.splice(existingMarkerIndex, 1);
     }
     
-    // Custom marker icon based on selection status
+    // Calculate marker size based on number of events
+    const markerSize = calculateMarkerSize(venue.eventCount);
+    
+    // Custom marker icon based on selection status and event count
     const markerIcon = {
       path: google.maps.SymbolPath.CIRCLE,
       fillColor: isSelected ? "#FF0000" : "#FF5A5F",
       fillOpacity: 0.9,
-      scale: isSelected ? 12 : 10,
+      scale: isSelected ? markerSize * 1.2 : markerSize,
       strokeColor: "#FFF",
       strokeWeight: 2,
     };
@@ -285,6 +304,12 @@ const MapPage = () => {
       title: venue.name,
       icon: markerIcon,
       animation: isSelected ? google.maps.Animation.BOUNCE : google.maps.Animation.DROP,
+      label: {
+        text: venue.eventCount.toString(),
+        color: "#FFFFFF",
+        fontSize: "10px",
+        fontWeight: "bold"
+      }
     });
     
     // Create info window
@@ -293,7 +318,7 @@ const MapPage = () => {
         <div style="color: #333; padding: 5px; max-width: 200px;">
           <h3 style="margin: 0; padding-bottom: 5px; font-size: 16px;">${venue.name}</h3>
           <p style="margin: 5px 0; font-size: 14px;">${venue.city}</p>
-          <p style="margin: 5px 0; font-size: 14px;">${venue.events.length} events</p>
+          <p style="margin: 5px 0; font-size: 14px; font-weight: bold;">${venue.eventCount} events</p>
         </div>
       `
     });
@@ -317,15 +342,16 @@ const MapPage = () => {
           m.marker.setIcon({
             ...markerIcon,
             fillColor: "#FF0000",
-            scale: 12
+            scale: markerSize * 1.2
           });
           m.marker.setAnimation(google.maps.Animation.BOUNCE);
         } else {
           // Reset others to default style
+          const otherSize = calculateMarkerSize(m.venue.eventCount);
           m.marker.setIcon({
             ...markerIcon,
             fillColor: "#FF5A5F",
-            scale: 10
+            scale: otherSize
           });
           m.marker.setAnimation(null);
         }
@@ -380,11 +406,12 @@ const MapPage = () => {
       const { google } = window;
       markersRef.current.forEach(m => {
         m.infoWindow.close();
+        const markerSize = calculateMarkerSize(m.venue.eventCount);
         m.marker.setIcon({
           path: google.maps.SymbolPath.CIRCLE,
           fillColor: "#FF5A5F",
           fillOpacity: 0.9,
-          scale: 10,
+          scale: markerSize,
           strokeColor: "#FFF",
           strokeWeight: 2,
         });
@@ -424,23 +451,25 @@ const MapPage = () => {
                 Back to venues
               </Button>
               
-              <h3 className="text-xl text-white font-semibold mb-4">
+              <h3 className="text-xl text-white font-semibold mb-4 flex items-center">
+                <Calendar className="mr-2 text-rose-500" size={20} />
                 Events at {selectedVenue.name}
+                <span className="ml-2 text-sm bg-rose-500 text-white px-2 py-0.5 rounded-full">
+                  {selectedVenue.events.length}
+                </span>
               </h3>
               
               <div className="space-y-4 w-full">
                 {selectedVenue.events.map(event => (
                   <Card key={event.id} className="bg-dark-400 border-gray-700 w-full">
-                    <CardContent className="p-0">
+                    <CardContent className="p-4">
                       <Link to={`/listings/${event.type}/${event.id}`} className="block">
-                        <div className="p-4">
-                          <h4 className="text-white font-medium mb-1">{event.title}</h4>
-                          <p className="text-gray-400 text-sm">{event.artist}</p>
-                          <p className="text-gray-400 text-sm mt-1">{event.date}</p>
-                          {event.time && (
-                            <p className="text-gray-400 text-sm">{event.time}</p>
-                          )}
-                        </div>
+                        <h4 className="text-white font-medium mb-1">{event.title}</h4>
+                        <p className="text-gray-400 text-sm">{event.artist}</p>
+                        <p className="text-gray-400 text-sm mt-1">{event.date}</p>
+                        {event.time && (
+                          <p className="text-gray-400 text-sm">{event.time}</p>
+                        )}
                       </Link>
                     </CardContent>
                   </Card>
@@ -451,20 +480,28 @@ const MapPage = () => {
             <div>
               <h3 className="text-xl text-white font-semibold mb-4">Venues</h3>
               <div className="space-y-2">
-                {venues.map(venue => (
+                {venues
+                  .sort((a, b) => b.eventCount - a.eventCount) // Sort by event count
+                  .map(venue => (
                   <Button
                     key={venue.id}
                     variant="ghost"
                     onClick={() => handleVenueClick(venue)}
                     className="w-full justify-start text-left p-3 h-auto"
                   >
-                    <div>
-                      <div className="flex items-center">
-                        <MapPin size={16} className="mr-2 text-rose-500" />
-                        <span className="font-medium">{venue.name}</span>
+                    <div className="flex items-center w-full">
+                      <div className="flex-shrink-0 mr-3">
+                        <div className="bg-rose-500 text-white rounded-full flex items-center justify-center" 
+                             style={{ 
+                               width: `${Math.min(Math.max(24 + venue.eventCount, 24), 40)}px`, 
+                               height: `${Math.min(Math.max(24 + venue.eventCount, 24), 40)}px` 
+                             }}>
+                          <span className="text-xs font-bold">{venue.eventCount}</span>
+                        </div>
                       </div>
-                      <div className="ml-6 text-gray-400 text-sm">
-                        {venue.city} • {venue.events.length} events
+                      <div className="flex-grow">
+                        <div className="font-medium">{venue.name}</div>
+                        <div className="text-gray-400 text-sm">{venue.city}</div>
                       </div>
                     </div>
                   </Button>

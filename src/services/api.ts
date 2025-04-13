@@ -6,6 +6,34 @@ import { getTicketmasterCache } from "./utils/cacheUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Force a sync with Ticketmaster API
+export const syncTicketmasterEvents = async (): Promise<{ success: boolean, message: string }> => {
+  try {
+    console.log("Forcing Ticketmaster sync...");
+    const response = await fetch('https://eckohtoprkgolyjdiown.supabase.co/functions/v1/ticketmaster-sync');
+    
+    if (!response.ok) {
+      throw new Error(`Sync failed with status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.error) {
+      throw new Error(result.error);
+    }
+    
+    return { 
+      success: true, 
+      message: result.refreshed 
+        ? `Successfully refreshed ${result.count} events` 
+        : `Using cached data (${result.count} events)` 
+    };
+  } catch (error) {
+    console.error("Error syncing with Ticketmaster:", error);
+    return { success: false, message: `Sync failed: ${error.message}` };
+  }
+};
+
 // Get the just announced events (not visible in previous API calls)
 export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
   try {
@@ -85,13 +113,42 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
   try {
     console.log("Fetching events from Supabase database...");
     
-    // Try to trigger a sync first (this will only update if data is stale)
+    // Check cache age
+    let needsRefresh = false;
     try {
-      const syncResponse = await fetch('https://eckohtoprkgolyjdiown.supabase.co/functions/v1/ticketmaster-sync');
-      const syncResult = await syncResponse.json();
-      console.log("Sync result:", syncResult);
-    } catch (syncError) {
-      console.warn("Background sync failed, proceeding with existing data:", syncError);
+      const { data: cacheInfo } = await supabase
+        .from('cache_metadata')
+        .select('last_updated')
+        .eq('id', 'ticketmaster')
+        .single();
+        
+      if (cacheInfo) {
+        const lastUpdated = new Date(cacheInfo.last_updated);
+        const oneDayAgo = new Date();
+        oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+        
+        if (lastUpdated < oneDayAgo) {
+          console.log("Cache is older than 24 hours, triggering background sync");
+          needsRefresh = true;
+        }
+      } else {
+        // No cache record found
+        needsRefresh = true;
+      }
+    } catch (cacheError) {
+      console.warn("Error checking cache age:", cacheError);
+      needsRefresh = true;
+    }
+    
+    // Try to trigger a sync in the background if needed
+    if (needsRefresh) {
+      try {
+        const syncResponse = await fetch('https://eckohtoprkgolyjdiown.supabase.co/functions/v1/ticketmaster-sync');
+        const syncResult = await syncResponse.json();
+        console.log("Sync result:", syncResult);
+      } catch (syncError) {
+        console.warn("Background sync failed, proceeding with existing data:", syncError);
+      }
     }
     
     // Query events from Supabase

@@ -15,12 +15,39 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// List of genres/subgenres to filter out (sports)
+const SPORTS_GENRES = [
+  'Rugby',
+  'GAA',
+  'Football',
+  'Sports',
+  'Basketball',
+  'Soccer',
+  'Baseball',
+  'Hockey',
+  'Cricket',
+];
+
 // Handle CORS preflight requests
 async function handleCors(req: Request) {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
   return null;
+}
+
+// Check if an event is a sports event
+function isSportsEvent(event: any): boolean {
+  const genre = event.classifications?.[0]?.genre?.name || "";
+  const subgenre = event.classifications?.[0]?.subGenre?.name || "";
+  const segment = event.classifications?.[0]?.segment?.name || "";
+  
+  return SPORTS_GENRES.some(sportGenre => 
+    genre.includes(sportGenre) || 
+    subgenre.includes(sportGenre) || 
+    segment.includes(sportGenre) ||
+    segment === "Sports"
+  );
 }
 
 // Helper function to format dates
@@ -84,8 +111,10 @@ async function fetchTicketmasterEvents() {
   try {
     // Fetch events from Ticketmaster API
     console.log("Fetching events from Ticketmaster API...");
+    
+    // Include only music, arts, and attraction events (exclude sports)
     const response = await fetch(
-      `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&size=200&apikey=${ticketmasterApiKey}`
+      `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&size=200&classificationName=music,arts,theatre,festival&apikey=${ticketmasterApiKey}`
     );
     
     if (!response.ok) {
@@ -99,8 +128,9 @@ async function fetchTicketmasterEvents() {
       throw new Error("No events found in API response");
     }
     
-    const events = data._embedded.events;
-    console.log(`Found ${events.length} events from Ticketmaster`);
+    // Filter out any sports events that might have slipped through the classification filter
+    const events = data._embedded.events.filter(event => !isSportsEvent(event));
+    console.log(`Found ${events.length} non-sports events from Ticketmaster`);
     
     // Process venues first to avoid foreign key issues
     const venues = new Map();

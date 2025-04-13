@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, Loader2, Search, X } from "lucide-react";
+import { Check, Loader2, Search, X, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { fetchAllEvents } from "@/services/api";
+import { fetchAllEvents, syncTicketmasterEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,6 +15,7 @@ const ManageFeaturedEvents = () => {
   const [allEvents, setAllEvents] = useState<EventCardProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncInfo, setLastSyncInfo] = useState<string>("");
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -31,6 +32,9 @@ const ManageFeaturedEvents = () => {
           setFeaturedEvents(JSON.parse(savedFeaturedEvents));
         }
         
+        // Get last sync info
+        await getLastSyncInfo();
+        
         setIsLoading(false);
       } catch (error) {
         console.error('Error loading events:', error);
@@ -41,6 +45,33 @@ const ManageFeaturedEvents = () => {
     
     loadEvents();
   }, []);
+
+  const getLastSyncInfo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('cache_metadata')
+        .select('last_updated, record_count')
+        .eq('id', 'ticketmaster')
+        .single();
+      
+      if (error) {
+        console.error("Error fetching last sync info:", error);
+        setLastSyncInfo("No sync information available");
+        return;
+      }
+      
+      if (data) {
+        const lastSyncDate = new Date(data.last_updated);
+        const formattedDate = lastSyncDate.toLocaleString();
+        setLastSyncInfo(`Last synced: ${formattedDate} (${data.record_count} events)`);
+      } else {
+        setLastSyncInfo("No sync information available");
+      }
+    } catch (error) {
+      console.error("Error fetching sync info:", error);
+      setLastSyncInfo("Error fetching sync info");
+    }
+  };
 
   const filteredEvents = allEvents.filter(event => 
     event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,23 +110,22 @@ const ManageFeaturedEvents = () => {
       setIsSyncing(true);
       toast.info("Syncing Ticketmaster events...");
       
-      const response = await fetch('https://eckohtoprkgolyjdiown.supabase.co/functions/v1/ticketmaster-sync');
-      if (!response.ok) {
-        throw new Error(`Sync failed with status: ${response.status}`);
+      const result = await syncTicketmasterEvents();
+      
+      if (!result.success) {
+        throw new Error(result.message);
       }
       
-      const result = await response.json();
-      
-      if (result.error) {
-        throw new Error(result.error);
-      }
-      
-      toast.success(`Sync complete: ${result.refreshed ? 'Data refreshed' : 'Using cached data'} (${result.count} events)`);
+      toast.success(result.message);
       
       // Reload events
       setIsLoading(true);
       const events = await fetchAllEvents();
       setAllEvents(events);
+      
+      // Update last sync info
+      await getLastSyncInfo();
+      
       setIsLoading(false);
     } catch (error) {
       console.error("Error syncing events:", error);
@@ -110,21 +140,28 @@ const ManageFeaturedEvents = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-white">Manage Featured Events</h2>
         
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={handleSyncEvents}
-          disabled={isLoading || isSyncing}
-        >
-          {isSyncing ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Syncing...
-            </>
-          ) : (
-            "Sync Ticketmaster"
-          )}
-        </Button>
+        <div className="space-y-2">
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="w-full"
+            onClick={handleSyncEvents}
+            disabled={isLoading || isSyncing}
+          >
+            {isSyncing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Syncing...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Sync Ticketmaster
+              </>
+            )}
+          </Button>
+          <p className="text-xs text-gray-400">{lastSyncInfo}</p>
+        </div>
       </div>
       
       <div className="mb-6 relative">
