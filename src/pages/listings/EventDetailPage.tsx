@@ -1,13 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { API_KEYS } from "@/config/api-keys";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import EventGrid from "@/components/ui/EventGrid";
 import { EventCardProps } from "@/components/ui/EventCard";
-import { fetchArtistData, fetchVenueEvents } from "@/services/api";
+import { fetchArtistData, fetchVenueEvents, fetchTicketmasterEvent } from "@/services/api";
 import SocialIcons, { getSocialLinksFromData } from "@/components/ui/SocialIcons";
 import SocialShareButtons from "@/components/ui/SocialShareButtons";
 
@@ -52,77 +52,43 @@ const EventDetailPage = () => {
       try {
         setIsLoading(true);
         
-        const response = await fetch(
-          `https://app.ticketmaster.com/discovery/v2/events/${id}.json?apikey=${API_KEYS.TICKETMASTER}`
-        );
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch event details');
+        if (!id) {
+          throw new Error("Event ID is missing");
         }
         
-        const data = await response.json();
+        // Use our API service to fetch the event
+        const eventData = await fetchTicketmasterEvent(id);
         
-        const venue = data._embedded?.venues?.[0] || {};
-        const priceRanges = data.priceRanges || [];
-        
-        let priceDisplay = "";
-        if (priceRanges.length > 0) {
-          const { min, max, currency } = priceRanges[0];
-          priceDisplay = min === max 
-            ? `${currency}${min.toFixed(2)}` 
-            : `${currency}${min.toFixed(2)} - ${currency}${max.toFixed(2)}`;
+        if (!eventData) {
+          throw new Error("Failed to fetch event details");
         }
         
-        const formattedDate = data.dates?.start?.localDate
-          ? new Date(data.dates.start.localDate).toLocaleDateString('en-US', { 
-              weekday: 'long',
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })
-          : "";
-          
-        const formattedTime = data.dates?.start?.localTime
-          ? new Date(`2000-01-01T${data.dates.start.localTime}`).toLocaleTimeString('en-US', {
-              hour: 'numeric', 
-              minute: '2-digit'
-            })
-          : "";
-          
-        const artist = data.name.includes(":") 
-          ? data.name.split(":")[0] 
-          : data._embedded?.attractions?.[0]?.name || "";
-          
         const eventDetail: EventDetail = {
-          id: data.id,
-          title: data.name,
-          artist: artist,
-          venue: venue.name || "",
-          address: venue.address?.line1,
-          city: venue.city?.name,
-          date: formattedDate,
-          time: formattedTime,
-          imageUrl: data.images?.find((img: any) => img.ratio === "16_9" && img.width > 800)?.url 
-            || data.images?.[0]?.url 
-            || "/placeholder.svg",
-          description: data.info || data.pleaseNote || "No additional information available for this event.",
-          genre: data.classifications?.[0]?.genre?.name !== "Undefined" ? data.classifications?.[0]?.genre?.name : undefined,
-          subgenre: data.classifications?.[0]?.subGenre?.name !== "Undefined" ? data.classifications?.[0]?.subGenre?.name : undefined,
-          priceRange: priceDisplay,
-          ticketUrl: data.url,
-          venueMapUrl: venue?.maps?.seatMap?.staticUrl,
+          id: eventData.id,
+          title: eventData.title,
+          artist: eventData.artist,
+          venue: eventData.venue.split(',')[0] || "",
+          city: eventData.venue.includes(',') ? eventData.venue.split(',')[1].trim() : undefined,
+          date: eventData.date,
+          time: eventData.time,
+          imageUrl: eventData.imageUrl,
+          description: "This event is brought to you by Ticketmaster. See more details on their website.",
+          genre: eventData.genre,
+          subgenre: eventData.subgenre,
+          priceRange: eventData.price ? `€${eventData.price.toFixed(2)}` : undefined,
+          ticketUrl: eventData.ticketUrl,
           type: (type === "concert" || type === "festival") ? type : "concert"
         };
         
         setEvent(eventDetail);
         setIsLoading(false);
         
-        if (artist) {
-          fetchArtistInfo(artist);
+        if (eventData.artist) {
+          fetchArtistInfo(eventData.artist);
         }
         
-        if (venue.name) {
-          fetchEventsAtVenue(venue.name);
+        if (eventData.venue) {
+          fetchEventsAtVenue(eventData.venue.split(',')[0]);
         }
       } catch (error) {
         console.error("Error fetching event details:", error);
@@ -364,7 +330,7 @@ const EventDetailPage = () => {
                       style={{ border: 0 }}
                       loading="lazy"
                       allowFullScreen
-                      src={`https://www.google.com/maps/embed/v1/place?key=${API_KEYS.GOOGLE_MAPS}&q=${encodeURIComponent(event.venue + (event.city ? ', ' + event.city : ''))}`}
+                      src={`https://www.google.com/maps/embed/v1/place?key=${window.API_KEYS?.googleMaps}&q=${encodeURIComponent(event.venue + (event.city ? ', ' + event.city : ''))}`}
                     ></iframe>
                   </div>
                 </div>

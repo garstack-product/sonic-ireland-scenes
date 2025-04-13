@@ -4,7 +4,6 @@ import { fetchTicketmasterEvents } from "@/services/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pin, ChevronRight, MapPin } from "lucide-react";
-import { API_KEYS } from "@/config/api-keys";
 import EventCard, { EventCardProps } from "@/components/ui/EventCard";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -89,7 +88,7 @@ const MapPage = () => {
     if (!document.getElementById('google-maps-script')) {
       const script = document.createElement('script');
       script.id = 'google-maps-script';
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEYS.GOOGLE_MAPS}&callback=initMap`;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${window.API_KEYS?.googleMaps}&callback=initMap`;
       script.async = true;
       script.defer = true;
       

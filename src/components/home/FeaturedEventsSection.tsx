@@ -13,19 +13,11 @@ const FeaturedEventsSection = ({ featuredEvents, isLoading }: FeaturedEventsSect
   return (
     <section className="py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-white">
-          Dirty Boots
-        </h1>
+        <h2 className="text-2xl font-bold text-white">Featured Events</h2>
         <Link to="/listings/concerts" className="flex items-center text-gray-400 hover:text-white transition-colors">
           <span className="mr-2">All Events</span>
           <ArrowRight size={16} />
         </Link>
-      </div>
-      
-      <div className="mb-4">
-        <p className="text-lg text-gray-200">
-          Ireland's premier music photography and event guide for concerts and festivals
-        </p>
       </div>
       
       {isLoading ? (

@@ -21,10 +21,12 @@ export const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
       const minPrice = event.priceRanges?.[0]?.min || 0;
       const maxPrice = event.priceRanges?.[0]?.max || 0;
       
-      // Get image
-      const imageUrl = event.images?.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url 
-        || event.images?.[0]?.url 
-        || "/placeholder.svg";
+      // Get best image (prefer large 16:9 ratio)
+      const imageUrl = 
+        event.images?.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url ||
+        event.images?.find((img: any) => img.width > 500)?.url ||
+        event.images?.[0]?.url ||
+        "/placeholder.svg";
         
       // Get date and time
       const startDate = event.dates?.start?.localDate || "";

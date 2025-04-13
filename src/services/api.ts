@@ -1,8 +1,8 @@
 
 import { EventCardProps } from "@/components/ui/EventCard";
-import { fetchTicketmasterEvents } from "./api/ticketmasterService";
+import { fetchTicketmasterEvents, fetchTicketmasterEvent } from "./api/ticketmasterService";
 import { fetchArtistData } from "./api/artistService";
-import { ticketmasterCache } from "./utils/cacheUtils";
+import { getTicketmasterCache } from "./utils/cacheUtils";
 
 // Get the just announced events (not visible in previous API calls)
 export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
@@ -97,5 +97,6 @@ export const fetchVenueEvents = async (venueName: string): Promise<EventCardProp
 // Re-export individual services for direct access
 export { 
   fetchTicketmasterEvents,
+  fetchTicketmasterEvent,
   fetchArtistData
 };

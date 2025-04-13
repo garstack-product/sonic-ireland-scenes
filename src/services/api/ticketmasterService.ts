@@ -60,6 +60,57 @@ const sampleTicketmasterEvents: EventCardProps[] = [
     category: "listing",
     rawDate: "2025-05-15T20:00:00Z",
     onSaleDate: "2025-04-05T09:00:00Z"
+  },
+  {
+    id: "tm-5",
+    title: "Red Hot Chili Peppers",
+    artist: "Red Hot Chili Peppers",
+    venue: "Malahide Castle, Dublin",
+    date: "June 20, 2025",
+    time: "6:00 PM",
+    imageUrl: "/placeholder.svg",
+    type: "concert",
+    category: "listing",
+    rawDate: "2025-06-20T18:00:00Z",
+    onSaleDate: "2025-04-12T10:00:00Z"
+  },
+  {
+    id: "tm-6",
+    title: "Arcade Fire: The Suburbs Anniversary",
+    artist: "Arcade Fire",
+    venue: "Olympia Theatre, Dublin",
+    date: "July 15, 2025",
+    time: "8:00 PM",
+    imageUrl: "/placeholder.svg",
+    type: "concert",
+    category: "listing",
+    rawDate: "2025-07-15T20:00:00Z",
+    onSaleDate: "2025-04-20T09:00:00Z"
+  },
+  {
+    id: "tm-7",
+    title: "Longitude Festival 2025",
+    artist: "Various Artists",
+    venue: "Marlay Park, Dublin",
+    date: "July 4-6, 2025",
+    imageUrl: "/placeholder.svg",
+    type: "festival",
+    category: "listing",
+    rawDate: "2025-07-04T12:00:00Z",
+    onSaleDate: "2025-03-01T09:00:00Z"
+  },
+  {
+    id: "tm-8",
+    title: "Dua Lipa: Future Nostalgia Tour",
+    artist: "Dua Lipa",
+    venue: "3Arena, Dublin",
+    date: "October 3, 2025",
+    time: "7:30 PM",
+    imageUrl: "/placeholder.svg",
+    type: "concert",
+    category: "listing",
+    rawDate: "2025-10-03T19:30:00Z",
+    onSaleDate: "2025-03-25T09:00:00Z"
   }
 ];
 
@@ -69,15 +120,15 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   
   // Check if we have valid cached data
   const now = Date.now();
-  const ticketmasterCache = getTicketmasterCache();
+  const cache = getTicketmasterCache();
   
   if (
-    ticketmasterCache && 
-    ticketmasterCache.data.length > 0 &&
-    now - ticketmasterCache.timestamp < CACHE_DURATION
+    cache && 
+    cache.data.length > 0 &&
+    now - cache.timestamp < CACHE_DURATION
   ) {
-    console.log("Using cached Ticketmaster data:", ticketmasterCache.data.length, "events");
-    return ticketmasterCache.data;
+    console.log("Using cached Ticketmaster data:", cache.data.length, "events");
+    return cache.data;
   }
   
   try {
@@ -116,11 +167,11 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   } catch (error) {
     console.error("Error fetching from Ticketmaster API:", error);
     
-    const ticketmasterCache = getTicketmasterCache();
+    const cache = getTicketmasterCache();
     // Check if we have any cached data (even if expired)
-    if (ticketmasterCache && ticketmasterCache.data.length > 0) {
+    if (cache && cache.data.length > 0) {
       console.log("Using expired cached data as fallback");
-      return ticketmasterCache.data;
+      return cache.data;
     }
     
     // If API request fails and no cache, use sample data
@@ -142,10 +193,10 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
 // Function to fetch a specific event from Ticketmaster API
 export const fetchTicketmasterEvent = async (eventId: string): Promise<EventCardProps | null> => {
   try {
-    const ticketmasterCache = getTicketmasterCache();
+    const cache = getTicketmasterCache();
     // First check if the event is in the cache
-    if (ticketmasterCache && ticketmasterCache.data.length > 0) {
-      const cachedEvent = ticketmasterCache.data.find(event => event.id === eventId);
+    if (cache && cache.data.length > 0) {
+      const cachedEvent = cache.data.find(event => event.id === eventId);
       if (cachedEvent) {
         return cachedEvent;
       }
@@ -155,7 +206,7 @@ export const fetchTicketmasterEvent = async (eventId: string): Promise<EventCard
     
     if (!apiKey) {
       console.error("Ticketmaster API key not found");
-      return null;
+      throw new Error("API key not found");
     }
     
     // Fetch event details from Ticketmaster API
