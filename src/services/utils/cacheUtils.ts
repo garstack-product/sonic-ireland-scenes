@@ -43,6 +43,16 @@ export const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
   return defaultValue;
 };
 
+// Get ticketmaster cache
+export const getTicketmasterCache = (): CachedData => {
+  return ticketmasterCache || { timestamp: 0, data: [] };
+};
+
+// Get eventbrite cache
+export const getEventbriteCache = (): CachedData => {
+  return eventbriteCache || { timestamp: 0, data: [] };
+};
+
 // Update ticketmaster cache with new data
 export const updateTicketmasterCache = (data: EventCardProps[], timestamp: number, lastFetchDate?: string): void => {
   ticketmasterCache = {

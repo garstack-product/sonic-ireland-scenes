@@ -1,8 +1,10 @@
+
 import { EventCardProps } from "@/components/ui/EventCard";
 import { mapEventbriteEvents } from "../mappers/eventbriteMapper";
 import { 
   CACHE_DURATION, 
-  updateEventbriteCache 
+  updateEventbriteCache,
+  getEventbriteCache
 } from "../utils/cacheUtils";
 import { toast } from "sonner";
 
@@ -64,6 +66,8 @@ export const fetchEventbriteEvents = async (): Promise<EventCardProps[]> => {
   
   // Check if we have valid cached data
   const now = Date.now();
+  const eventbriteCache = getEventbriteCache();
+  
   if (
     eventbriteCache && 
     eventbriteCache.data.length > 0 &&
@@ -85,6 +89,7 @@ export const fetchEventbriteEvents = async (): Promise<EventCardProps[]> => {
   } catch (error) {
     console.error("Error with Eventbrite data:", error);
     
+    const eventbriteCache = getEventbriteCache();
     // Check if we have any cached data (even if expired)
     if (eventbriteCache && eventbriteCache.data.length > 0) {
       console.log("Using expired cached data as fallback");
@@ -100,6 +105,7 @@ export const fetchEventbriteEvents = async (): Promise<EventCardProps[]> => {
 };
 
 export const fetchEventbriteEvent = async (eventId: string): Promise<EventCardProps | null> => {
+  const eventbriteCache = getEventbriteCache();
   // First check if the event is in the cache
   if (eventbriteCache && eventbriteCache.data.length > 0) {
     const cachedEvent = eventbriteCache.data.find(event => event.id === eventId);

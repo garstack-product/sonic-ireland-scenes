@@ -1,8 +1,10 @@
+
 import { EventCardProps } from "@/components/ui/EventCard";
 import { mapTicketmasterEvents } from "../mappers/ticketmasterMapper";
 import { 
   CACHE_DURATION, 
-  updateTicketmasterCache
+  updateTicketmasterCache,
+  getTicketmasterCache
 } from "../utils/cacheUtils";
 import { toast } from "sonner";
 
@@ -67,6 +69,8 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   
   // Check if we have valid cached data
   const now = Date.now();
+  const ticketmasterCache = getTicketmasterCache();
+  
   if (
     ticketmasterCache && 
     ticketmasterCache.data.length > 0 &&
@@ -103,7 +107,7 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
     // Map Ticketmaster events to our EventCard format
     const events = mapTicketmasterEvents(data._embedded.events);
     
-    // Update cache using the new function
+    // Update cache with new data
     updateTicketmasterCache(events, now, new Date().toISOString());
     
     console.log("Fetched", events.length, "events from Ticketmaster API");
@@ -112,6 +116,7 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
   } catch (error) {
     console.error("Error fetching from Ticketmaster API:", error);
     
+    const ticketmasterCache = getTicketmasterCache();
     // Check if we have any cached data (even if expired)
     if (ticketmasterCache && ticketmasterCache.data.length > 0) {
       console.log("Using expired cached data as fallback");
@@ -121,7 +126,7 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
     // If API request fails and no cache, use sample data
     console.log("Using sample Ticketmaster data as fallback");
     
-    // Store the sample data in cache using the new function
+    // Store the sample data in cache
     updateTicketmasterCache(
       sampleTicketmasterEvents,
       now - CACHE_DURATION + 60000, // Set to expire soon but not immediately
@@ -137,6 +142,7 @@ export const fetchTicketmasterEvents = async (): Promise<EventCardProps[]> => {
 // Function to fetch a specific event from Ticketmaster API
 export const fetchTicketmasterEvent = async (eventId: string): Promise<EventCardProps | null> => {
   try {
+    const ticketmasterCache = getTicketmasterCache();
     // First check if the event is in the cache
     if (ticketmasterCache && ticketmasterCache.data.length > 0) {
       const cachedEvent = ticketmasterCache.data.find(event => event.id === eventId);
