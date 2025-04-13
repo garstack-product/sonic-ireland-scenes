@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink } from "lucide-react";
@@ -56,7 +55,6 @@ const EventDetailPage = () => {
           throw new Error("Event ID is missing");
         }
         
-        // Use our API service to fetch the event
         const eventData = await fetchTicketmasterEvent(id);
         
         if (!eventData) {
@@ -163,6 +161,66 @@ const EventDetailPage = () => {
   };
 
   const socialLinks = getSocialLinksFromData(artistData);
+
+  const getSocialIcons = () => {
+    if (!artistData?.artist_links) return null;
+
+    const links = [
+      { 
+        name: 'Website', 
+        url: artistData.artist_links.homepage, 
+        icon: <Globe className="h-5 w-5" />,
+        color: '#4a5568'
+      },
+      { 
+        name: 'Facebook', 
+        url: artistData.artist_links.facebook, 
+        icon: <Facebook className="h-5 w-5" />,
+        color: '#1877F2'
+      },
+      { 
+        name: 'Instagram', 
+        url: artistData.artist_links.instagram, 
+        icon: <Instagram className="h-5 w-5" />,
+        color: '#E1306C'
+      },
+      { 
+        name: 'Twitter', 
+        url: artistData.artist_links.twitter, 
+        icon: <Twitter className="h-5 w-5" />,
+        color: '#1DA1F2'
+      },
+      { 
+        name: 'Spotify', 
+        url: artistData.artist_links.spotify, 
+        icon: <Music className="h-5 w-5" />,
+        color: '#1DB954'
+      },
+      { 
+        name: 'iTunes', 
+        url: artistData.artist_links.itunes, 
+        icon: <Music className="h-5 w-5" />,
+        color: '#EA4CC0'
+      }
+    ].filter(link => link.url);
+
+    return (
+      <div className="flex space-x-4 mt-4">
+        {links.map((link, index) => (
+          <a
+            key={index}
+            href={link.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full p-2 bg-dark-400 hover:bg-dark-300 transition-colors"
+            style={{ color: link.color }}
+          >
+            {link.icon}
+          </a>
+        ))}
+      </div>
+    );
+  };
 
   if (isLoading) {
     return (

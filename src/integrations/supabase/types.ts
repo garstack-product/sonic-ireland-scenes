@@ -36,12 +36,14 @@ export type Database = {
       events: {
         Row: {
           artist: string | null
+          artist_links: Json | null
           created_at: string
           date: string | null
           description: string | null
           genre: string | null
           id: string
           image_url: string | null
+          is_hidden: boolean | null
           on_sale_date: string | null
           price: number | null
           raw_data: Json | null
@@ -57,12 +59,14 @@ export type Database = {
         }
         Insert: {
           artist?: string | null
+          artist_links?: Json | null
           created_at?: string
           date?: string | null
           description?: string | null
           genre?: string | null
           id: string
           image_url?: string | null
+          is_hidden?: boolean | null
           on_sale_date?: string | null
           price?: number | null
           raw_data?: Json | null
@@ -78,12 +82,14 @@ export type Database = {
         }
         Update: {
           artist?: string | null
+          artist_links?: Json | null
           created_at?: string
           date?: string | null
           description?: string | null
           genre?: string | null
           id?: string
           image_url?: string | null
+          is_hidden?: boolean | null
           on_sale_date?: string | null
           price?: number | null
           raw_data?: Json | null

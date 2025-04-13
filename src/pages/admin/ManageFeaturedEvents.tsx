@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, Loader2, Search, X, RefreshCw } from "lucide-react";
+import { Check, Loader2, Search, X, RefreshCw, EyeOff, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { fetchAllEvents, syncTicketmasterEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
@@ -16,6 +15,8 @@ const ManageFeaturedEvents = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncInfo, setLastSyncInfo] = useState<string>("");
+
+  const [hiddenEvents, setHiddenEvents] = useState<string[]>([]);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -87,20 +88,35 @@ const ManageFeaturedEvents = () => {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const toggleEventVisibility = (eventId: string) => {
+    setHiddenEvents(prev => 
+      prev.includes(eventId)
+        ? prev.filter(id => id !== eventId)
+        : [...prev, eventId]
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    
     try {
       // Save to localStorage
       localStorage.setItem('featuredEvents', JSON.stringify(featuredEvents));
+      localStorage.setItem('hiddenEvents', JSON.stringify(hiddenEvents));
       
-      toast.success("Featured events updated successfully!");
+      // Update events in Supabase
+      const { error } = await supabase
+        .from('events')
+        .upsert(
+          hiddenEvents.map(id => ({ id, is_hidden: true })),
+          { onConflict: 'id' }
+        );
+      
+      if (error) throw error;
+      
+      toast.success("Events updated successfully!");
     } catch (error) {
-      console.error('Error saving featured events:', error);
-      toast.error('Failed to save featured events');
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error saving events:', error);
+      toast.error('Failed to save events');
     }
   };
 
@@ -195,18 +211,39 @@ const ManageFeaturedEvents = () => {
                     <p className="text-gray-400 text-sm">{event.artist} • {event.venue}</p>
                     <p className="text-gray-400 text-sm">{event.date}</p>
                   </div>
-                  <Button
-                    type="button"
-                    variant={featuredEvents.includes(event.id) ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => toggleFeature(event.id)}
-                  >
-                    {featuredEvents.includes(event.id) ? (
-                      <><Check size={16} className="mr-2" /> Featured</>
-                    ) : (
-                      "Feature"
-                    )}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleEventVisibility(event.id)}
+                      className={
+                        hiddenEvents.includes(event.id) 
+                          ? 'bg-gray-500 text-white' 
+                          : 'bg-transparent'
+                      }
+                    >
+                      {hiddenEvents.includes(event.id) ? (
+                        <EyeOff size={16} className="mr-2" />
+                      ) : (
+                        <Eye size={16} className="mr-2" />
+                      )}
+                      {hiddenEvents.includes(event.id) ? 'Hidden' : 'Visible'}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant={featuredEvents.includes(event.id) ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => toggleFeature(event.id)}
+                    >
+                      {featuredEvents.includes(event.id) ? (
+                        <><Check size={16} className="mr-2" /> Featured</>
+                      ) : (
+                        "Feature"
+                      )}
+                    </Button>
+                  </div>
                 </div>
               ))
             ) : (

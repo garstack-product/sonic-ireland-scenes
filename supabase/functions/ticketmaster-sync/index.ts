@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.6';
 
 // Supabase client
@@ -251,6 +250,20 @@ async function fetchTicketmasterEvents() {
       const onSaleDateTime = event.sales?.public?.startDateTime;
       const onSaleDate = onSaleDateTime ? new Date(onSaleDateTime).toISOString() : null;
       
+      // Extract artist links from attractions or other sources
+      const artistLinks = event._embedded?.attractions?.[0]?.externalLinks || {};
+      const processedLinks = {
+        homepage: artistLinks.homepage?.[0]?.url,
+        facebook: artistLinks.facebook?.[0]?.url,
+        instagram: artistLinks.instagram?.[0]?.url,
+        twitter: artistLinks.twitter?.[0]?.url,
+        spotify: artistLinks.spotify?.[0]?.url,
+        itunes: artistLinks.itunes?.[0]?.url,
+        musicbrainz: null, // Ticketmaster might not provide this
+        lastfm: null,
+        wiki: null
+      };
+
       return {
         id: event.id,
         title: event.name,
@@ -268,7 +281,8 @@ async function fetchTicketmasterEvents() {
         price: price || null,
         type: eventType,
         description: event.info || null,
-        raw_data: event
+        raw_data: event,
+        artist_links: processedLinks
       };
     });
     
