@@ -50,8 +50,9 @@ export const useVenues = () => {
             id: venue.id,
             name: venue.name,
             city: venue.city || 'Unknown',
-            latitude: parseFloat(venue.latitude),
-            longitude: parseFloat(venue.longitude),
+            // Convert numeric latitude/longitude to numeric type
+            latitude: typeof venue.latitude === 'string' ? parseFloat(venue.latitude) : venue.latitude,
+            longitude: typeof venue.longitude === 'string' ? parseFloat(venue.longitude) : venue.longitude,
             eventCount: 0,
             events: []
           });
@@ -61,7 +62,7 @@ export const useVenues = () => {
       // Now add events to each venue
       eventData.forEach(event => {
         // Try to find venue by ID
-        const venueId = event.venue_id;
+        const venueId = event.venue_id || '';  // Handle missing venue_id with empty string
         if (venueId && venueMap.has(venueId)) {
           const venue = venueMap.get(venueId)!;
           venue.events.push(event);
@@ -132,7 +133,6 @@ export const useVenues = () => {
           id: `venue-${venueName.toLowerCase().replace(/\s+/g, '-')}`,
           name: venueName,
           city: event.venue.includes(',') ? event.venue.split(',')[1].trim() : 'Dublin',
-          // We'll properly geocode these later
           latitude: 53.3498, // Default Dublin latitude
           longitude: -6.2603, // Default Dublin longitude
           eventCount: 0,

@@ -22,6 +22,7 @@ export interface EventCardProps {
   rawDate?: string; // Raw date for filtering
   onSaleDate?: string | null; // When tickets went on sale
   source?: string; // Source of the event (ticketmaster, eventbrite, etc.)
+  venue_id?: string; // Add venue_id property to fix the error
 }
 
 const EventCard = ({ 
