@@ -1,8 +1,6 @@
-
 import { EventCardProps } from "@/components/ui/EventCard";
 import { mapEventbriteEvents } from "../mappers/eventbriteMapper";
 import { 
-  eventbriteCache, 
   CACHE_DURATION, 
   updateEventbriteCache 
 } from "../utils/cacheUtils";
@@ -18,6 +16,7 @@ const sampleEventbriteEvents: EventCardProps[] = [
     date: "August 1-3, 2025",
     imageUrl: "/placeholder.svg",
     type: "festival",
+    category: "listing",
     rawDate: "2025-08-01T12:00:00Z",
     onSaleDate: "2025-02-15T09:00:00Z"
   },
@@ -29,6 +28,7 @@ const sampleEventbriteEvents: EventCardProps[] = [
     date: "July 5-7, 2025",
     imageUrl: "/placeholder.svg",
     type: "festival",
+    category: "listing",
     rawDate: "2025-07-05T12:00:00Z",
     onSaleDate: "2025-01-30T09:00:00Z"
   },
@@ -41,6 +41,7 @@ const sampleEventbriteEvents: EventCardProps[] = [
     time: "5:00 PM",
     imageUrl: "/placeholder.svg",
     type: "concert",
+    category: "listing",
     rawDate: "2025-06-22T17:00:00Z",
     onSaleDate: "2025-04-12T10:00:00Z"
   },
@@ -52,6 +53,7 @@ const sampleEventbriteEvents: EventCardProps[] = [
     date: "June 20-22, 2025",
     imageUrl: "/placeholder.svg",
     type: "festival",
+    category: "listing",
     rawDate: "2025-06-20T12:00:00Z",
     onSaleDate: "2025-03-01T09:00:00Z"
   }

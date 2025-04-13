@@ -1,11 +1,8 @@
-
 import { EventCardProps } from "@/components/ui/EventCard";
 import { mapTicketmasterEvents } from "../mappers/ticketmasterMapper";
 import { 
-  ticketmasterCache, 
   CACHE_DURATION, 
-  updateTicketmasterCache, 
-  saveToLocalStorage 
+  updateTicketmasterCache
 } from "../utils/cacheUtils";
 import { toast } from "sonner";
 
@@ -20,6 +17,7 @@ const sampleTicketmasterEvents: EventCardProps[] = [
     time: "6:30 PM",
     imageUrl: "/placeholder.svg",
     type: "concert",
+    category: "listing",
     rawDate: "2025-08-30T18:30:00Z",
     onSaleDate: "2025-04-01T09:00:00Z"
   },
@@ -32,6 +30,7 @@ const sampleTicketmasterEvents: EventCardProps[] = [
     time: "7:00 PM",
     imageUrl: "/placeholder.svg",
     type: "concert",
+    category: "listing",
     rawDate: "2025-06-28T19:00:00Z",
     onSaleDate: "2025-04-10T10:00:00Z"
   },
@@ -43,6 +42,7 @@ const sampleTicketmasterEvents: EventCardProps[] = [
     date: "September 5-7, 2025",
     imageUrl: "/placeholder.svg",
     type: "festival",
+    category: "listing",
     rawDate: "2025-09-05T12:00:00Z",
     onSaleDate: "2025-03-15T09:00:00Z"
   },
@@ -55,6 +55,7 @@ const sampleTicketmasterEvents: EventCardProps[] = [
     time: "8:00 PM",
     imageUrl: "/placeholder.svg",
     type: "concert",
+    category: "listing",
     rawDate: "2025-05-15T20:00:00Z",
     onSaleDate: "2025-04-05T09:00:00Z"
   }
