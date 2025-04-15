@@ -7,7 +7,7 @@ import {
   fetchUpcomingEvents,
   fetchFeaturedEvents,
   syncTicketmasterEvents
-} from './eventService';
+} from './events';
 import { fetchTicketmasterEvents, fetchTicketmasterEvent } from './ticketmasterService';
 import { fetchArtistData } from './artistService';
 
