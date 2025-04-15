@@ -7,10 +7,11 @@ import { toast } from "sonner";
 import { fetchAllEvents, syncTicketmasterEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
 const ManageFeaturedEvents = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [featuredEvents, setFeaturedEvents] = useState<string[]>([]); // IDs of featured events
+  const [featuredEvents, setFeaturedEvents] = useState<string[]>([]); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [allEvents, setAllEvents] = useState<EventCardProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +19,7 @@ const ManageFeaturedEvents = () => {
   const [lastSyncInfo, setLastSyncInfo] = useState<string>("");
 
   const [hiddenEvents, setHiddenEvents] = useState<string[]>([]);
-  const [festivalEvents, setFestivalEvents] = useState<string[]>([]); // IDs of festival events
+  const [festivalEvents, setFestivalEvents] = useState<string[]>([]); 
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -35,9 +36,13 @@ const ManageFeaturedEvents = () => {
         }
         
         // Load hidden, featured, and festival events from database
-        const { data: eventsData } = await supabase
+        const { data: eventsData, error } = await supabase
           .from('events')
           .select('id, is_hidden, is_featured, is_festival');
+        
+        if (error) {
+          throw error;
+        }
           
         if (eventsData) {
           setHiddenEvents(eventsData.filter(event => event.is_hidden).map(event => event.id));
@@ -319,3 +324,4 @@ const ManageFeaturedEvents = () => {
 };
 
 export default ManageFeaturedEvents;
+
