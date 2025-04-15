@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { fetchJustAnnouncedEvents, fetchUpcomingEvents, fetchFeaturedEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
@@ -69,7 +68,7 @@ const HomePage = () => {
 
   return (
     <div className="space-y-20">
-      {/* Featured Events Section (replacing Hero Section) */}
+      {/* Featured Events Section */}
       <FeaturedEventsSection 
         featuredEvents={featuredEvents} 
         isLoading={isLoading} 
@@ -81,6 +80,7 @@ const HomePage = () => {
         events={justAnnouncedEvents}
         isLoading={isLoading}
         linkPath="/listings/just-announced"
+        useCarousel={true}
       />
       
       {/* This Week's Events */}

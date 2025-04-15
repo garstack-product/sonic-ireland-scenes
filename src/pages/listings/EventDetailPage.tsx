@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink, Facebook, Instagram, Twitter } from "lucide-react";
@@ -164,7 +163,7 @@ const EventDetailPage = () => {
 
   const getEventImage = () => {
     const venueImageUrl = 
-      artistData?.venue_image || 
+      artistData?.artist_image || 
       event?.rawData?.images?.find((img: any) => img.ratio === '16_9')?.url || 
       (event?.artist ? `/artist-images/${event.artist.toLowerCase().replace(/\s+/g, '-')}.jpg` : null) || 
       '/placeholder.svg';

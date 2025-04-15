@@ -1,4 +1,3 @@
-
 import { EventCardProps } from "@/components/ui/EventCard";
 import { fetchAllEvents } from "./fetchService";
 
@@ -17,7 +16,7 @@ export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
         return onSaleDate > sevenDaysAgo;
       }
       return false;
-    }).slice(0, 8); // Limit to 8 events
+    }).slice(0, 20); // Limit to 20 events
   } catch (error) {
     console.error("Error in fetchJustAnnouncedEvents:", error);
     return [];
