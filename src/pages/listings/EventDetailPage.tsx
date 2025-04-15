@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink, Facebook, Instagram, Twitter } from "lucide-react";
@@ -27,6 +28,7 @@ interface EventDetail {
   ticketUrl?: string;
   venueMapUrl?: string;
   type: "concert" | "festival";
+  rawData?: any; // Adding rawData field to store original Ticketmaster response
 }
 
 const EventDetailPage = () => {

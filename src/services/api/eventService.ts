@@ -174,7 +174,7 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
         if (!event.rawDate) return false;
         
         const eventDate = new Date(event.rawDate);
-        return eventDate >= today && event.is_featured;
+        return eventDate >= today && event.is_featured === true;
       })
       .sort((a, b) => {
         // Sort by date
