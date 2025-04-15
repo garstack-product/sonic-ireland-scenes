@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { fetchJustAnnouncedEvents, fetchUpcomingEvents, fetchFeaturedEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";

@@ -1,3 +1,4 @@
+
 import { EventCardProps } from "@/components/ui/EventCard";
 import { fetchAllEvents } from "./fetchService";
 
@@ -32,12 +33,19 @@ export const fetchUpcomingEvents = async (days: number = 7): Promise<EventCardPr
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + days);
     
+    // Filter for events in the next 7 days and exclude sports/GAA
     return events.filter(event => {
       if (!event.rawDate) return false;
       
+      // Skip sports events
+      if (event.genre === 'GAA' || event.genre === 'Sports' || 
+          event.subgenre === 'GAA' || event.subgenre === 'Sports') {
+        return false;
+      }
+      
       const eventDate = new Date(event.rawDate);
       return eventDate >= today && eventDate <= futureDate;
-    }).slice(0, 12); // Limit to 12 events for carousel
+    });
   } catch (error) {
     console.error("Error in fetchUpcomingEvents:", error);
     return [];
@@ -54,6 +62,12 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
     return allEvents
       .filter(event => {
         if (!event.rawDate) return false;
+        
+        // Skip sports events
+        if (event.genre === 'GAA' || event.genre === 'Sports' || 
+            event.subgenre === 'GAA' || event.subgenre === 'Sports') {
+          return false;
+        }
         
         const eventDate = new Date(event.rawDate);
         return eventDate >= today && event.is_featured === true;
@@ -75,7 +89,14 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
 export const fetchVenueEvents = async (venueName: string): Promise<EventCardProps[]> => {
   try {
     const allEvents = await fetchAllEvents();
-    return allEvents.filter(event => event.venue.includes(venueName));
+    return allEvents.filter(event => 
+      event.venue.includes(venueName) &&
+      // Skip sports events
+      event.genre !== 'GAA' && 
+      event.genre !== 'Sports' && 
+      event.subgenre !== 'GAA' && 
+      event.subgenre !== 'Sports'
+    );
   } catch (error) {
     console.error(`Error fetching events for venue ${venueName}:`, error);
     return [];

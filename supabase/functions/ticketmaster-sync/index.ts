@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.6';
 
 // Supabase client
@@ -118,20 +119,14 @@ async function fetchTicketmasterEvents() {
       const pageSize = 200; // Maximum allowed by Ticketmaster API
       let totalPages = 1;
       
-      // List of European country codes
-      const europeanCountries = [
-        'GB', 'IE', 'FR', 'DE', 'ES', 'IT', 
-        'NL', 'BE', 'PT', 'SE', 'NO', 'DK', 
-        'FI', 'CH', 'AT', 'GR', 'PL'
-      ];
-      
       do {
         console.log(`Fetching page ${page + 1} of events...`);
+        // Updated to focus on music events in Ireland specifically
         const response = await fetch(
           `https://app.ticketmaster.com/discovery/v2/events.json?` +
-          `countryCode=${europeanCountries.join(',')}` +
+          `countryCode=IE` +
           `&size=${pageSize}&page=${page}` +
-          `&classificationName=music,arts,theatre,festival` +
+          `&segmentName=Music` + // Use segmentName=Music instead of classificationName
           `&apikey=${ticketmasterApiKey}`
         );
         
@@ -173,6 +168,10 @@ async function fetchTicketmasterEvents() {
     for (const event of filteredEvents) {
       if (event._embedded?.venues?.[0]) {
         const venue = event._embedded.venues[0];
+        if (!venue.name) {
+          console.log("Found venue without name:", venue);
+          continue; // Skip venues without names to avoid DB constraint errors
+        }
         venues.set(venue.id, {
           id: venue.id,
           name: venue.name,
@@ -248,8 +247,11 @@ async function fetchTicketmasterEvents() {
       
       // Compute event type
       let eventType = "concert";
-      if (event.name?.toLowerCase().includes("festival") || 
-          event.classifications?.[0]?.subGenre?.name?.toLowerCase().includes("festival")) {
+      // Determine if this is a festival
+      const isFestival = event.name?.toLowerCase().includes("festival") || 
+          event.classifications?.[0]?.subGenre?.name?.toLowerCase().includes("festival");
+          
+      if (isFestival) {
         eventType = "festival";
       }
       
@@ -293,7 +295,8 @@ async function fetchTicketmasterEvents() {
         type: eventType,
         description: event.info || null,
         raw_data: event,
-        artist_links: processedLinks
+        artist_links: processedLinks,
+        is_festival: isFestival // Adding the is_festival flag
       };
     });
     

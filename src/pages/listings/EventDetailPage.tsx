@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink, Facebook, Instagram, Twitter } from "lucide-react";
@@ -28,6 +29,7 @@ interface EventDetail {
   venueMapUrl?: string;
   type: "concert" | "festival";
   rawData?: any; // Adding rawData field to store original Ticketmaster response
+  venueData?: any; // Add field for more detailed venue information
 }
 
 const EventDetailPage = () => {
@@ -62,6 +64,9 @@ const EventDetailPage = () => {
           throw new Error("Failed to fetch event details");
         }
         
+        // Extract venue information
+        const venueInfo = eventData.rawData?._embedded?.venues?.[0] || {};
+        
         const eventDetail: EventDetail = {
           id: eventData.id,
           title: eventData.title,
@@ -71,12 +76,15 @@ const EventDetailPage = () => {
           date: eventData.date,
           time: eventData.time,
           imageUrl: eventData.imageUrl,
-          description: "This event is brought to you by Ticketmaster. See more details on their website.",
+          description: eventData.rawData?.info || "This event is brought to you by Ticketmaster. See more details on their website.",
           genre: eventData.genre,
           subgenre: eventData.subgenre,
           priceRange: eventData.price ? `€${eventData.price.toFixed(2)}` : undefined,
           ticketUrl: eventData.ticketUrl,
-          type: (type === "concert" || type === "festival") ? type : "concert"
+          type: (type === "concert" || type === "festival") ? type : "concert",
+          rawData: eventData.rawData,
+          venueData: venueInfo,
+          address: venueInfo?.address?.line1,
         };
         
         setEvent(eventDetail);
@@ -162,13 +170,13 @@ const EventDetailPage = () => {
   };
 
   const getEventImage = () => {
-    const venueImageUrl = 
+    const eventImageUrl = 
       artistData?.artist_image || 
       event?.rawData?.images?.find((img: any) => img.ratio === '16_9')?.url || 
       (event?.artist ? `/artist-images/${event.artist.toLowerCase().replace(/\s+/g, '-')}.jpg` : null) || 
       '/placeholder.svg';
 
-    return venueImageUrl;
+    return eventImageUrl;
   };
 
   const socialLinks = getSocialLinksFromData(artistData);
@@ -249,6 +257,19 @@ const EventDetailPage = () => {
       </div>
     );
   }
+
+  // Extract detailed venue information
+  const venueData = event.venueData || {};
+  const venueAddress = event.address || venueData?.address?.line1 || "";
+  const venueCity = event.city || venueData?.city?.name || "";
+  const venueState = venueData?.state?.name || "";
+  const venueCountry = venueData?.country?.name || "";
+  const venuePostalCode = venueData?.postalCode || "";
+  const venueUrl = venueData?.url || "";
+  const venuePhoneNumber = venueData?.phoneNumber || "";
+  const venueAccessibility = venueData?.accessibleSeatingDetail || "";
+  const venueParkingInfo = venueData?.parkingDetail || "";
+  const venueGeneralInfo = venueData?.generalInfo?.generalRule || "";
 
   return (
     <div className="bg-dark-400 min-h-screen py-8">
@@ -371,15 +392,31 @@ const EventDetailPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="bg-dark-400 p-6 rounded-lg">
                   <h4 className="text-lg text-white font-medium mb-4">{event.venue}</h4>
-                  {event.address && <p className="text-gray-300 mb-2">{event.address}</p>}
-                  {event.city && <p className="text-gray-300 mb-4">{event.city}</p>}
                   
-                  {event.venueMapUrl && (
-                    <img 
-                      src={event.venueMapUrl} 
-                      alt={`Seating chart for ${event.venue}`} 
-                      className="rounded-lg w-full mt-4"
-                    />
+                  {venueAddress && <p className="text-gray-300 mb-2">{venueAddress}</p>}
+                  {venueCity && <p className="text-gray-300 mb-1">{venueCity}{venueState ? `, ${venueState}` : ''}</p>}
+                  {venuePostalCode && <p className="text-gray-300 mb-1">{venuePostalCode}</p>}
+                  {venueCountry && <p className="text-gray-300 mb-4">{venueCountry}</p>}
+                  
+                  {venuePhoneNumber && (
+                    <div className="mt-4">
+                      <h5 className="text-white font-medium mb-2">Contact</h5>
+                      <p className="text-gray-300">{venuePhoneNumber}</p>
+                    </div>
+                  )}
+                  
+                  {venueUrl && (
+                    <div className="mt-4">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => window.open(venueUrl, '_blank')}
+                      >
+                        <ExternalLink size={16} className="mr-2" />
+                        Visit Venue Website
+                      </Button>
+                    </div>
                   )}
                   
                   {event.priceRange && (
@@ -401,6 +438,30 @@ const EventDetailPage = () => {
                       allowFullScreen
                       src={`https://www.google.com/maps/embed/v1/place?key=${window.API_KEYS?.googleMaps}&q=${encodeURIComponent(event.venue + (event.city ? ', ' + event.city : ''))}`}
                     ></iframe>
+                  </div>
+                  
+                  {/* Additional Venue Information */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    {venueAccessibility && (
+                      <div className="bg-dark-400 p-4 rounded-lg">
+                        <h5 className="text-white font-medium mb-2">Accessibility</h5>
+                        <p className="text-gray-300 text-sm">{venueAccessibility}</p>
+                      </div>
+                    )}
+                    
+                    {venueParkingInfo && (
+                      <div className="bg-dark-400 p-4 rounded-lg">
+                        <h5 className="text-white font-medium mb-2">Parking</h5>
+                        <p className="text-gray-300 text-sm">{venueParkingInfo}</p>
+                      </div>
+                    )}
+                    
+                    {venueGeneralInfo && (
+                      <div className="bg-dark-400 p-4 rounded-lg md:col-span-2">
+                        <h5 className="text-white font-medium mb-2">Venue Rules</h5>
+                        <p className="text-gray-300 text-sm">{venueGeneralInfo}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
