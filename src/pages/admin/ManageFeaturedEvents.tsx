@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Check, Loader2, Search, X, RefreshCw, EyeOff, Eye } from "lucide-react";
+import { Check, Loader2, Search, RefreshCw, EyeOff, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { fetchAllEvents, syncTicketmasterEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
@@ -22,9 +22,8 @@ const ManageFeaturedEvents = () => {
     const loadEvents = async () => {
       try {
         setIsLoading(true);
-        // Load events from database
-        const events = await fetchAllEvents();
         
+        const events = await fetchAllEvents();
         setAllEvents(events);
         
         // Try to load saved featured events from localStorage
@@ -33,7 +32,7 @@ const ManageFeaturedEvents = () => {
           setFeaturedEvents(JSON.parse(savedFeaturedEvents));
         }
         
-        // Load hidden events
+        // Load hidden and featured events from database
         const { data: hiddenEventsData } = await supabase
           .from('events')
           .select('id')
@@ -42,9 +41,6 @@ const ManageFeaturedEvents = () => {
         if (hiddenEventsData) {
           setHiddenEvents(hiddenEventsData.map(event => event.id));
         }
-        
-        // Get last sync info
-        await getLastSyncInfo();
         
         setIsLoading(false);
       } catch (error) {
@@ -56,6 +52,41 @@ const ManageFeaturedEvents = () => {
     
     loadEvents();
   }, []);
+
+  const toggleFeature = (id: string) => {
+    setFeaturedEvents(prev => 
+      prev.includes(id) 
+        ? prev.filter(eventId => eventId !== id) 
+        : [...prev, id]
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsSubmitting(true);
+      
+      // Save to localStorage
+      localStorage.setItem('featuredEvents', JSON.stringify(featuredEvents));
+      
+      // Update featured events in Supabase
+      for (const eventId of allEvents.map(event => event.id)) {
+        const { error } = await supabase
+          .from('events')
+          .update({ is_featured: featuredEvents.includes(eventId) })
+          .eq('id', eventId);
+          
+        if (error) throw error;
+      }
+      
+      toast.success("Featured events updated successfully!");
+    } catch (error) {
+      console.error('Error saving featured events:', error);
+      toast.error('Failed to save featured events');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const getLastSyncInfo = async () => {
     try {
@@ -90,63 +121,12 @@ const ManageFeaturedEvents = () => {
     event.venue.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const toggleFeature = (id: string) => {
-    setFeaturedEvents(prev => 
-      prev.includes(id) 
-        ? prev.filter(eventId => eventId !== id) 
-        : [...prev, id]
-    );
-  };
-
   const toggleEventVisibility = (eventId: string) => {
     setHiddenEvents(prev => 
       prev.includes(eventId)
         ? prev.filter(id => id !== eventId)
         : [...prev, eventId]
     );
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      setIsSubmitting(true);
-      
-      // Save to localStorage
-      localStorage.setItem('featuredEvents', JSON.stringify(featuredEvents));
-      localStorage.setItem('hiddenEvents', JSON.stringify(hiddenEvents));
-      
-      // Update events in Supabase - fixed by updating each event individually
-      // This ensures we're including all required fields in the update
-      for (const eventId of hiddenEvents) {
-        const { error } = await supabase
-          .from('events')
-          .update({ is_hidden: true })
-          .eq('id', eventId);
-          
-        if (error) throw error;
-      }
-      
-      // Set all other events as visible
-      const visibleEvents = allEvents
-        .filter(event => !hiddenEvents.includes(event.id))
-        .map(event => event.id);
-        
-      for (const eventId of visibleEvents) {
-        const { error } = await supabase
-          .from('events')
-          .update({ is_hidden: false })
-          .eq('id', eventId);
-          
-        if (error) throw error;
-      }
-      
-      toast.success("Events updated successfully!");
-    } catch (error) {
-      console.error('Error saving events:', error);
-      toast.error('Failed to save events');
-    } finally {
-      setIsSubmitting(false);
-    }
   };
 
   // Manual sync function

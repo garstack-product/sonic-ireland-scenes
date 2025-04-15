@@ -1,4 +1,3 @@
-
 import { EventCardProps } from "@/components/ui/EventCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -167,27 +166,25 @@ export const fetchUpcomingEvents = async (days: number = 7): Promise<EventCardPr
 export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
   try {
     const allEvents = await fetchAllEvents();
-    const savedFeaturedIds = localStorage.getItem('featuredEvents');
-    
-    if (!savedFeaturedIds) {
-      // Use some default events as featured if none are set
-      return allEvents.slice(0, 4);
-    }
-    
-    try {
-      const featuredIds = JSON.parse(savedFeaturedIds);
-      const featured = allEvents.filter(event => featuredIds.includes(event.id));
-      
-      // If no matched events found, return some defaults
-      if (featured.length === 0) {
-        return allEvents.slice(0, 4);
-      }
-      
-      return featured;
-    } catch (error) {
-      console.error("Error parsing featured events:", error);
-      return allEvents.slice(0, 4);
-    }
+    const today = new Date();
+
+    // First, filter events that are both featured and upcoming
+    const upcomingFeaturedEvents = allEvents
+      .filter(event => {
+        if (!event.rawDate) return false;
+        
+        const eventDate = new Date(event.rawDate);
+        return eventDate >= today && event.is_featured;
+      })
+      .sort((a, b) => {
+        // Sort by date
+        const dateA = new Date(a.rawDate || 0);
+        const dateB = new Date(b.rawDate || 0);
+        return dateA.getTime() - dateB.getTime();
+      })
+      .slice(0, 10); // Limit to 10 events
+
+    return upcomingFeaturedEvents;
   } catch (error) {
     console.error("Error in fetchFeaturedEvents:", error);
     return [];

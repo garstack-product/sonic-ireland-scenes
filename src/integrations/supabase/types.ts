@@ -43,6 +43,7 @@ export type Database = {
           genre: string | null
           id: string
           image_url: string | null
+          is_featured: boolean | null
           is_hidden: boolean | null
           on_sale_date: string | null
           price: number | null
@@ -66,6 +67,7 @@ export type Database = {
           genre?: string | null
           id: string
           image_url?: string | null
+          is_featured?: boolean | null
           is_hidden?: boolean | null
           on_sale_date?: string | null
           price?: number | null
@@ -89,6 +91,7 @@ export type Database = {
           genre?: string | null
           id?: string
           image_url?: string | null
+          is_featured?: boolean | null
           is_hidden?: boolean | null
           on_sale_date?: string | null
           price?: number | null

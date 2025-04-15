@@ -118,10 +118,21 @@ async function fetchTicketmasterEvents() {
       const pageSize = 200; // Maximum allowed by Ticketmaster API
       let totalPages = 1;
       
+      // List of European country codes
+      const europeanCountries = [
+        'GB', 'IE', 'FR', 'DE', 'ES', 'IT', 
+        'NL', 'BE', 'PT', 'SE', 'NO', 'DK', 
+        'FI', 'CH', 'AT', 'GR', 'PL'
+      ];
+      
       do {
         console.log(`Fetching page ${page + 1} of events...`);
         const response = await fetch(
-          `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=IE&size=${pageSize}&page=${page}&classificationName=music,arts,theatre,festival&apikey=${ticketmasterApiKey}`
+          `https://app.ticketmaster.com/discovery/v2/events.json?` +
+          `countryCode=${europeanCountries.join(',')}` +
+          `&size=${pageSize}&page=${page}` +
+          `&classificationName=music,arts,theatre,festival` +
+          `&apikey=${ticketmasterApiKey}`
         );
         
         if (!response.ok) {

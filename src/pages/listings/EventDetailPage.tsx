@@ -160,6 +160,16 @@ const EventDetailPage = () => {
     toast.success("Link copied to clipboard");
   };
 
+  const getEventImage = () => {
+    const venueImageUrl = 
+      artistData?.venue_image || 
+      event?.rawData?.images?.find((img: any) => img.ratio === '16_9')?.url || 
+      (event?.artist ? `/artist-images/${event.artist.toLowerCase().replace(/\s+/g, '-')}.jpg` : null) || 
+      '/placeholder.svg';
+
+    return venueImageUrl;
+  };
+
   const socialLinks = getSocialLinksFromData(artistData);
 
   const getSocialIcons = () => {
@@ -245,7 +255,7 @@ const EventDetailPage = () => {
         <div className="bg-dark-300 rounded-lg overflow-hidden shadow-lg">
           <div className="h-[30vh] md:h-[40vh] relative">
             <img 
-              src={event.imageUrl} 
+              src={getEventImage()} 
               alt={event.title} 
               className="w-full h-full object-cover"
             />
