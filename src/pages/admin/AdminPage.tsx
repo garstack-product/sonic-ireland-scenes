@@ -7,6 +7,7 @@ import AddConcertReview from "./AddConcertReview";
 import AddFestivalReview from "./AddFestivalReview";
 import AddNewsItem from "./AddNewsItem";
 import ManageFeaturedEvents from "./ManageFeaturedEvents";
+import AddEvent from "./AddEvent";
 
 const AdminPage = () => {
   const [isLoggedIn] = useState(true); // In a real app, this would be managed by auth state
@@ -41,6 +42,7 @@ const AdminPage = () => {
             <TabsTrigger value="festival-reviews">Festival Reviews</TabsTrigger>
             <TabsTrigger value="news">News</TabsTrigger>
             <TabsTrigger value="featured">Featured Events</TabsTrigger>
+            <TabsTrigger value="add-event">Add Event</TabsTrigger>
           </TabsList>
           
           <TabsContent value="concert-reviews">
@@ -57,6 +59,10 @@ const AdminPage = () => {
           
           <TabsContent value="featured">
             <ManageFeaturedEvents />
+          </TabsContent>
+          
+          <TabsContent value="add-event">
+            <AddEvent />
           </TabsContent>
         </Tabs>
       </div>
