@@ -11,7 +11,6 @@ import { EventCardProps } from "@/components/ui/EventCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { fetchTicketmasterEvents } from "@/services/api";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -60,13 +59,17 @@ const FestivalListingsPage = () => {
           let price = event.price;
           let maxPrice = undefined;
           
-          if (event.raw_data?.priceRanges && event.raw_data.priceRanges.length > 0) {
-            price = event.raw_data.priceRanges[0].min;
-            maxPrice = event.raw_data.priceRanges[0].max;
+          if (event.raw_data && typeof event.raw_data === 'object') {
+            const rawData = event.raw_data as any;
             
-            // Only set maxPrice if it's different from price
-            if (maxPrice <= price) {
-              maxPrice = undefined;
+            if (rawData.priceRanges && Array.isArray(rawData.priceRanges) && rawData.priceRanges.length > 0) {
+              price = rawData.priceRanges[0].min;
+              maxPrice = rawData.priceRanges[0].max;
+              
+              // Only set maxPrice if it's different from price
+              if (maxPrice <= price) {
+                maxPrice = undefined;
+              }
             }
           }
           
