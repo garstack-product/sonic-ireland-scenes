@@ -12,7 +12,7 @@ import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { fetchTicketmasterEvents } from "@/services/api";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const FestivalListingsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");

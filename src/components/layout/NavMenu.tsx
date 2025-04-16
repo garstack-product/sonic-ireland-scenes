@@ -100,14 +100,14 @@ const NavMenu = () => {
           <div 
             className="absolute left-0 top-full mt-2 w-48 rounded-md shadow-lg bg-dark-300 ring-1 ring-black ring-opacity-5 py-1 z-10"
           >
-            <NavLink to="/reviews/concerts" className="block px-4 py-2">Concerts</NavLink>
-            <NavLink to="/reviews/festivals" className="block px-4 py-2">Festivals</NavLink>
+            <NavLink to="/reviews/concerts" onClick={handleNavigation} className="block px-4 py-2">Concerts</NavLink>
+            <NavLink to="/reviews/festivals" onClick={handleNavigation} className="block px-4 py-2">Festivals</NavLink>
           </div>
         )}
       </div>
       
-      <NavLink to="/news">News</NavLink>
-      <NavLink to="/about">About</NavLink>
+      <NavLink to="/news" onClick={handleNavigation}>News</NavLink>
+      <NavLink to="/about" onClick={handleNavigation}>About</NavLink>
       
       {user ? (
         <div className="relative group">
@@ -125,12 +125,12 @@ const NavMenu = () => {
             <div 
               className="absolute left-0 top-full mt-2 w-48 rounded-md shadow-lg bg-dark-300 ring-1 ring-black ring-opacity-5 py-1 z-10"
             >
-              <NavLink to="/listings/my-events" className="flex items-center px-4 py-2">
+              <NavLink to="/listings/my-events" onClick={handleNavigation} className="flex items-center px-4 py-2">
                 <User size={16} className="mr-2" />
                 <span>My Events</span>
               </NavLink>
               {user.isAdmin && (
-                <NavLink to="/admin" className="block px-4 py-2">Admin Dashboard</NavLink>
+                <NavLink to="/admin" onClick={handleNavigation} className="block px-4 py-2">Admin Dashboard</NavLink>
               )}
               <button 
                 onClick={logout}
@@ -143,16 +143,18 @@ const NavMenu = () => {
           )}
         </div>
       ) : (
-        <NavLink to="/login">Login</NavLink>
+        <NavLink to="/login" onClick={handleNavigation}>Login</NavLink>
       )}
     </nav>
   );
 };
 
-const NavLink = ({ to, children, className = "" }: { to: string; children: React.ReactNode; className?: string }) => (
+// Update the NavLink component to include onClick prop
+const NavLink = ({ to, children, className = "", onClick }: { to: string; children: React.ReactNode; className?: string; onClick?: () => void }) => (
   <Link 
     to={to} 
     className={`text-white hover:text-gray-300 transition-colors ${className}`}
+    onClick={onClick}
   >
     {children}
   </Link>
