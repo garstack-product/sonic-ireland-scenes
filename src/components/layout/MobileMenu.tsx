@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
@@ -13,6 +12,13 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const [showReviewsSubmenu, setShowReviewsSubmenu] = useState(false);
   const [showFestivalsSubmenu, setShowFestivalsSubmenu] = useState(false);
 
+  const handleNavigation = () => {
+    onClose();
+    setShowListingsSubmenu(false);
+    setShowReviewsSubmenu(false);
+    setShowFestivalsSubmenu(false);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -25,7 +31,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         </div>
         
         <nav className="px-6 py-8 flex flex-col space-y-6 text-lg">
-          <MobileNavLink to="/" onClick={onClose}>Home</MobileNavLink>
+          <MobileNavLink to="/" onClick={handleNavigation}>Home</MobileNavLink>
           
           <div>
             <button 
@@ -38,7 +44,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             
             {showListingsSubmenu && (
               <div className="ml-4 mt-2 border-l-2 border-gray-700 pl-4 flex flex-col space-y-4 animate-fade-in">
-                <MobileNavLink to="/listings/concerts" onClick={onClose}>Concerts</MobileNavLink>
+                <MobileNavLink to="/listings/concerts" onClick={handleNavigation}>Concerts</MobileNavLink>
                 <div>
                   <button 
                     className="flex items-center justify-between w-full text-white py-2"
@@ -49,13 +55,13 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
                   </button>
                   {showFestivalsSubmenu && (
                     <div className="ml-4 mt-2 border-l-2 border-gray-700 pl-4 flex flex-col space-y-4 animate-fade-in">
-                      <MobileNavLink to="/listings/festivals" onClick={onClose}>Ireland</MobileNavLink>
-                      <MobileNavLink to="/listings/festivals/uk" onClick={onClose}>UK</MobileNavLink>
+                      <MobileNavLink to="/listings/festivals" onClick={handleNavigation}>Ireland</MobileNavLink>
+                      <MobileNavLink to="/listings/festivals/uk" onClick={handleNavigation}>UK</MobileNavLink>
                     </div>
                   )}
                 </div>
-                <MobileNavLink to="/listings/just-announced" onClick={onClose}>Just Announced</MobileNavLink>
-                <MobileNavLink to="/listings/map" onClick={onClose}>Map</MobileNavLink>
+                <MobileNavLink to="/listings/just-announced" onClick={handleNavigation}>Just Announced</MobileNavLink>
+                <MobileNavLink to="/listings/map" onClick={handleNavigation}>Map</MobileNavLink>
               </div>
             )}
           </div>
@@ -71,15 +77,15 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             
             {showReviewsSubmenu && (
               <div className="ml-4 mt-2 border-l-2 border-gray-700 pl-4 flex flex-col space-y-4 animate-fade-in">
-                <MobileNavLink to="/reviews/concerts" onClick={onClose}>Concerts</MobileNavLink>
-                <MobileNavLink to="/reviews/festivals" onClick={onClose}>Festivals</MobileNavLink>
+                <MobileNavLink to="/reviews/concerts" onClick={handleNavigation}>Concerts</MobileNavLink>
+                <MobileNavLink to="/reviews/festivals" onClick={handleNavigation}>Festivals</MobileNavLink>
               </div>
             )}
           </div>
           
-          <MobileNavLink to="/news" onClick={onClose}>News</MobileNavLink>
-          <MobileNavLink to="/about" onClick={onClose}>About</MobileNavLink>
-          <MobileNavLink to="/login" onClick={onClose}>Login</MobileNavLink>
+          <MobileNavLink to="/news" onClick={handleNavigation}>News</MobileNavLink>
+          <MobileNavLink to="/about" onClick={handleNavigation}>About</MobileNavLink>
+          <MobileNavLink to="/login" onClick={handleNavigation}>Login</MobileNavLink>
         </nav>
       </div>
     </div>

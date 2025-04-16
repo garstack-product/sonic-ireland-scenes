@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
@@ -13,6 +12,7 @@ import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { fetchTicketmasterEvents } from "@/services/api";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const FestivalListingsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,49 +35,50 @@ const FestivalListingsPage = () => {
       try {
         setIsLoading(true);
         
-        // Get events from the API service
-        const events = await fetchTicketmasterEvents();
+        const { data: events, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('country', 'Ireland')
+          .eq('is_festival', true)
+          .order('raw_date', { ascending: true });
+
+        if (error) throw error;
         
-        const allGenres = new Set<string>();
-        allGenres.add("All Genres");
-        
-        // Filter for festival events
-        const festivals = events.filter(event => {
-          // Try to identify festivals by keywords in the title or genre
-          const isFestival = 
-            event.title?.toLowerCase().includes("festival") || 
-            event.subgenre?.toLowerCase().includes("festival") ||
-            event.genre?.toLowerCase().includes("festival");
-            
-          if (isFestival && event.genre && event.genre !== "Undefined") {
-            allGenres.add(event.genre);
-          }
-          
-          return isFestival;
-        });
-        
-        // Sort festivals by date
-        const sortedFestivals = [...festivals].sort((a, b) => {
-          const dateA = new Date(a.date);
-          const dateB = new Date(b.date);
-          return dateA.getTime() - dateB.getTime();
-        });
-        
-        setFestivalListings(sortedFestivals);
-        setGenres(Array.from(allGenres));
-        setIsLoading(false);
-        
-        console.log(`Found ${sortedFestivals.length} festivals`);
+        const mappedEvents: EventCardProps[] = (events || []).map(event => ({
+          id: event.id,
+          title: event.title,
+          artist: event.artist || '',
+          venue: event.venue || '',
+          date: event.date || '',
+          time: event.time || '',
+          imageUrl: event.image_url || '/placeholder.svg',
+          type: (event.type as 'concert' | 'festival') || 'festival',
+          category: 'listing' as const,
+          genre: event.genre || undefined,
+          subgenre: event.subgenre || undefined,
+          price: event.price || undefined,
+          ticketUrl: event.ticket_url || undefined,
+          rawDate: event.raw_date || undefined,
+          onSaleDate: event.on_sale_date || null,
+          source: 'database',
+          venue_id: event.venue_id || undefined,
+          is_featured: event.is_featured,
+          is_hidden: event.is_hidden,
+          rawData: event.raw_data
+        }));
+
+        setFestivalListings(mappedEvents);
       } catch (error) {
         console.error("Error loading festival data:", error);
-        toast.error("Failed to load festival data. Please try again later.");
+        toast.error("Failed to load festival data");
+      } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadFestivals();
   }, []);
-  
+
   useEffect(() => {
     const filtered = festivalListings.filter(listing => {
       const matchesSearch = 
