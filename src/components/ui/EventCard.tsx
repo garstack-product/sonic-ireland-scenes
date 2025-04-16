@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { Heart, Ticket, Euro } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -19,6 +20,7 @@ export interface EventCardProps {
   genre?: string;
   subgenre?: string;
   price?: number;
+  maxPrice?: number; // Add maxPrice property for price ranges
   ticketUrl?: string;
   rawDate?: string; // Raw date for filtering
   onSaleDate?: string | null; // When tickets went on sale
@@ -42,6 +44,7 @@ const EventCard = ({
   genre,
   subgenre,
   price,
+  maxPrice,
   ticketUrl
 }: EventCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
@@ -74,6 +77,29 @@ const EventCard = ({
       setIsLiked(true);
       toast.success(`Added ${title} to your liked events`);
     }
+  };
+
+  // Format price display based on available information
+  const renderPrice = () => {
+    if (price === undefined || price === null) {
+      return null;
+    }
+    
+    if (maxPrice && maxPrice > price) {
+      return (
+        <div className="mt-1 flex items-center">
+          <Euro size={14} className="mr-1" /> 
+          <span>{price.toFixed(2)} - €{maxPrice.toFixed(2)}</span>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="mt-1 flex items-center">
+        <Euro size={14} className="mr-1" /> 
+        <span>{price.toFixed(2)}</span>
+      </div>
+    );
   };
 
   return (
@@ -116,12 +142,7 @@ const EventCard = ({
           <div>{venue}</div>
           <div className="mt-1">{date}</div>
           {time && <div className="mt-0.5">{time}</div>}
-          {price !== undefined && price > 0 && (
-            <div className="mt-1 flex items-center">
-              <Euro size={14} className="mr-1" /> 
-              <span>{price.toFixed(2)}</span>
-            </div>
-          )}
+          {renderPrice()}
         </div>
         
         <div className="mt-3 flex justify-between items-center">

@@ -17,7 +17,7 @@ export const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
       const city = event._embedded?.venues?.[0]?.city?.name || "";
       const venueFull = city ? `${venue}, ${city}` : venue;
       
-      // Get price info
+      // Get price info with both min and max values
       const minPrice = event.priceRanges?.[0]?.min || 0;
       const maxPrice = event.priceRanges?.[0]?.max || 0;
       
@@ -57,6 +57,7 @@ export const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
         genre: genre !== "Undefined" ? genre : undefined,
         subgenre: subgenre !== "Undefined" ? subgenre : undefined,
         price: minPrice,
+        maxPrice: maxPrice > minPrice ? maxPrice : undefined, // Only include maxPrice if it's different from minPrice
         ticketUrl: event.url, // Add ticket URL
         rawDate: startDate, // Add raw date for filtering
         onSaleDate: event.sales?.public?.startDateTime || null // When tickets went on sale

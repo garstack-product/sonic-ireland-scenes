@@ -232,8 +232,9 @@ async function fetchTicketmasterEvents() {
       const genre = event.classifications?.[0]?.genre?.name;
       const subgenre = event.classifications?.[0]?.subGenre?.name;
       
-      // Get price info
-      const price = event.priceRanges?.[0]?.min;
+      // Get price info - now extracting both min and max price
+      const minPrice = event.priceRanges?.[0]?.min;
+      const maxPrice = event.priceRanges?.[0]?.max;
       
       // Try to extract artist name
       let artistName = "";
@@ -291,13 +292,17 @@ async function fetchTicketmasterEvents() {
         ticket_url: event.url,
         genre: genre !== "Undefined" ? genre : null,
         subgenre: subgenre !== "Undefined" ? subgenre : null,
-        price: price || null,
+        price: minPrice || null,
+        // Include raw price ranges in the raw_data field
+        raw_data: {
+          ...event,
+          priceRanges: event.priceRanges // Ensure the price ranges are stored in raw_data
+        },
         type: eventType,
         description: event.info || null,
-        raw_data: event,
         artist_links: processedLinks,
         country: event._countryCode === 'GB' ? 'UK' : 'Ireland',
-        is_festival: true
+        is_festival: isFestival
       };
     });
     

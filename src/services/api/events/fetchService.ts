@@ -37,26 +37,43 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
     console.log(`Got ${events.length} events from database`);
     
     // Map database events to EventCardProps format
-    return events.map(event => ({
-      id: event.id,
-      title: event.title,
-      artist: event.artist || '',
-      venue: event.venue || '',
-      date: event.date || '',
-      time: event.time || '',
-      imageUrl: event.image_url || '/placeholder.svg',
-      type: (event.type as 'concert' | 'festival') || 'concert',
-      category: 'listing' as const,
-      genre: event.genre || undefined,
-      subgenre: event.subgenre || undefined,
-      price: event.price || undefined,
-      ticketUrl: event.ticket_url || undefined,
-      rawDate: event.raw_date || undefined,
-      onSaleDate: event.on_sale_date || null,
-      is_featured: event.is_featured,
-      is_hidden: event.is_hidden,
-      rawData: event.raw_data
-    }));
+    return events.map(event => {
+      // Extract min and max price from raw_data if available
+      let price = event.price;
+      let maxPrice = undefined;
+      
+      if (event.raw_data?.priceRanges && event.raw_data.priceRanges.length > 0) {
+        price = event.raw_data.priceRanges[0].min;
+        maxPrice = event.raw_data.priceRanges[0].max;
+        
+        // Only set maxPrice if it's different from price
+        if (maxPrice <= price) {
+          maxPrice = undefined;
+        }
+      }
+      
+      return {
+        id: event.id,
+        title: event.title,
+        artist: event.artist || '',
+        venue: event.venue || '',
+        date: event.date || '',
+        time: event.time || '',
+        imageUrl: event.image_url || '/placeholder.svg',
+        type: (event.type as 'concert' | 'festival') || 'concert',
+        category: 'listing' as const,
+        genre: event.genre || undefined,
+        subgenre: event.subgenre || undefined,
+        price: price || undefined,
+        maxPrice: maxPrice,
+        ticketUrl: event.ticket_url || undefined,
+        rawDate: event.raw_date || undefined,
+        onSaleDate: event.on_sale_date || null,
+        is_featured: event.is_featured,
+        is_hidden: event.is_hidden,
+        rawData: event.raw_data
+      };
+    });
   } catch (error) {
     console.error("Error in fetchAllEvents:", error);
     toast.error("Error fetching events from database. Falling back to API.");

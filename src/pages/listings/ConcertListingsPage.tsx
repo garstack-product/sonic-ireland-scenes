@@ -5,7 +5,7 @@ import EventGrid from "@/components/ui/EventGrid";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Search, Calendar, ChevronDown } from "lucide-react";
+import { Search, Calendar, ChevronDown, Euro } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { toast } from "sonner";
@@ -83,9 +83,11 @@ const ConcertListingsPage = () => {
       
       const matchesGenre = selectedGenre === "All Genres" || listing.genre === selectedGenre;
       
+      // Updated price filtering logic to handle price ranges
       const matchesPrice = 
         !listing.price || 
-        (listing.price >= priceRange[0] && listing.price <= priceRange[1]);
+        (listing.price >= priceRange[0] && 
+         (listing.maxPrice ? listing.maxPrice <= priceRange[1] : listing.price <= priceRange[1]));
       
       // Check if event's date is within the selected date range
       let matchesDateRange = true;

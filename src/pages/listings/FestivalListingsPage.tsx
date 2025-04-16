@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Search, Calendar, ChevronDown } from "lucide-react";
+import { Search, Calendar, ChevronDown, Euro } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -44,30 +45,58 @@ const FestivalListingsPage = () => {
 
         if (error) throw error;
         
-        const mappedEvents: EventCardProps[] = (events || []).map(event => ({
-          id: event.id,
-          title: event.title,
-          artist: event.artist || '',
-          venue: event.venue || '',
-          date: event.date || '',
-          time: event.time || '',
-          imageUrl: event.image_url || '/placeholder.svg',
-          type: (event.type as 'concert' | 'festival') || 'festival',
-          category: 'listing' as const,
-          genre: event.genre || undefined,
-          subgenre: event.subgenre || undefined,
-          price: event.price || undefined,
-          ticketUrl: event.ticket_url || undefined,
-          rawDate: event.raw_date || undefined,
-          onSaleDate: event.on_sale_date || null,
-          source: 'database',
-          venue_id: event.venue_id || undefined,
-          is_featured: event.is_featured,
-          is_hidden: event.is_hidden,
-          rawData: event.raw_data
-        }));
+        // Extract all genres
+        const allGenres = new Set<string>();
+        allGenres.add("All Genres");
+        
+        events.forEach(event => {
+          if (event.genre && event.genre !== "Undefined") {
+            allGenres.add(event.genre);
+          }
+        });
+        
+        const mappedEvents: EventCardProps[] = (events || []).map(event => {
+          // Extract min and max price from event.raw_data if available
+          let price = event.price;
+          let maxPrice = undefined;
+          
+          if (event.raw_data?.priceRanges && event.raw_data.priceRanges.length > 0) {
+            price = event.raw_data.priceRanges[0].min;
+            maxPrice = event.raw_data.priceRanges[0].max;
+            
+            // Only set maxPrice if it's different from price
+            if (maxPrice <= price) {
+              maxPrice = undefined;
+            }
+          }
+          
+          return {
+            id: event.id,
+            title: event.title,
+            artist: event.artist || '',
+            venue: event.venue || '',
+            date: event.date || '',
+            time: event.time || '',
+            imageUrl: event.image_url || '/placeholder.svg',
+            type: (event.type as 'concert' | 'festival') || 'festival',
+            category: 'listing' as const,
+            genre: event.genre || undefined,
+            subgenre: event.subgenre || undefined,
+            price: price || undefined,
+            maxPrice: maxPrice,
+            ticketUrl: event.ticket_url || undefined,
+            rawDate: event.raw_date || undefined,
+            onSaleDate: event.on_sale_date || null,
+            source: 'database',
+            venue_id: event.venue_id || undefined,
+            is_featured: event.is_featured,
+            is_hidden: event.is_hidden,
+            rawData: event.raw_data
+          };
+        });
 
         setFestivalListings(mappedEvents);
+        setGenres(Array.from(allGenres));
       } catch (error) {
         console.error("Error loading festival data:", error);
         toast.error("Failed to load festival data");
@@ -88,9 +117,11 @@ const FestivalListingsPage = () => {
       
       const matchesGenre = selectedGenre === "All Genres" || listing.genre === selectedGenre;
       
+      // Updated price filtering logic to handle price ranges
       const matchesPrice = 
         !listing.price || 
-        (listing.price >= priceRange[0] && listing.price <= priceRange[1]);
+        (listing.price >= priceRange[0] && 
+         (listing.maxPrice ? listing.maxPrice <= priceRange[1] : listing.price <= priceRange[1]));
       
       let matchesDateRange = true;
       if (dateRange.from || dateRange.to) {
