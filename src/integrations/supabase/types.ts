@@ -37,6 +37,7 @@ export type Database = {
         Row: {
           artist: string | null
           artist_links: Json | null
+          country: string | null
           created_at: string
           date: string | null
           description: string | null
@@ -62,6 +63,7 @@ export type Database = {
         Insert: {
           artist?: string | null
           artist_links?: Json | null
+          country?: string | null
           created_at?: string
           date?: string | null
           description?: string | null
@@ -87,6 +89,7 @@ export type Database = {
         Update: {
           artist?: string | null
           artist_links?: Json | null
+          country?: string | null
           created_at?: string
           date?: string | null
           description?: string | null

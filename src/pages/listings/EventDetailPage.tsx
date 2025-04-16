@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink, Facebook, Instagram, Twitter } from "lucide-react";
@@ -28,8 +27,8 @@ interface EventDetail {
   ticketUrl?: string;
   venueMapUrl?: string;
   type: "concert" | "festival";
-  rawData?: any; // Adding rawData field to store original Ticketmaster response
-  venueData?: any; // Add field for more detailed venue information
+  rawData?: any;
+  venueData?: any;
 }
 
 const EventDetailPage = () => {
@@ -42,7 +41,7 @@ const EventDetailPage = () => {
   const [artistData, setArtistData] = useState<any>(null);
   const [isLoadingArtist, setIsLoadingArtist] = useState(false);
   const [isLoadingVenueEvents, setIsLoadingVenueEvents] = useState(false);
-  
+
   useEffect(() => {
     if (user && id) {
       setLiked(isEventLiked(id));
@@ -64,7 +63,6 @@ const EventDetailPage = () => {
           throw new Error("Failed to fetch event details");
         }
         
-        // Extract venue information
         const venueInfo = eventData.rawData?._embedded?.venues?.[0] || {};
         
         const eventDetail: EventDetail = {
@@ -258,7 +256,6 @@ const EventDetailPage = () => {
     );
   }
 
-  // Extract detailed venue information
   const venueData = event.venueData || {};
   const venueAddress = event.address || venueData?.address?.line1 || "";
   const venueCity = event.city || venueData?.city?.name || "";
@@ -440,7 +437,6 @@ const EventDetailPage = () => {
                     ></iframe>
                   </div>
                   
-                  {/* Additional Venue Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                     {venueAccessibility && (
                       <div className="bg-dark-400 p-4 rounded-lg">

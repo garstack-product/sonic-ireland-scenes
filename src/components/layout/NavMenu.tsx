@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ChevronDown, ChevronUp, LogOut, User } from "lucide-react";
@@ -48,7 +47,19 @@ const NavMenu = () => {
             className="absolute left-0 top-full mt-2 w-48 rounded-md shadow-lg bg-dark-300 ring-1 ring-black ring-opacity-5 py-1 z-10"
           >
             <NavLink to="/listings/concerts" className="block px-4 py-2">Concerts</NavLink>
-            <NavLink to="/listings/festivals" className="block px-4 py-2">Festivals</NavLink>
+            <div className="relative group">
+              <button 
+                className="flex items-center justify-between w-full px-4 py-2 text-white hover:bg-dark-400"
+                onClick={e => e.preventDefault()}
+              >
+                <span>Festivals</span>
+                <ChevronDown size={16} />
+              </button>
+              <div className="absolute left-full top-0 w-48 rounded-md shadow-lg bg-dark-300 ring-1 ring-black ring-opacity-5 py-1">
+                <NavLink to="/listings/festivals" className="block px-4 py-2">Ireland</NavLink>
+                <NavLink to="/listings/festivals/uk" className="block px-4 py-2">UK</NavLink>
+              </div>
+            </div>
             <NavLink to="/listings/just-announced" className="block px-4 py-2">Just Announced</NavLink>
             <NavLink to="/listings/map" className="block px-4 py-2">Map</NavLink>
             {user && (

@@ -24,6 +24,7 @@ import RegisterPage from "./pages/auth/RegisterPage";
 import MyEventsPage from "./pages/user/MyEventsPage";
 import AdminPage from "./pages/admin/AdminPage";
 import EventDetailPage from "./pages/listings/EventDetailPage";
+import UKFestivalsPage from "./pages/listings/UKFestivalsPage";
 
 // Store API keys safely
 const API_KEYS = {
@@ -55,6 +56,7 @@ const App = () => (
               {/* Listings Routes */}
               <Route path="/listings/concerts" element={<ConcertListingsPage />} />
               <Route path="/listings/festivals" element={<FestivalListingsPage />} />
+              <Route path="/listings/festivals/uk" element={<UKFestivalsPage />} />
               <Route path="/listings/just-announced" element={<JustAnnouncedPage />} />
               <Route path="/listings/map" element={<MapPage />} />
               <Route path="/listings/my-events" element={<MyEventsPage />} />

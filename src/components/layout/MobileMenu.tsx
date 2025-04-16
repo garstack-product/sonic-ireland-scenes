@@ -3,14 +3,10 @@ import { Link } from "react-router-dom";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
-interface MobileMenuProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const [showListingsSubmenu, setShowListingsSubmenu] = useState(false);
   const [showReviewsSubmenu, setShowReviewsSubmenu] = useState(false);
+  const [showFestivalsSubmenu, setShowFestivalsSubmenu] = useState(false);
 
   if (!isOpen) return null;
 
@@ -38,7 +34,21 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             {showListingsSubmenu && (
               <div className="ml-4 mt-2 border-l-2 border-gray-700 pl-4 flex flex-col space-y-4 animate-fade-in">
                 <MobileNavLink to="/listings/concerts" onClick={onClose}>Concerts</MobileNavLink>
-                <MobileNavLink to="/listings/festivals" onClick={onClose}>Festivals</MobileNavLink>
+                <div>
+                  <button 
+                    className="flex items-center justify-between w-full text-white py-2"
+                    onClick={() => setShowFestivalsSubmenu(!showFestivalsSubmenu)}
+                  >
+                    <span>Festivals</span>
+                    {showFestivalsSubmenu ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                  </button>
+                  {showFestivalsSubmenu && (
+                    <div className="ml-4 mt-2 border-l-2 border-gray-700 pl-4 flex flex-col space-y-4 animate-fade-in">
+                      <MobileNavLink to="/listings/festivals" onClick={onClose}>Ireland</MobileNavLink>
+                      <MobileNavLink to="/listings/festivals/uk" onClick={onClose}>UK</MobileNavLink>
+                    </div>
+                  )}
+                </div>
                 <MobileNavLink to="/listings/just-announced" onClick={onClose}>Just Announced</MobileNavLink>
                 <MobileNavLink to="/listings/map" onClick={onClose}>Map</MobileNavLink>
               </div>
