@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.6';
 
 // Supabase client
@@ -109,24 +108,21 @@ async function fetchTicketmasterEvents() {
   }
 
   try {
-    // Fetch events from Ticketmaster API
-    console.log("Fetching events from Ticketmaster API...");
-    
-    // Modified to fetch more events by making multiple API calls
-    const fetchAllPages = async () => {
+    // Fetch events from Ticketmaster API for both countries
+    const fetchAllPages = async (countryCode: string) => {
       let allEvents = [];
       let page = 0;
-      const pageSize = 200; // Maximum allowed by Ticketmaster API
+      const pageSize = 200;
       let totalPages = 1;
       
       do {
-        console.log(`Fetching page ${page + 1} of events...`);
-        // Updated to focus on music events in Ireland specifically
+        console.log(`Fetching page ${page + 1} of events for ${countryCode}...`);
         const response = await fetch(
           `https://app.ticketmaster.com/discovery/v2/events.json?` +
-          `countryCode=IE` +
+          `countryCode=${countryCode}` +
           `&size=${pageSize}&page=${page}` +
-          `&segmentName=Music` + // Use segmentName=Music instead of classificationName
+          `&segmentName=Music` +
+          `&keyword=festival` +
           `&apikey=${ticketmasterApiKey}`
         );
         
@@ -137,30 +133,34 @@ async function fetchTicketmasterEvents() {
         const data = await response.json();
         
         if (!data._embedded || !data._embedded.events) {
-          console.warn(`No events found on page ${page}`);
+          console.warn(`No events found on page ${page} for ${countryCode}`);
           break;
         }
         
         // Add events from this page
-        allEvents = [...allEvents, ...data._embedded.events];
+        allEvents = [...allEvents, ...data._embedded.events.map((event: any) => ({
+          ...event,
+          _countryCode: countryCode
+        }))];
         
-        // Update pagination info
         page++;
         totalPages = data.page?.totalPages || 1;
         
-        // Avoid hitting rate limits
         if (page < totalPages) {
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
-      } while (page < totalPages && page < 5); // Limit to 5 pages (1000 events) to avoid timeouts
+      } while (page < totalPages && page < 5);
       
       return allEvents;
     };
     
-    const events = await fetchAllPages();
+    // Fetch events for both countries
+    const ieEvents = await fetchAllPages('IE');
+    const ukEvents = await fetchAllPages('GB');
+    const allEvents = [...ieEvents, ...ukEvents];
     
-    // Filter out any sports events that might have slipped through the classification filter
-    const filteredEvents = events.filter(event => !isSportsEvent(event));
+    // Filter out sports events
+    const filteredEvents = allEvents.filter(event => !isSportsEvent(event));
     console.log(`Found ${filteredEvents.length} non-sports events from Ticketmaster`);
     
     // Process venues first to avoid foreign key issues
@@ -206,7 +206,7 @@ async function fetchTicketmasterEvents() {
       }
     }
     
-    // Process events
+    // Process events with country information
     const processedEvents = filteredEvents.map(event => {
       // Extract venue info
       const venue = event._embedded?.venues?.[0];
@@ -272,7 +272,7 @@ async function fetchTicketmasterEvents() {
         twitter: artistLinks.twitter?.[0]?.url,
         spotify: artistLinks.spotify?.[0]?.url,
         itunes: artistLinks.itunes?.[0]?.url,
-        musicbrainz: null, // Ticketmaster might not provide this
+        musicbrainz: null,
         lastfm: null,
         wiki: null
       };
@@ -296,7 +296,8 @@ async function fetchTicketmasterEvents() {
         description: event.info || null,
         raw_data: event,
         artist_links: processedLinks,
-        is_festival: isFestival // Adding the is_festival flag
+        country: event._countryCode === 'GB' ? 'UK' : 'Ireland',
+        is_festival: true
       };
     });
     

@@ -168,13 +168,24 @@ const EventDetailPage = () => {
   };
 
   const getEventImage = () => {
-    const eventImageUrl = 
-      artistData?.artist_image || 
-      event?.rawData?.images?.find((img: any) => img.ratio === '16_9')?.url || 
-      (event?.artist ? `/artist-images/${event.artist.toLowerCase().replace(/\s+/g, '-')}.jpg` : null) || 
-      '/placeholder.svg';
-
-    return eventImageUrl;
+    if (!event) return '/placeholder.svg';
+    
+    // Try to get the best quality artist image
+    const artistImage = event.rawData?._embedded?.attractions?.[0]?.images?.find(
+      (img: any) => img.ratio === '16_9' && img.width > 1024
+    )?.url;
+    
+    if (artistImage) return artistImage;
+    
+    // Fallback to event images
+    const eventImage = event.rawData?.images?.find(
+      (img: any) => img.ratio === '16_9' && img.width > 1024
+    )?.url;
+    
+    if (eventImage) return eventImage;
+    
+    // Final fallback
+    return event.imageUrl || '/placeholder.svg';
   };
 
   const socialLinks = getSocialLinksFromData(artistData);
