@@ -3,6 +3,11 @@ import { Link } from "react-router-dom";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 
+interface MobileMenuProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const [showListingsSubmenu, setShowListingsSubmenu] = useState(false);
   const [showReviewsSubmenu, setShowReviewsSubmenu] = useState(false);
