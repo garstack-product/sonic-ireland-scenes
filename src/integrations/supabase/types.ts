@@ -228,6 +228,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_add_event: {
+        Args: { event_data: Json }
+        Returns: undefined
+      }
       should_update_cache: {
         Args: { cache_id: string; interval_hours: number }
         Returns: boolean

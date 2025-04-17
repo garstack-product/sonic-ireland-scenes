@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,9 +64,10 @@ const AddEvent = () => {
         } : null
       };
 
-      // Use RPC function to bypass RLS for admin users
-      const { data, error } = await supabase
-        .rpc('admin_add_event', { event_data: eventData });
+      // Use custom RPC function to insert event
+      const { error } = await supabase.rpc('admin_add_event', { 
+        event_data: JSON.stringify(eventData) 
+      });
 
       if (error) throw error;
       
