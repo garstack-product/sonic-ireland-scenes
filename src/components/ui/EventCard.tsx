@@ -87,7 +87,7 @@ const EventCard = ({
     
     if (maxPrice && maxPrice > price) {
       return (
-        <div className="mt-1 flex items-center">
+        <div className="mt-1 flex items-center text-gray-400">
           <Euro size={14} className="mr-1" /> 
           <span>{price.toFixed(2)} - €{maxPrice.toFixed(2)}</span>
         </div>
@@ -95,7 +95,7 @@ const EventCard = ({
     }
     
     return (
-      <div className="mt-1 flex items-center">
+      <div className="mt-1 flex items-center text-gray-400">
         <Euro size={14} className="mr-1" /> 
         <span>{price.toFixed(2)}</span>
       </div>

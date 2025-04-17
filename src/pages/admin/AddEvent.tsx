@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,10 +63,9 @@ const AddEvent = () => {
         } : null
       };
 
-      // Insert into database
-      const { error } = await supabase
-        .from('events')
-        .insert(eventData);
+      // Use RPC function to bypass RLS for admin users
+      const { data, error } = await supabase
+        .rpc('admin_add_event', { event_data: eventData });
 
       if (error) throw error;
       
