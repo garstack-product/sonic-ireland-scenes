@@ -8,10 +8,12 @@ import { toast } from "sonner";
 import EventFilters from "@/components/events/filters/EventFilters";
 import EventListingsStatus from "@/components/events/EventListingsStatus";
 import { useEventFiltering } from "@/hooks/useEventFiltering";
+import EventSyncButton from "@/components/admin/EventSyncButton";
 
 const UKFestivalsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [festivals, setFestivals] = useState<EventCardProps[]>([]);
+  const [lastSyncInfo, setLastSyncInfo] = useState<string>("Last sync: Unknown");
   
   // Use the hook for event filtering functionality
   const {
@@ -31,74 +33,86 @@ const UKFestivalsPage = () => {
     handleLoadMore
   } = useEventFiltering({ events: festivals });
 
-  useEffect(() => {
-    const loadFestivals = async () => {
-      try {
-        setIsLoading(true);
+  const loadFestivals = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data: events, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('country', 'UK')
+        .eq('is_festival', true)
+        .order('raw_date', { ascending: true });
+
+      if (error) throw error;
+
+      // Get last sync time
+      const { data: cacheMeta } = await supabase
+        .from('cache_metadata')
+        .select('last_updated, status')
+        .eq('id', 'ticketmaster')
+        .single();
+
+      if (cacheMeta) {
+        const lastSync = new Date(cacheMeta.last_updated);
+        setLastSyncInfo(`Last sync: ${lastSync.toLocaleString()} - ${cacheMeta.status}`);
+      }
+
+      // Map the database fields to EventCardProps format
+      const mappedEvents: EventCardProps[] = (events || []).map(event => {
+        // Extract min and max price from event.raw_data if available
+        let price = event.price;
+        let maxPrice = undefined;
         
-        const { data: events, error } = await supabase
-          .from('events')
-          .select('*')
-          .eq('country', 'UK')
-          .eq('is_festival', true)
-          .order('raw_date', { ascending: true });
-
-        if (error) throw error;
-
-        // Map the database fields to EventCardProps format
-        const mappedEvents: EventCardProps[] = (events || []).map(event => {
-          // Extract min and max price from event.raw_data if available
-          let price = event.price;
-          let maxPrice = undefined;
+        if (event.raw_data && typeof event.raw_data === 'object') {
+          const rawData = event.raw_data as any;
           
-          if (event.raw_data && typeof event.raw_data === 'object') {
-            const rawData = event.raw_data as any;
+          if (rawData.priceRanges && Array.isArray(rawData.priceRanges) && rawData.priceRanges.length > 0) {
+            price = rawData.priceRanges[0].min;
+            maxPrice = rawData.priceRanges[0].max;
             
-            if (rawData.priceRanges && Array.isArray(rawData.priceRanges) && rawData.priceRanges.length > 0) {
-              price = rawData.priceRanges[0].min;
-              maxPrice = rawData.priceRanges[0].max;
-              
-              // Only set maxPrice if it's different from price
-              if (maxPrice <= price) {
-                maxPrice = undefined;
-              }
+            // Only set maxPrice if it's different from price
+            if (maxPrice <= price) {
+              maxPrice = undefined;
             }
           }
+        }
 
-          return {
-            id: event.id,
-            title: event.title,
-            artist: event.artist || '',
-            venue: event.venue || '',
-            date: event.date || '',
-            time: event.time || '',
-            imageUrl: event.image_url || '/placeholder.svg',
-            type: (event.type as 'concert' | 'festival') || 'festival',
-            category: 'listing' as const,
-            genre: event.genre || undefined,
-            subgenre: event.subgenre || undefined,
-            price: price || undefined,
-            maxPrice: maxPrice,
-            ticketUrl: event.ticket_url || undefined,
-            rawDate: event.raw_date || undefined,
-            onSaleDate: event.on_sale_date || null,
-            source: 'database',
-            venue_id: event.venue_id || undefined,
-            is_featured: event.is_featured,
-            is_hidden: event.is_hidden,
-            rawData: event.raw_data
-          };
-        });
+        return {
+          id: event.id,
+          title: event.title,
+          artist: event.artist || '',
+          venue: event.venue || '',
+          date: event.date || '',
+          time: event.time || '',
+          imageUrl: event.image_url || '/placeholder.svg',
+          type: (event.type as 'concert' | 'festival') || 'festival',
+          category: 'listing' as const,
+          genre: event.genre || undefined,
+          subgenre: event.subgenre || undefined,
+          price: price || undefined,
+          maxPrice: maxPrice,
+          ticketUrl: event.ticket_url || undefined,
+          rawDate: event.raw_date || undefined,
+          onSaleDate: event.on_sale_date || null,
+          source: 'database',
+          venue_id: event.venue_id || undefined,
+          is_featured: event.is_featured,
+          is_hidden: event.is_hidden,
+          rawData: event.raw_data
+        };
+      });
 
-        setFestivals(mappedEvents);
-      } catch (error) {
-        console.error("Error loading UK festivals:", error);
-        toast.error("Failed to load UK festivals");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setFestivals(mappedEvents);
+    } catch (error) {
+      console.error("Error loading UK festivals:", error);
+      toast.error("Failed to load UK festivals");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadFestivals();
   }, []);
 
@@ -108,6 +122,14 @@ const UKFestivalsPage = () => {
         title="UK Festivals" 
         subtitle="Discover upcoming festivals in the United Kingdom"
       />
+
+      <div className="mb-6">
+        <EventSyncButton 
+          isLoading={isLoading} 
+          onSyncComplete={loadFestivals}
+          lastSyncInfo={lastSyncInfo}
+        />
+      </div>
       
       <EventFilters
         searchTerm={searchTerm}

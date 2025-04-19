@@ -8,10 +8,12 @@ import { toast } from "sonner";
 import EventFilters from "@/components/events/filters/EventFilters";
 import EventListingsStatus from "@/components/events/EventListingsStatus";
 import { useEventFiltering } from "@/hooks/useEventFiltering";
+import EventSyncButton from "@/components/admin/EventSyncButton";
 
 const SpainFestivalsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [festivals, setFestivals] = useState<EventCardProps[]>([]);
+  const [lastSyncInfo, setLastSyncInfo] = useState<string>("Last sync: Unknown");
   
   const {
     searchTerm,
@@ -30,72 +32,98 @@ const SpainFestivalsPage = () => {
     handleLoadMore
   } = useEventFiltering({ events: festivals });
 
-  useEffect(() => {
-    const loadFestivals = async () => {
-      try {
-        setIsLoading(true);
+  const loadFestivals = async () => {
+    try {
+      setIsLoading(true);
+      
+      // First check if we have any events from Spain
+      const { count: spainCount, error: countError } = await supabase
+        .from('events')
+        .select('*', { count: 'exact', head: true })
+        .eq('country', 'Spain');
+      
+      if (countError) throw countError;
+      
+      console.log(`Found ${spainCount} events for Spain`);
+      
+      if (spainCount === 0) {
+        toast.info("No Spanish festivals found. Please sync Ticketmaster data.");
+      }
+
+      // Updated query to ensure we only get festivals from Spain
+      const { data: events, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('country', 'Spain')
+        .eq('is_festival', true)
+        .order('raw_date', { ascending: true });
+
+      if (error) throw error;
+
+      // Get last sync time
+      const { data: cacheMeta } = await supabase
+        .from('cache_metadata')
+        .select('last_updated, status')
+        .eq('id', 'ticketmaster')
+        .single();
+
+      if (cacheMeta) {
+        const lastSync = new Date(cacheMeta.last_updated);
+        setLastSyncInfo(`Last sync: ${lastSync.toLocaleString()} - ${cacheMeta.status}`);
+      }
+
+      const mappedEvents: EventCardProps[] = (events || []).map(event => {
+        let price = event.price;
+        let maxPrice = undefined;
         
-        // Updated query to ensure we only get festivals from Spain
-        const { data: events, error } = await supabase
-          .from('events')
-          .select('*')
-          .eq('country', 'Spain')
-          .eq('is_festival', true)
-          .order('raw_date', { ascending: true });
-
-        if (error) throw error;
-
-        const mappedEvents: EventCardProps[] = (events || []).map(event => {
-          let price = event.price;
-          let maxPrice = undefined;
+        if (event.raw_data && typeof event.raw_data === 'object') {
+          const rawData = event.raw_data as any;
           
-          if (event.raw_data && typeof event.raw_data === 'object') {
-            const rawData = event.raw_data as any;
+          if (rawData.priceRanges && Array.isArray(rawData.priceRanges) && rawData.priceRanges.length > 0) {
+            price = rawData.priceRanges[0].min;
+            maxPrice = rawData.priceRanges[0].max;
             
-            if (rawData.priceRanges && Array.isArray(rawData.priceRanges) && rawData.priceRanges.length > 0) {
-              price = rawData.priceRanges[0].min;
-              maxPrice = rawData.priceRanges[0].max;
-              
-              if (maxPrice <= price) {
-                maxPrice = undefined;
-              }
+            if (maxPrice <= price) {
+              maxPrice = undefined;
             }
           }
+        }
 
-          return {
-            id: event.id,
-            title: event.title,
-            artist: event.artist || '',
-            venue: event.venue || '',
-            date: event.date || '',
-            time: event.time || '',
-            imageUrl: event.image_url || '/placeholder.svg',
-            type: (event.type as 'concert' | 'festival') || 'festival',
-            category: 'listing' as const,
-            genre: event.genre || undefined,
-            subgenre: event.subgenre || undefined,
-            price: price || undefined,
-            maxPrice: maxPrice,
-            ticketUrl: event.ticket_url || undefined,
-            rawDate: event.raw_date || undefined,
-            onSaleDate: event.on_sale_date || null,
-            source: 'database',
-            venue_id: event.venue_id || undefined,
-            is_featured: event.is_featured,
-            is_hidden: event.is_hidden,
-            rawData: event.raw_data
-          };
-        });
+        return {
+          id: event.id,
+          title: event.title,
+          artist: event.artist || '',
+          venue: event.venue || '',
+          date: event.date || '',
+          time: event.time || '',
+          imageUrl: event.image_url || '/placeholder.svg',
+          type: (event.type as 'concert' | 'festival') || 'festival',
+          category: 'listing' as const,
+          genre: event.genre || undefined,
+          subgenre: event.subgenre || undefined,
+          price: price || undefined,
+          maxPrice: maxPrice,
+          ticketUrl: event.ticket_url || undefined,
+          rawDate: event.raw_date || undefined,
+          onSaleDate: event.on_sale_date || null,
+          source: 'database',
+          venue_id: event.venue_id || undefined,
+          is_featured: event.is_featured,
+          is_hidden: event.is_hidden,
+          rawData: event.raw_data
+        };
+      });
 
-        setFestivals(mappedEvents);
-      } catch (error) {
-        console.error("Error loading Spanish festivals:", error);
-        toast.error("Failed to load Spanish festivals");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setFestivals(mappedEvents);
+    } catch (error) {
+      console.error("Error loading Spanish festivals:", error);
+      toast.error("Failed to load Spanish festivals");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadFestivals();
   }, []);
 
@@ -105,6 +133,14 @@ const SpainFestivalsPage = () => {
         title="Spanish Festivals" 
         subtitle="Discover upcoming festivals in Spain"
       />
+
+      <div className="mb-6">
+        <EventSyncButton 
+          isLoading={isLoading} 
+          onSyncComplete={loadFestivals}
+          lastSyncInfo={lastSyncInfo}
+        />
+      </div>
       
       <EventFilters
         searchTerm={searchTerm}
@@ -134,7 +170,7 @@ const SpainFestivalsPage = () => {
         <>
           <EventGrid 
             events={displayedListings} 
-            emptyMessage="No festivals found matching your filters."
+            emptyMessage="No festivals found matching your filters. Please try syncing data."
           />
           
           <EventListingsStatus
