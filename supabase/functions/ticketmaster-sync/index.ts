@@ -108,21 +108,32 @@ async function fetchTicketmasterEvents() {
   }
 
   try {
-    // Fetch events from Ticketmaster API for both countries
-    const fetchAllPages = async (countryCode: string) => {
+    // Define countries to fetch
+    const countries = [
+      { code: 'IE', name: 'Ireland' },
+      { code: 'GB', name: 'UK' },
+      { code: 'FR', name: 'France' },
+      { code: 'ES', name: 'Spain' },
+      { code: 'DE', name: 'Germany' },
+      { code: 'NL', name: 'Netherlands' }
+    ];
+    
+    // Fetch events for all countries
+    const fetchAllPages = async (countryCode: string, countryName: string) => {
       let allEvents = [];
       let page = 0;
       const pageSize = 200;
       let totalPages = 1;
       
       do {
-        console.log(`Fetching page ${page + 1} of events for ${countryCode}...`);
+        console.log(`Fetching page ${page + 1} of events for ${countryName}...`);
         const response = await fetch(
           `https://app.ticketmaster.com/discovery/v2/events.json?` +
           `countryCode=${countryCode}` +
           `&size=${pageSize}&page=${page}` +
           `&segmentName=Music` +
           `&keyword=festival` +
+          `&locale=*` +
           `&apikey=${ticketmasterApiKey}`
         );
         
@@ -133,14 +144,14 @@ async function fetchTicketmasterEvents() {
         const data = await response.json();
         
         if (!data._embedded || !data._embedded.events) {
-          console.warn(`No events found on page ${page} for ${countryCode}`);
+          console.warn(`No events found on page ${page} for ${countryName}`);
           break;
         }
         
         // Add events from this page
         allEvents = [...allEvents, ...data._embedded.events.map((event: any) => ({
           ...event,
-          _countryCode: countryCode
+          _countryName: countryName
         }))];
         
         page++;
@@ -154,10 +165,13 @@ async function fetchTicketmasterEvents() {
       return allEvents;
     };
     
-    // Fetch events for both countries
-    const ieEvents = await fetchAllPages('IE');
-    const ukEvents = await fetchAllPages('GB');
-    const allEvents = [...ieEvents, ...ukEvents];
+    // Fetch events for all countries in parallel
+    const countryEvents = await Promise.all(
+      countries.map(country => fetchAllPages(country.code, country.name))
+    );
+    
+    // Combine all events
+    const allEvents = countryEvents.flat();
     
     // Filter out sports events
     const filteredEvents = allEvents.filter(event => !isSportsEvent(event));
@@ -301,7 +315,7 @@ async function fetchTicketmasterEvents() {
         type: eventType,
         description: event.info || null,
         artist_links: processedLinks,
-        country: event._countryCode === 'GB' ? 'UK' : 'Ireland',
+        country: event._countryName, // Use the country name we added
         is_festival: isFestival
       };
     });
