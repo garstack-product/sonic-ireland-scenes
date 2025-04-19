@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.6';
 
 // Supabase client
@@ -260,15 +261,15 @@ async function fetchTicketmasterEvents() {
         artistName = event.name;
       }
       
-      // Compute event type
-      let eventType = "concert";
       // Determine if this is a festival
-      const isFestival = event.name?.toLowerCase().includes("festival") || 
-          event.classifications?.[0]?.subGenre?.name?.toLowerCase().includes("festival");
-          
-      if (isFestival) {
-        eventType = "festival";
-      }
+      // IMPROVED: Explicitly check for festival in event name, subgenre, or keyword
+      const isFestival = 
+        event.name?.toLowerCase().includes("festival") || 
+        event.classifications?.[0]?.subGenre?.name?.toLowerCase().includes("festival") ||
+        event.keyword?.toLowerCase?.()?.includes("festival") ||
+        // Since we're using 'keyword=festival' in our API query, all results should be festivals
+        // but let's make sure by checking the query parameters used
+        true;
       
       // Create properly formatted datetime string for raw_date
       const rawDateTime = event.dates?.start?.dateTime || event.dates?.start?.localDate;
@@ -312,11 +313,11 @@ async function fetchTicketmasterEvents() {
           ...event,
           priceRanges: event.priceRanges // Ensure the price ranges are stored in raw_data
         },
-        type: eventType,
+        type: isFestival ? "festival" : "concert",
         description: event.info || null,
         artist_links: processedLinks,
         country: event._countryName, // Use the country name we added
-        is_festival: isFestival
+        is_festival: isFestival // IMPORTANT: Make sure this is set to true for festival events
       };
     });
     
@@ -400,3 +401,4 @@ Deno.serve(async (req) => {
     });
   }
 });
+

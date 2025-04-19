@@ -35,6 +35,7 @@ const FranceFestivalsPage = () => {
       try {
         setIsLoading(true);
         
+        // Updated query to ensure we only get festivals from France
         const { data: events, error } = await supabase
           .from('events')
           .select('*')

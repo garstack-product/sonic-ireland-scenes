@@ -19,6 +19,16 @@ export const syncTicketmasterEvents = async (): Promise<{ success: boolean, mess
       throw new Error(result.error);
     }
     
+    // Force a refresh of the page after successful sync to show the new data
+    if (result.refreshed) {
+      toast.success(`Successfully refreshed ${result.count} events. Reloading data...`);
+      
+      // Wait 2 seconds before suggesting a page reload
+      setTimeout(() => {
+        toast.info("Please refresh the page to see the latest festival data");
+      }, 2000);
+    }
+    
     return { 
       success: true, 
       message: result.refreshed 
