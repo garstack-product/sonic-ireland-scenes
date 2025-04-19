@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
@@ -115,7 +116,7 @@ const NetherlandsFestivalsPage = () => {
         dateRange={dateRange}
         setDateRange={setDateRange}
         showDatePicker={showDatePicker}
-        setShowDatePicker={showDatePicker}
+        setShowDatePicker={setShowDatePicker}
       />
       
       <div className="mb-6 mt-4">
