@@ -1,163 +1,129 @@
 
-import { useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, ChevronUp, LogOut, User } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
+// Navigation items configuration
+const navItems = [
+  { label: "Home", path: "/" },
+  {
+    label: "Listings",
+    path: "/listings",
+    subItems: [
+      { label: "Concerts", path: "/listings/concerts" },
+      { label: "Festivals", path: "/listings/festivals" },
+      { label: "UK Festivals", path: "/listings/festivals/uk" },
+      { label: "Spanish Festivals", path: "/listings/festivals/spain" },
+      { label: "French Festivals", path: "/listings/festivals/france" },
+      { label: "German Festivals", path: "/listings/festivals/germany" },
+      { label: "Dutch Festivals", path: "/listings/festivals/netherlands" },
+      { label: "Just Announced", path: "/listings/just-announced" },
+      { label: "Map", path: "/listings/map" },
+    ],
+  },
+  {
+    label: "Reviews",
+    path: "/reviews",
+    subItems: [
+      { label: "Concerts", path: "/reviews/concerts" },
+      { label: "Festivals", path: "/reviews/festivals" },
+    ],
+  },
+  { label: "News", path: "/news" },
+  { label: "About", path: "/about" },
+];
+
+// Nav menu component
 const NavMenu = () => {
-  const [showListingsSubmenu, setShowListingsSubmenu] = useState(false);
-  const [showReviewsSubmenu, setShowReviewsSubmenu] = useState(false);
-  const [showUserSubmenu, setShowUserSubmenu] = useState(false);
-  const [showFestivalsSubmenu, setShowFestivalsSubmenu] = useState(false);
-  const { user, logout } = useAuth();
   const location = useLocation();
+  const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null);
 
-  const toggleListingsSubmenu = () => {
-    setShowListingsSubmenu(!showListingsSubmenu);
-    if (showReviewsSubmenu) setShowReviewsSubmenu(false);
-    if (showUserSubmenu) setShowUserSubmenu(false);
+  const isActive = (path: string) => {
+    if (path === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(path);
   };
 
-  const toggleReviewsSubmenu = () => {
-    setShowReviewsSubmenu(!showReviewsSubmenu);
-    if (showListingsSubmenu) setShowListingsSubmenu(false);
-    if (showUserSubmenu) setShowUserSubmenu(false);
+  const handleMouseEnter = (label: string) => {
+    setActiveDropdown(label);
   };
 
-  const toggleUserSubmenu = () => {
-    setShowUserSubmenu(!showUserSubmenu);
-    if (showListingsSubmenu) setShowListingsSubmenu(false);
-    if (showReviewsSubmenu) setShowReviewsSubmenu(false);
-  };
-
-  const toggleFestivalsSubmenu = () => {
-    setShowFestivalsSubmenu(!showFestivalsSubmenu);
-  };
-
-  const handleNavigation = () => {
-    setShowListingsSubmenu(false);
-    setShowReviewsSubmenu(false);
-    setShowUserSubmenu(false);
-    setShowFestivalsSubmenu(false);
+  const handleMouseLeave = () => {
+    setActiveDropdown(null);
   };
 
   return (
-    <nav className="hidden md:flex items-center space-x-8 ml-8">
-      <NavLink to="/" onClick={handleNavigation}>Home</NavLink>
-      
-      <div className="relative group">
-        <button 
-          className="flex items-center space-x-1 text-white hover:text-gray-300 transition-colors"
-          onClick={toggleListingsSubmenu}
-          aria-expanded={showListingsSubmenu}
-          aria-haspopup="true"
+    <nav className="hidden md:flex space-x-1 items-center">
+      {navItems.map((item) => (
+        <div
+          key={item.label}
+          className="relative"
+          onMouseEnter={() => handleMouseEnter(item.label)}
+          onMouseLeave={handleMouseLeave}
         >
-          <span>Listings</span>
-          {showListingsSubmenu ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        
-        {showListingsSubmenu && (
-          <div 
-            className="absolute left-0 top-full mt-2 w-48 rounded-md shadow-lg bg-dark-300 ring-1 ring-black ring-opacity-5 py-1 z-10"
-          >
-            <NavLink to="/listings/concerts" onClick={handleNavigation} className="block px-4 py-2">Concerts</NavLink>
-            <div className="relative group">
-              <button 
-                className="flex items-center justify-between w-full px-4 py-2 text-white hover:bg-dark-400"
-                onClick={toggleFestivalsSubmenu}
-              >
-                <span>Festivals</span>
-                {showFestivalsSubmenu ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </button>
-              {showFestivalsSubmenu && (
-                <div className="absolute left-full top-0 w-48 rounded-md shadow-lg bg-dark-300 ring-1 ring-black ring-opacity-5 py-1">
-                  <NavLink to="/listings/festivals" onClick={handleNavigation} className="block px-4 py-2">Ireland</NavLink>
-                  <NavLink to="/listings/festivals/uk" onClick={handleNavigation} className="block px-4 py-2">UK</NavLink>
-                </div>
-              )}
-            </div>
-            <NavLink to="/listings/just-announced" onClick={handleNavigation} className="block px-4 py-2">Just Announced</NavLink>
-            <NavLink to="/listings/map" onClick={handleNavigation} className="block px-4 py-2">Map</NavLink>
-            {user && (
-              <NavLink to="/listings/my-events" onClick={handleNavigation} className="block px-4 py-2">My Events</NavLink>
+          <Link
+            to={item.path}
+            className={cn(
+              "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+              isActive(item.path)
+                ? "text-white bg-dark-400"
+                : "text-gray-300 hover:text-white hover:bg-dark-400"
             )}
-          </div>
-        )}
-      </div>
-      
-      <div className="relative group">
-        <button 
-          className="flex items-center space-x-1 text-white hover:text-gray-300 transition-colors"
-          onClick={toggleReviewsSubmenu}
-          aria-expanded={showReviewsSubmenu}
-          aria-haspopup="true"
-        >
-          <span>Reviews</span>
-          {showReviewsSubmenu ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-        
-        {showReviewsSubmenu && (
-          <div 
-            className="absolute left-0 top-full mt-2 w-48 rounded-md shadow-lg bg-dark-300 ring-1 ring-black ring-opacity-5 py-1 z-10"
           >
-            <NavLink to="/reviews/concerts" onClick={handleNavigation} className="block px-4 py-2">Concerts</NavLink>
-            <NavLink to="/reviews/festivals" onClick={handleNavigation} className="block px-4 py-2">Festivals</NavLink>
-          </div>
-        )}
-      </div>
-      
-      <NavLink to="/news" onClick={handleNavigation}>News</NavLink>
-      <NavLink to="/about" onClick={handleNavigation}>About</NavLink>
-      
-      {user ? (
-        <div className="relative group">
-          <button 
-            className="flex items-center space-x-1 text-white hover:text-gray-300 transition-colors"
-            onClick={toggleUserSubmenu}
-            aria-expanded={showUserSubmenu}
-            aria-haspopup="true"
-          >
-            <span>{user.name.split(' ')[0]}</span>
-            {showUserSubmenu ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-          
-          {showUserSubmenu && (
-            <div 
-              className="absolute left-0 top-full mt-2 w-48 rounded-md shadow-lg bg-dark-300 ring-1 ring-black ring-opacity-5 py-1 z-10"
+            {item.label}
+            {item.subItems && (
+              <span className="ml-1 inline-block">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="inline"
+                >
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </span>
+            )}
+          </Link>
+
+          {item.subItems && activeDropdown === item.label && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-dark-400 ring-1 ring-black ring-opacity-5 z-50"
             >
-              <NavLink to="/listings/my-events" onClick={handleNavigation} className="flex items-center px-4 py-2">
-                <User size={16} className="mr-2" />
-                <span>My Events</span>
-              </NavLink>
-              {user.isAdmin && (
-                <NavLink to="/admin" onClick={handleNavigation} className="block px-4 py-2">Admin Dashboard</NavLink>
-              )}
-              <button 
-                onClick={logout}
-                className="flex items-center w-full text-left px-4 py-2 text-white hover:bg-dark-400 hover:text-gray-300 transition-colors"
-              >
-                <LogOut size={16} className="mr-2" />
-                <span>Sign out</span>
-              </button>
-            </div>
+              <div className="py-1" role="menu" aria-orientation="vertical">
+                {item.subItems.map((subItem) => (
+                  <Link
+                    key={subItem.path}
+                    to={subItem.path}
+                    className={cn(
+                      "block px-4 py-2 text-sm text-gray-300 hover:bg-dark-500 hover:text-white",
+                      location.pathname === subItem.path
+                        ? "bg-dark-500 text-white"
+                        : ""
+                    )}
+                    role="menuitem"
+                  >
+                    {subItem.label}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
           )}
         </div>
-      ) : (
-        <NavLink to="/login" onClick={handleNavigation}>Login</NavLink>
-      )}
+      ))}
     </nav>
   );
 };
-
-// Update the NavLink component to include onClick prop
-const NavLink = ({ to, children, className = "", onClick }: { to: string; children: React.ReactNode; className?: string; onClick?: () => void }) => (
-  <Link 
-    to={to} 
-    className={`text-white hover:text-gray-300 transition-colors ${className}`}
-    onClick={onClick}
-  >
-    {children}
-  </Link>
-);
 
 export default NavMenu;

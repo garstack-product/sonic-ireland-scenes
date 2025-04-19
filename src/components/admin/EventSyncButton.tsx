@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { syncTicketmasterEvents } from "@/services/api";
+import { syncTicketmasterEvents } from "@/services/api/events/syncService";
 
 interface EventSyncButtonProps {
   isLoading: boolean;
@@ -27,6 +27,15 @@ const EventSyncButton = ({ isLoading, onSyncComplete, lastSyncInfo }: EventSyncB
       
       toast.success(result.message);
       await onSyncComplete();
+      
+      // After successful sync, prompt the user to refresh the page to see all new events
+      toast.info("Please refresh the page to see all new festival data", {
+        duration: 5000,
+        action: {
+          label: "Refresh Now",
+          onClick: () => window.location.reload()
+        }
+      });
     } catch (error) {
       console.error("Error syncing events:", error);
       toast.error(`Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`);

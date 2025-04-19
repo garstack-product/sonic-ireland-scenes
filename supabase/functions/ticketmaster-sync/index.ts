@@ -1,7 +1,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.6';
 import { CountryConfig, ProcessedEvent, VenueData, ArtistLinks } from './types.ts';
-import { handleCors, isSportsEvent } from './utils.ts';
+import { handleCors, corsHeaders, isSportsEvent } from './utils.ts';
 import { fetchEventsForCountry, processEvents } from './eventProcessor.ts';
 import { insertVenues, insertEvents } from './databaseOperations.ts';
 
