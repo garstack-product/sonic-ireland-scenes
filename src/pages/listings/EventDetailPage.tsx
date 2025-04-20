@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import EventGrid from "@/components/ui/EventGrid";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { fetchArtistData, fetchVenueEvents, fetchTicketmasterEvent } from "@/services/api";
-import SocialIcons, { getSocialLinksFromData } from "@/components/ui/SocialIcons";
+import SocialIcons from "@/components/ui/SocialIcons";
 import SocialShareButtons from "@/components/ui/SocialShareButtons";
 
 interface EventDetail {
@@ -232,6 +232,8 @@ const EventDetailPage = () => {
       }
     ].filter(link => link.url);
   };
+
+  const socialLinks = getSocialLinks();
 
   if (isLoading) {
     return (
