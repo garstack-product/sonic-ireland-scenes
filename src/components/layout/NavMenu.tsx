@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -34,7 +33,7 @@ const navItems = [
   { label: "About", path: "/about" },
 ];
 
-// Nav menu component
+// Nav menu component 
 const NavMenu = () => {
   const location = useLocation();
   const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null);

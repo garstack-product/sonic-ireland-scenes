@@ -36,10 +36,10 @@ const mobileNavItems = [
 
 interface MobileMenuProps {
   isOpen: boolean;
-  closeMenu: () => void;
+  onClose: () => void; // Changed from closeMenu to onClose to match MainLayout usage
 }
 
-const MobileMenu = ({ isOpen, closeMenu }: MobileMenuProps) => {
+const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const location = useLocation();
   const [expandedItems, setExpandedItems] = React.useState<string[]>([]);
 
@@ -60,8 +60,8 @@ const MobileMenu = ({ isOpen, closeMenu }: MobileMenuProps) => {
 
   // When the route changes, close the mobile menu
   React.useEffect(() => {
-    closeMenu();
-  }, [location, closeMenu]);
+    onClose(); // Changed from closeMenu to onClose
+  }, [location, onClose]); // Changed from closeMenu to onClose
 
   return (
     <AnimatePresence>
@@ -76,7 +76,7 @@ const MobileMenu = ({ isOpen, closeMenu }: MobileMenuProps) => {
           <div className="flex flex-col p-6 space-y-4">
             <div className="flex justify-end">
               <button 
-                onClick={closeMenu}
+                onClick={onClose} // Changed from closeMenu to onClose
                 className="text-gray-400 hover:text-white"
                 aria-label="Close menu"
               >
