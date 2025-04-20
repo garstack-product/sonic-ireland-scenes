@@ -34,8 +34,13 @@ const AddEvent = () => {
     setIsSubmitting(true);
 
     try {
-      // Format date for raw_date
-      const rawDate = new Date(`${date}T${time || "00:00:00"}`);
+      // Format date for raw_date - fixed timestamp handling
+      let rawDate = null;
+      
+      if (date) {
+        // Create a proper date object with the time (or midnight if no time)
+        rawDate = new Date(`${date}T${time || "00:00:00"}`);
+      }
       
       // Create event object
       const eventData = {
@@ -51,7 +56,7 @@ const AddEvent = () => {
         subgenre: subgenre || undefined,
         price: price ? parseFloat(price) : null,
         ticket_url: ticketUrl || undefined,
-        raw_date: rawDate.toISOString(),
+        raw_date: rawDate ? rawDate.toISOString() : null, // Properly handle the date
         is_featured: isFeatured,
         is_festival: eventType === 'festival',
         description,
@@ -64,12 +69,17 @@ const AddEvent = () => {
         } : null
       };
 
+      console.log("Submitting event data:", eventData);
+
       // Use custom RPC function to insert event
       const { error } = await supabase.rpc('admin_add_event', { 
         event_data: JSON.stringify(eventData) 
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw error;
+      }
       
       toast.success("Event added successfully!");
       resetForm();
