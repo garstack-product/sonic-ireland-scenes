@@ -173,21 +173,18 @@ const EventDetailPage = () => {
   const getEventImage = () => {
     if (!event) return '/placeholder.svg';
     
-    // Try to get the best quality artist image
     const artistImage = event.rawData?._embedded?.attractions?.[0]?.images?.find(
       (img: any) => img.ratio === '16_9' && img.width > 1024
     )?.url;
     
     if (artistImage) return artistImage;
     
-    // Fallback to event images
     const eventImage = event.rawData?.images?.find(
       (img: any) => img.ratio === '16_9' && img.width > 1024
     )?.url;
     
     if (eventImage) return eventImage;
     
-    // Final fallback
     return event.imageUrl || '/placeholder.svg';
   };
 
@@ -203,7 +200,6 @@ const EventDetailPage = () => {
       { name: 'YouTube', url: links.youtube?.[0]?.url, icon: <Youtube className="h-5 w-5" />, color: '#FF0000' }
     ].filter(link => link.url);
   };
-  const eventSocialLinks = getSocialLinks();
 
   if (isLoading) {
     return (
@@ -223,6 +219,7 @@ const EventDetailPage = () => {
   }
 
   const venueData = event.venueData || {};
+  const eventSocialLinks = getSocialLinks();
 
   return (
     <div className="bg-dark-400 min-h-screen py-8">

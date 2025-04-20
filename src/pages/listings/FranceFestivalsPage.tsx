@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import EventFilters from "@/components/events/filters/EventFilters";
 import EventListingsStatus from "@/components/events/EventListingsStatus";
 import { useEventFiltering } from "@/hooks/useEventFiltering";
+import { fetchFestivalsByCountry } from "@/services/api/ticketmaster/countryApi";
 
 const FranceFestivalsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +36,7 @@ const FranceFestivalsPage = () => {
       try {
         setIsLoading(true);
         
-        // Updated query to ensure we only get festivals from France
+        // First try to get from database
         const { data: events, error } = await supabase
           .from('events')
           .select('*')
@@ -45,6 +46,27 @@ const FranceFestivalsPage = () => {
 
         if (error) throw error;
 
+        // If database has no results, fetch directly from Ticketmaster
+        if (!events || events.length === 0) {
+          console.log("No France festivals in database, fetching from Ticketmaster API");
+          
+          try {
+            const apiEvents = await fetchFestivalsByCountry('FR');
+            setFestivals(apiEvents);
+            
+            if (apiEvents.length === 0) {
+              toast.info("No festivals found for France. Try again later.");
+            }
+          } catch (apiError) {
+            console.error("Error fetching from Ticketmaster API:", apiError);
+            toast.error("Failed to load French festivals from API");
+          }
+          
+          setIsLoading(false);
+          return;
+        }
+
+        // Map database events to our format
         const mappedEvents: EventCardProps[] = (events || []).map(event => {
           let price = event.price;
           let maxPrice = undefined;

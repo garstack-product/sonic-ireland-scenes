@@ -1,7 +1,7 @@
 
 import React from "react";
 import SocialIcons from "@/components/ui/SocialIcons";
-import { Calendar, Clock, MapPin, Ticket, Heart } from "lucide-react";
+import { Calendar, Clock, MapPin, Ticket, Heart, Globe, Twitter, Facebook, Instagram, Music, Youtube, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SocialShareButtons from "@/components/ui/SocialShareButtons";
 
@@ -24,13 +24,17 @@ const ArtistInfoSection: React.FC<ArtistInfoSectionProps> = ({
   const links = (() => {
     const raw = event?.rawData?._embedded?.attractions?.[0]?.externalLinks;
     if (!raw) return [];
+    
     return [
-      { name: "Homepage", url: raw.homepage?.[0]?.url, icon: <span className="icon-[globe]" />, color: "#4a5568" },
-      { name: "Facebook", url: raw.facebook?.[0]?.url, icon: <span className="icon-[facebook]" />, color: "#1877F2" },
-      { name: "Twitter", url: raw.twitter?.[0]?.url, icon: <span className="icon-[twitter]" />, color: "#1DA1F2" },
-      { name: "Instagram", url: raw.instagram?.[0]?.url, icon: <span className="icon-[instagram]" />, color: "#E1306C" },
-      { name: "Spotify", url: raw.spotify?.[0]?.url, icon: <span className="icon-[music]" />, color: "#1DB954" },
-      { name: "YouTube", url: raw.youtube?.[0]?.url, icon: <span className="icon-[youtube]" />, color: "#FF0000" },
+      { name: "Homepage", url: raw.homepage?.[0]?.url, icon: <Globe size={20} />, color: "#4a5568" },
+      { name: "Facebook", url: raw.facebook?.[0]?.url, icon: <Facebook size={20} />, color: "#1877F2" },
+      { name: "Twitter", url: raw.twitter?.[0]?.url, icon: <Twitter size={20} />, color: "#1DA1F2" },
+      { name: "Instagram", url: raw.instagram?.[0]?.url, icon: <Instagram size={20} />, color: "#E1306C" },
+      { name: "Spotify", url: raw.spotify?.[0]?.url, icon: <Music size={20} />, color: "#1DB954" },
+      { name: "YouTube", url: raw.youtube?.[0]?.url, icon: <Youtube size={20} />, color: "#FF0000" },
+      { name: "iTunes", url: raw.itunes?.[0]?.url, icon: <Music size={20} />, color: "#EA4CC0" },
+      { name: "Last.fm", url: raw.lastfm?.[0]?.url, icon: <ExternalLink size={20} />, color: "#D51007" },
+      { name: "Wiki", url: raw.wiki?.[0]?.url, icon: <ExternalLink size={20} />, color: "#000000" }
     ].filter(link => link.url);
   })();
 

@@ -9,6 +9,7 @@ import EventFilters from "@/components/events/filters/EventFilters";
 import EventListingsStatus from "@/components/events/EventListingsStatus";
 import { useEventFiltering } from "@/hooks/useEventFiltering";
 import EventSyncButton from "@/components/admin/EventSyncButton";
+import { fetchFestivalsByCountry } from "@/services/api/ticketmaster/countryApi";
 
 const SpainFestivalsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -46,8 +47,24 @@ const SpainFestivalsPage = () => {
       
       console.log(`Found ${spainCount} events for Spain`);
       
-      if (spainCount === 0) {
-        toast.info("No Spanish festivals found. Please sync Ticketmaster data.");
+      // If database has no results, fetch directly from Ticketmaster
+      if (!spainCount || spainCount === 0) {
+        console.log("No Spain festivals in database, fetching from Ticketmaster API");
+        
+        try {
+          const apiEvents = await fetchFestivalsByCountry('ES');
+          setFestivals(apiEvents);
+          
+          if (apiEvents.length === 0) {
+            toast.info("No festivals found for Spain. Try again later.");
+          }
+        } catch (apiError) {
+          console.error("Error fetching from Ticketmaster API:", apiError);
+          toast.error("Failed to load Spanish festivals from API");
+        }
+        
+        setIsLoading(false);
+        return;
       }
 
       // Updated query to ensure we only get festivals from Spain

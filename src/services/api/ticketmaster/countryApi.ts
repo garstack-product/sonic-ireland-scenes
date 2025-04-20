@@ -11,7 +11,8 @@ export const fetchFestivalsByCountry = async (countryCode: CountryCode): Promise
       keyword: 'festival',
       locale: '*',
       countryCode,
-      segmentName: 'music'
+      segmentName: 'music',
+      size: '200' // Add size parameter to get more results
     });
 
     if (!data._embedded?.events) {
