@@ -1,14 +1,14 @@
 
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
+import { MapPin, ExternalLink, Globe, Facebook, Twitter, Instagram, Music, Youtube } from "lucide-react";
+import SocialIcons from "@/components/ui/SocialIcons";
 
 interface VenueInfoSectionProps {
   event: any;
   venueData: any;
   isLoadingVenueEvents: boolean;
   venueEvents: any[];
-  EventGrid: React.ComponentType<{ events: any[] }>;
+  EventGrid: React.ComponentType<any>;
 }
 
 const VenueInfoSection: React.FC<VenueInfoSectionProps> = ({
@@ -16,102 +16,86 @@ const VenueInfoSection: React.FC<VenueInfoSectionProps> = ({
   venueData,
   isLoadingVenueEvents,
   venueEvents,
-  EventGrid
+  EventGrid,
 }) => {
-  const venueAddress = event.address || venueData?.address?.line1 || "";
-  const venueCity = event.city || venueData?.city?.name || "";
-  const venueState = venueData?.state?.name || "";
-  const venueCountry = venueData?.country?.name || "";
-  const venuePostalCode = venueData?.postalCode || "";
-  const venueUrl = venueData?.url || "";
-  const venuePhoneNumber = venueData?.phoneNumber || "";
-  const venueAccessibility = venueData?.accessibleSeatingDetail || "";
-  const venueParkingInfo = venueData?.parkingDetail || "";
-  const venueGeneralInfo = venueData?.generalInfo?.generalRule || "";
-  // priceRange stays in event
+  // Extract venue social links from API data
+  const getVenueSocialLinks = () => {
+    const links = venueData?.externalLinks || {};
+    
+    return [
+      { name: "Homepage", url: links.homepage?.[0]?.url, icon: <Globe size={20} />, color: "#4a5568" },
+      { name: "Facebook", url: links.facebook?.[0]?.url, icon: <Facebook size={20} />, color: "#1877F2" },
+      { name: "Twitter", url: links.twitter?.[0]?.url, icon: <Twitter size={20} />, color: "#1DA1F2" },
+      { name: "Instagram", url: links.instagram?.[0]?.url, icon: <Instagram size={20} />, color: "#E1306C" },
+      { name: "Spotify", url: links.spotify?.[0]?.url, icon: <Music size={20} />, color: "#1DB954" },
+      { name: "YouTube", url: links.youtube?.[0]?.url, icon: <Youtube size={20} />, color: "#FF0000" }
+    ].filter(link => link.url);
+  };
+
+  const venueSocialLinks = getVenueSocialLinks();
+
   return (
-    <>
+    <div>
       <h3 className="text-2xl text-white font-semibold mb-6">Venue Information</h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="bg-dark-400 p-6 rounded-lg">
-          <h4 className="text-lg text-white font-medium mb-4">{event.venue}</h4>
-          {venueAddress && <p className="text-gray-300 mb-2">{venueAddress}</p>}
-          {venueCity && <p className="text-gray-300 mb-1">{venueCity}{venueState ? `, ${venueState}` : ''}</p>}
-          {venuePostalCode && <p className="text-gray-300 mb-1">{venuePostalCode}</p>}
-          {venueCountry && <p className="text-gray-300 mb-4">{venueCountry}</p>}
-          {venuePhoneNumber && (
-            <div className="mt-4">
-              <h5 className="text-white font-medium mb-2">Contact</h5>
-              <p className="text-gray-300">{venuePhoneNumber}</p>
-            </div>
-          )}
-          {venueUrl && (
-            <div className="mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={() => window.open(venueUrl, '_blank')}
-              >
-                <ExternalLink size={16} className="mr-2" />
-                Visit Venue Website
-              </Button>
-            </div>
-          )}
-          {event.priceRange && (
-            <div className="mt-6">
-              <h5 className="text-white font-medium mb-2">Ticket Price</h5>
-              <p className="text-gray-300">{event.priceRange}</p>
-            </div>
-          )}
+        <div>
+          <div className="rounded-lg overflow-hidden mb-4">
+            <img
+              src={venueData?.images?.[0]?.url || '/placeholder.svg'}
+              alt={event.venue}
+              className="w-full h-auto object-cover"
+            />
+          </div>
+          {venueSocialLinks.length > 0 && <SocialIcons links={venueSocialLinks} />}
         </div>
         <div className="md:col-span-2">
-          <div className="bg-dark-400 rounded-lg overflow-hidden h-80">
-            <iframe
-              title="Venue Location"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-              loading="lazy"
-              allowFullScreen
-              src={`https://www.google.com/maps/embed/v1/place?key=${window.API_KEYS?.googleMaps}&q=${encodeURIComponent(event.venue + (event.city ? ', ' + event.city : ''))}`}
-            ></iframe>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-            {venueAccessibility && (
-              <div className="bg-dark-400 p-4 rounded-lg">
-                <h5 className="text-white font-medium mb-2">Accessibility</h5>
-                <p className="text-gray-300 text-sm">{venueAccessibility}</p>
+          <h4 className="text-lg text-white font-medium mb-3">{event.venue}</h4>
+          {(venueData?.address?.line1 || venueData?.city?.name) && (
+            <div className="flex items-start text-gray-300 mb-4">
+              <MapPin className="h-5 w-5 mr-2 mt-0.5" />
+              <div>
+                {venueData?.address?.line1 && <p>{venueData.address.line1}</p>}
+                {venueData?.city?.name && (
+                  <p>
+                    {venueData.city.name}
+                    {venueData?.state?.stateCode && `, ${venueData.state.stateCode}`}
+                    {venueData?.postalCode && ` ${venueData.postalCode}`}
+                  </p>
+                )}
+                {venueData?.country?.name && <p>{venueData.country.name}</p>}
               </div>
-            )}
-            {venueParkingInfo && (
-              <div className="bg-dark-400 p-4 rounded-lg">
-                <h5 className="text-white font-medium mb-2">Parking</h5>
-                <p className="text-gray-300 text-sm">{venueParkingInfo}</p>
-              </div>
-            )}
-            {venueGeneralInfo && (
-              <div className="bg-dark-400 p-4 rounded-lg md:col-span-2">
-                <h5 className="text-white font-medium mb-2">Venue Rules</h5>
-                <p className="text-gray-300 text-sm">{venueGeneralInfo}</p>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
+          {venueData?.url && (
+            <a
+              href={venueData.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-blue-400 hover:text-blue-300 mb-4"
+            >
+              <ExternalLink className="h-4 w-4 mr-1" />
+              Visit venue website
+            </a>
+          )}
+          {venueData?.generalInfo && (
+            <div className="mt-4">
+              <h5 className="text-white font-medium mb-2">General Information</h5>
+              <p className="text-gray-300">{venueData.generalInfo.generalRule}</p>
+            </div>
+          )}
+          {isLoadingVenueEvents ? (
+            <div className="mt-6">
+              <p className="text-gray-400">Loading other events at this venue...</p>
+            </div>
+          ) : venueEvents.length > 0 ? (
+            <div className="mt-6">
+              <h4 className="text-lg text-white font-semibold mb-4">Other Events at This Venue</h4>
+              <EventGrid events={venueEvents} />
+            </div>
+          ) : null}
         </div>
       </div>
-      {venueEvents.length > 0 && (
-        <div className="md:col-span-3 mt-8">
-          <h3 className="text-2xl text-white font-semibold mb-6">More Events at {event.venue}</h3>
-          {isLoadingVenueEvents ? (
-            <div className="flex justify-center py-6">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
-            </div>
-          ) : (
-            <EventGrid events={venueEvents} />
-          )}
-        </div>
-      )}
-    </>
+    </div>
   );
 };
 

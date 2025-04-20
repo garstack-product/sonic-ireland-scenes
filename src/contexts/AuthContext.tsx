@@ -8,6 +8,7 @@ export interface User {
   email: string;
   name: string;
   isAdmin: boolean;
+  isContributor: boolean;
   likedEvents: string[]; // IDs of liked events
 }
 
@@ -40,13 +41,23 @@ const DEMO_USERS: User[] = [
     email: 'admin@example.com',
     name: 'Admin User',
     isAdmin: true,
+    isContributor: true,
     likedEvents: ['101', '102']
   },
   {
     id: '2',
+    email: 'contributor@example.com',
+    name: 'Contributor User',
+    isAdmin: false,
+    isContributor: true,
+    likedEvents: []
+  },
+  {
+    id: '3',
     email: 'user@example.com',
     name: 'Regular User',
     isAdmin: false,
+    isContributor: false,
     likedEvents: ['103']
   }
 ];
@@ -118,6 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       name,
       isAdmin: false,
+      isContributor: false,
       likedEvents: []
     };
     

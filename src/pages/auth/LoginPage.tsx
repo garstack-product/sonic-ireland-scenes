@@ -1,117 +1,160 @@
 
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Get the redirect path from location state or default to home
-  const from = (location.state as any)?.from?.pathname || "/";
-  
-  const handleLogin = async (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const success = await login(email, password);
-    if (success) {
-      navigate(from, { replace: true });
+    if (!email || !password) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const success = await login(email, password);
+      if (success) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("An error occurred during login");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Quick login buttons for demo purposes
+  const quickLogin = async (role: string) => {
+    setIsLoading(true);
+    let email = "";
+    
+    switch (role) {
+      case "admin":
+        email = "admin@example.com";
+        break;
+      case "contributor":
+        email = "contributor@example.com";
+        break;
+      case "user":
+        email = "user@example.com";
+        break;
+      default:
+        email = "user@example.com";
+    }
+    
+    try {
+      const success = await login(email, "password");
+      if (success) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("An error occurred during login");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-white">Sign in</h2>
-          <p className="mt-2 text-gray-400">
-            Sign in to manage your music events
-          </p>
-        </div>
-        
-        <div className="mt-8 bg-dark-300 rounded-lg p-6 shadow-lg">
-          <form className="space-y-6" onSubmit={handleLogin}>
+    <div className="container mx-auto px-4 py-16">
+      <div className="max-w-md mx-auto bg-dark-300 rounded-lg overflow-hidden shadow-lg">
+        <div className="px-6 py-8">
+          <h2 className="text-2xl font-bold text-white mb-6 text-center">Log In</h2>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
-                Email address
+                Email
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="pl-10 bg-dark-200 border-gray-700 text-white"
-                  placeholder="admin@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="bg-dark-200 border-gray-700 text-white"
+              />
             </div>
             
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
                 Password
               </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
-                </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  required
-                  className="pl-10 pr-10 bg-dark-200 border-gray-700 text-white"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="text-gray-400 hover:text-white focus:outline-none"
-                  >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                  </button>
-                </div>
-              </div>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="bg-dark-200 border-gray-700 text-white"
+              />
             </div>
             
-            <div>
-              <Button
-                type="submit"
-                className="w-full bg-white text-dark-500 hover:bg-gray-200"
-                disabled={isLoading}
-              >
-                {isLoading ? "Signing in..." : "Sign in"}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading ? "Logging in..." : "Log In"}
+            </Button>
           </form>
           
-          <div className="mt-6 text-center text-sm text-gray-400">
-            <p>
+          <div className="text-center mt-6">
+            <p className="text-gray-400 mb-4">
               Don't have an account?{" "}
-              <Link to="/register" className="text-white hover:underline">
-                Sign up
+              <Link to="/register" className="text-primary hover:underline">
+                Register here
               </Link>
             </p>
-            <p className="mt-2">Demo credentials:</p>
-            <p>Admin: admin@example.com / admin</p>
-            <p>User: user@example.com / password</p>
+          </div>
+          
+          {/* Quick login options for demo purposes */}
+          <div className="mt-8 pt-6 border-t border-gray-700">
+            <h3 className="text-sm font-medium text-gray-400 mb-4 text-center">
+              Demo Quick Login
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => quickLogin("admin")} 
+                className="text-xs"
+                disabled={isLoading}
+              >
+                Admin
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => quickLogin("contributor")} 
+                className="text-xs"
+                disabled={isLoading}
+              >
+                Contributor
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => quickLogin("user")} 
+                className="text-xs"
+                disabled={isLoading}
+              >
+                User
+              </Button>
+            </div>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              (Password: "password")
+            </p>
           </div>
         </div>
       </div>
