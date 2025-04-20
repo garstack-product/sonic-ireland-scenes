@@ -1,4 +1,3 @@
-
 import { EventCardProps } from "@/components/ui/EventCard";
 import { formatDate, formatTime } from "../utils/formatUtils";
 import { isSportsEvent } from "../utils/filterUtils";
@@ -18,8 +17,8 @@ export const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
       const venueFull = city ? `${venue}, ${city}` : venue;
       
       // Get price info with both min and max values
-      const minPrice = event.priceRanges?.[0]?.min || 0;
-      const maxPrice = event.priceRanges?.[0]?.max || 0;
+      const minPrice = event.priceRanges?.[0]?.min;
+      const maxPrice = event.priceRanges?.[0]?.max;
       
       // Get best image (prefer large 16:9 ratio)
       const imageUrl = 
@@ -56,11 +55,11 @@ export const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
         category: "listing" as const,
         genre: genre !== "Undefined" ? genre : undefined,
         subgenre: subgenre !== "Undefined" ? subgenre : undefined,
-        price: minPrice,
-        maxPrice: maxPrice > minPrice ? maxPrice : undefined, // Only include maxPrice if it's different from minPrice
-        ticketUrl: event.url, // Add ticket URL
-        rawDate: startDate, // Add raw date for filtering
-        onSaleDate: event.sales?.public?.startDateTime || null // When tickets went on sale
+        price: minPrice || undefined,
+        maxPrice: maxPrice !== minPrice ? maxPrice : undefined,
+        ticketUrl: event.url,
+        rawDate: startDate,
+        onSaleDate: event.sales?.public?.startDateTime || null
       };
     });
 };

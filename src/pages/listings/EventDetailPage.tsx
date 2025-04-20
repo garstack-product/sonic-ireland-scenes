@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink, Facebook, Instagram, Twitter } from "lucide-react";
+import { Calendar, Clock, MapPin, Ticket, Heart, Share2, Globe, Music, ExternalLink, Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -188,66 +188,49 @@ const EventDetailPage = () => {
     return event.imageUrl || '/placeholder.svg';
   };
 
-  const socialLinks = getSocialLinksFromData(artistData);
-
-  const getSocialIcons = () => {
-    if (!artistData?.artist_links) return null;
-
-    const links = [
+  const getSocialLinks = () => {
+    if (!event?.rawData?._embedded?.attractions?.[0]?.externalLinks) return [];
+    
+    const links = event.rawData._embedded.attractions[0].externalLinks;
+    
+    return [
       { 
-        name: 'Website', 
-        url: artistData.artist_links.homepage, 
+        name: 'Homepage',
+        url: links.homepage?.[0]?.url,
         icon: <Globe className="h-5 w-5" />,
         color: '#4a5568'
       },
       { 
         name: 'Facebook', 
-        url: artistData.artist_links.facebook, 
+        url: links.facebook?.[0]?.url,
         icon: <Facebook className="h-5 w-5" />,
         color: '#1877F2'
       },
       { 
-        name: 'Instagram', 
-        url: artistData.artist_links.instagram, 
-        icon: <Instagram className="h-5 w-5" />,
-        color: '#E1306C'
-      },
-      { 
         name: 'Twitter', 
-        url: artistData.artist_links.twitter, 
+        url: links.twitter?.[0]?.url,
         icon: <Twitter className="h-5 w-5" />,
         color: '#1DA1F2'
       },
       { 
+        name: 'Instagram', 
+        url: links.instagram?.[0]?.url,
+        icon: <Instagram className="h-5 w-5" />,
+        color: '#E1306C'
+      },
+      { 
         name: 'Spotify', 
-        url: artistData.artist_links.spotify, 
+        url: links.spotify?.[0]?.url,
         icon: <Music className="h-5 w-5" />,
         color: '#1DB954'
       },
       { 
-        name: 'iTunes', 
-        url: artistData.artist_links.itunes, 
-        icon: <Music className="h-5 w-5" />,
-        color: '#EA4CC0'
+        name: 'YouTube', 
+        url: links.youtube?.[0]?.url,
+        icon: <Youtube className="h-5 w-5" />,
+        color: '#FF0000'
       }
     ].filter(link => link.url);
-
-    return (
-      <div className="flex space-x-4 mt-4">
-        {links.map((link, index) => (
-          <a
-            key={index}
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full p-2 bg-dark-400 hover:bg-dark-300 transition-colors"
-            style={{ color: link.color }}
-          >
-            {link.icon}
-          </a>
-        ))}
-      </div>
-    );
   };
 
   if (isLoading) {
@@ -312,6 +295,22 @@ const EventDetailPage = () => {
             </div>
           </div>
           
+          <div className="flex justify-center gap-4 py-4 bg-dark-400">
+            {getSocialLinks().map((link, index) => (
+              <a
+                key={index}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full p-2 bg-dark-300 hover:bg-dark-200 transition-colors"
+                style={{ color: link.color }}
+                title={link.name}
+              >
+                {link.icon}
+              </a>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-6 md:p-8">
             <div className="md:col-span-3">
               <h3 className="text-2xl text-white font-semibold mb-6">Artist Information</h3>
