@@ -12,12 +12,18 @@ const mobileNavItems = [
     path: "/listings",
     subItems: [
       { label: "Concerts", path: "/listings/concerts" },
-      { label: "Festivals", path: "/listings/festivals" },
-      { label: "UK Festivals", path: "/listings/festivals/uk" },
-      { label: "Spanish Festivals", path: "/listings/festivals/spain" },
-      { label: "French Festivals", path: "/listings/festivals/france" },
-      { label: "German Festivals", path: "/listings/festivals/germany" },
-      { label: "Dutch Festivals", path: "/listings/festivals/netherlands" },
+      { 
+        label: "Festivals", 
+        path: "/listings/festivals",
+        subItems: [
+          { label: "Ireland", path: "/listings/festivals/ireland" },
+          { label: "UK", path: "/listings/festivals/uk" },
+          { label: "France", path: "/listings/festivals/france" },
+          { label: "Spain", path: "/listings/festivals/spain" },
+          { label: "Germany", path: "/listings/festivals/germany" },
+          { label: "Netherlands", path: "/listings/festivals/netherlands" },
+        ]
+      },
       { label: "Just Announced", path: "/listings/just-announced" },
       { label: "Map", path: "/listings/map" },
     ],

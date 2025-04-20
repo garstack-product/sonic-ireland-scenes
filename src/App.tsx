@@ -29,6 +29,7 @@ import FranceFestivalsPage from "./pages/listings/FranceFestivalsPage";
 import SpainFestivalsPage from "./pages/listings/SpainFestivalsPage";
 import GermanyFestivalsPage from "./pages/listings/GermanyFestivalsPage";
 import NetherlandsFestivalsPage from "./pages/listings/NetherlandsFestivalsPage";
+import IrelandFestivalsPage from "./pages/listings/IrelandFestivalsPage";
 
 // Store API keys safely
 const API_KEYS = {
@@ -60,6 +61,7 @@ const App = () => (
               {/* Listings Routes */}
               <Route path="/listings/concerts" element={<ConcertListingsPage />} />
               <Route path="/listings/festivals" element={<FestivalListingsPage />} />
+              <Route path="/listings/festivals/ireland" element={<IrelandFestivalsPage />} />
               <Route path="/listings/festivals/uk" element={<UKFestivalsPage />} />
               <Route path="/listings/festivals/france" element={<FranceFestivalsPage />} />
               <Route path="/listings/festivals/spain" element={<SpainFestivalsPage />} />
