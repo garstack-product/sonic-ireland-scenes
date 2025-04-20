@@ -8,25 +8,27 @@ import EventFilters from "@/components/events/filters/EventFilters";
 import EventListingsStatus from "@/components/events/EventListingsStatus";
 import { useEventFiltering } from "@/hooks/useEventFiltering";
 import { fetchFestivalsByCountry } from "@/services/api/ticketmaster/countryApi";
+import EventSyncButton from "@/components/admin/EventSyncButton";
 
 const IrelandFestivalsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [festivals, setFestivals] = useState<EventCardProps[]>([]);
+  const [lastSyncInfo, setLastSyncInfo] = useState<string>("Last sync: Unknown");
+
+  const loadFestivals = async () => {
+    try {
+      setIsLoading(true);
+      const events = await fetchFestivalsByCountry('IE');
+      setFestivals(events);
+    } catch (error) {
+      console.error("Error loading Irish festivals:", error);
+      toast.error("Failed to load Irish festivals");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadFestivals = async () => {
-      try {
-        setIsLoading(true);
-        const events = await fetchFestivalsByCountry('IE');
-        setFestivals(events);
-      } catch (error) {
-        console.error("Error loading Irish festivals:", error);
-        toast.error("Failed to load Irish festivals");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadFestivals();
   }, []);
 
@@ -53,6 +55,14 @@ const IrelandFestivalsPage = () => {
         title="Irish Festivals" 
         subtitle="Discover upcoming festivals in Ireland"
       />
+      
+      <div className="mb-6">
+        <EventSyncButton 
+          isLoading={isLoading} 
+          onSyncComplete={loadFestivals}
+          lastSyncInfo={lastSyncInfo}
+        />
+      </div>
       
       <EventFilters
         searchTerm={searchTerm}

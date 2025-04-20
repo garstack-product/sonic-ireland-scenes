@@ -38,16 +38,18 @@ const mobileNavItems = [
   },
   { label: "News", path: "/news" },
   { label: "About", path: "/about" },
+  { label: "Admin", path: "/admin" }, // Ensuring Admin link is present
 ];
 
 interface MobileMenuProps {
   isOpen: boolean;
-  onClose: () => void; // Changed from closeMenu to onClose to match MainLayout usage
+  onClose: () => void;
 }
 
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const location = useLocation();
   const [expandedItems, setExpandedItems] = React.useState<string[]>([]);
+  const [expandedSubItems, setExpandedSubItems] = React.useState<string[]>([]);
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -64,10 +66,18 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
     );
   };
 
+  const toggleSubExpand = (label: string) => {
+    setExpandedSubItems((prev) =>
+      prev.includes(label) 
+        ? prev.filter((item) => item !== label)
+        : [...prev, label]
+    );
+  };
+
   // When the route changes, close the mobile menu
   React.useEffect(() => {
-    onClose(); // Changed from closeMenu to onClose
-  }, [location, onClose]); // Changed from closeMenu to onClose
+    onClose();
+  }, [location, onClose]);
 
   return (
     <AnimatePresence>
@@ -82,7 +92,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
           <div className="flex flex-col p-6 space-y-4">
             <div className="flex justify-end">
               <button 
-                onClick={onClose} // Changed from closeMenu to onClose
+                onClick={onClose}
                 className="text-gray-400 hover:text-white"
                 aria-label="Close menu"
               >
@@ -148,18 +158,81 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
                           >
                             <div className="pl-4 ml-2 border-l border-dark-700 mt-1 space-y-1">
                               {item.subItems.map((subItem) => (
-                                <Link
-                                  key={subItem.path}
-                                  to={subItem.path}
-                                  className={cn(
-                                    "block px-4 py-2 text-sm rounded-md",
-                                    location.pathname === subItem.path
-                                      ? "bg-dark-700 text-white"
-                                      : "text-gray-400 hover:bg-dark-700 hover:text-white"
+                                <div key={subItem.path}>
+                                  {subItem.subItems ? (
+                                    <div>
+                                      <button
+                                        className={cn(
+                                          "flex justify-between items-center w-full px-4 py-2 text-left text-sm rounded-md",
+                                          location.pathname.startsWith(subItem.path)
+                                            ? "bg-dark-700 text-white"
+                                            : "text-gray-400 hover:bg-dark-700 hover:text-white"
+                                        )}
+                                        onClick={() => toggleSubExpand(subItem.label)}
+                                      >
+                                        {subItem.label}
+                                        <svg 
+                                          xmlns="http://www.w3.org/2000/svg" 
+                                          width="16" 
+                                          height="16" 
+                                          viewBox="0 0 24 24" 
+                                          fill="none" 
+                                          stroke="currentColor" 
+                                          strokeWidth="2" 
+                                          strokeLinecap="round" 
+                                          strokeLinejoin="round"
+                                          className={cn(
+                                            "transition-transform", 
+                                            expandedSubItems.includes(subItem.label) ? "rotate-180" : ""
+                                          )}
+                                        >
+                                          <path d="m6 9 6 6 6-6"/>
+                                        </svg>
+                                      </button>
+                                      
+                                      <AnimatePresence>
+                                        {expandedSubItems.includes(subItem.label) && (
+                                          <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="overflow-hidden"
+                                          >
+                                            <div className="pl-4 ml-2 border-l border-dark-700 mt-1 space-y-1">
+                                              {subItem.subItems.map((nestedItem) => (
+                                                <Link
+                                                  key={nestedItem.path}
+                                                  to={nestedItem.path}
+                                                  className={cn(
+                                                    "block px-4 py-2 text-sm rounded-md",
+                                                    location.pathname === nestedItem.path
+                                                      ? "bg-dark-700 text-white"
+                                                      : "text-gray-400 hover:bg-dark-700 hover:text-white"
+                                                  )}
+                                                >
+                                                  {nestedItem.label}
+                                                </Link>
+                                              ))}
+                                            </div>
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
+                                    </div>
+                                  ) : (
+                                    <Link
+                                      to={subItem.path}
+                                      className={cn(
+                                        "block px-4 py-2 text-sm rounded-md",
+                                        location.pathname === subItem.path
+                                          ? "bg-dark-700 text-white"
+                                          : "text-gray-400 hover:bg-dark-700 hover:text-white"
+                                      )}
+                                    >
+                                      {subItem.label}
+                                    </Link>
                                   )}
-                                >
-                                  {subItem.label}
-                                </Link>
+                                </div>
                               ))}
                             </div>
                           </motion.div>

@@ -38,12 +38,14 @@ const navItems = [
   },
   { label: "News", path: "/news" },
   { label: "About", path: "/about" },
+  { label: "Admin", path: "/admin" }, // Ensuring Admin link is present
 ];
 
 // Nav menu component 
 const NavMenu = () => {
   const location = useLocation();
   const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null);
+  const [activeSubDropdown, setActiveSubDropdown] = React.useState<string | null>(null);
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -56,8 +58,13 @@ const NavMenu = () => {
     setActiveDropdown(label);
   };
 
+  const handleSubMouseEnter = (label: string) => {
+    setActiveSubDropdown(label);
+  };
+
   const handleMouseLeave = () => {
     setActiveDropdown(null);
+    setActiveSubDropdown(null);
   };
 
   return (
@@ -109,19 +116,81 @@ const NavMenu = () => {
             >
               <div className="py-1" role="menu" aria-orientation="vertical">
                 {item.subItems.map((subItem) => (
-                  <Link
-                    key={subItem.path}
-                    to={subItem.path}
-                    className={cn(
-                      "block px-4 py-2 text-sm text-gray-300 hover:bg-dark-500 hover:text-white",
-                      location.pathname === subItem.path
-                        ? "bg-dark-500 text-white"
-                        : ""
+                  <div key={subItem.path} className="relative">
+                    {subItem.subItems ? (
+                      <div
+                        className="relative"
+                        onMouseEnter={() => handleSubMouseEnter(subItem.label)}
+                      >
+                        <Link
+                          to={subItem.path}
+                          className={cn(
+                            "block px-4 py-2 text-sm text-gray-300 hover:bg-dark-500 hover:text-white",
+                            location.pathname === subItem.path
+                              ? "bg-dark-500 text-white"
+                              : ""
+                          )}
+                          role="menuitem"
+                        >
+                          {subItem.label}
+                          <span className="float-right mt-1">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="12"
+                              height="12"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="m9 6 6 6-6 6" />
+                            </svg>
+                          </span>
+                        </Link>
+                        
+                        {activeSubDropdown === subItem.label && (
+                          <motion.div
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute left-full top-0 w-48 rounded-md shadow-lg bg-dark-400 ring-1 ring-black ring-opacity-5"
+                          >
+                            <div className="py-1">
+                              {subItem.subItems.map((nestedItem) => (
+                                <Link
+                                  key={nestedItem.path}
+                                  to={nestedItem.path}
+                                  className={cn(
+                                    "block px-4 py-2 text-sm text-gray-300 hover:bg-dark-500 hover:text-white",
+                                    location.pathname === nestedItem.path
+                                      ? "bg-dark-500 text-white"
+                                      : ""
+                                  )}
+                                >
+                                  {nestedItem.label}
+                                </Link>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+                    ) : (
+                      <Link
+                        to={subItem.path}
+                        className={cn(
+                          "block px-4 py-2 text-sm text-gray-300 hover:bg-dark-500 hover:text-white",
+                          location.pathname === subItem.path
+                            ? "bg-dark-500 text-white"
+                            : ""
+                        )}
+                        role="menuitem"
+                      >
+                        {subItem.label}
+                      </Link>
                     )}
-                    role="menuitem"
-                  >
-                    {subItem.label}
-                  </Link>
+                  </div>
                 ))}
               </div>
             </motion.div>
