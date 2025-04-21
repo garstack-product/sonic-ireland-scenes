@@ -22,6 +22,7 @@ export const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
       
       // Get best image (prefer large 16:9 ratio)
       const imageUrl = 
+        event._embedded?.venues?.[0]?.images?.[0]?.url ||
         event.images?.find((img: any) => img.ratio === "16_9" && img.width > 500)?.url ||
         event.images?.find((img: any) => img.width > 500)?.url ||
         event.images?.[0]?.url ||
@@ -56,10 +57,12 @@ export const mapTicketmasterEvents = (events: any[]): EventCardProps[] => {
         genre: genre !== "Undefined" ? genre : undefined,
         subgenre: subgenre !== "Undefined" ? subgenre : undefined,
         price: minPrice || undefined,
-        maxPrice: maxPrice !== minPrice ? maxPrice : undefined,
+        maxPrice: maxPrice && maxPrice > minPrice ? maxPrice : undefined,
         ticketUrl: event.url,
         rawDate: startDate,
-        onSaleDate: event.sales?.public?.startDateTime || null
+        onSaleDate: event.sales?.public?.startDateTime || null,
+        start_price: minPrice || undefined,
+        max_price: maxPrice && maxPrice > minPrice ? maxPrice : undefined,
       };
     });
 };

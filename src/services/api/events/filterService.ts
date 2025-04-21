@@ -1,4 +1,3 @@
-
 import { EventCardProps } from "@/components/ui/EventCard";
 import { fetchAllEvents } from "./fetchService";
 
@@ -62,23 +61,20 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
     return allEvents
       .filter(event => {
         if (!event.rawDate) return false;
-        
         // Skip sports events
         if (event.genre === 'GAA' || event.genre === 'Sports' || 
             event.subgenre === 'GAA' || event.subgenre === 'Sports') {
           return false;
         }
-        
         const eventDate = new Date(event.rawDate);
         return eventDate >= today && event.is_featured === true;
       })
       .sort((a, b) => {
-        // Sort by date
         const dateA = new Date(a.rawDate || 0);
         const dateB = new Date(b.rawDate || 0);
         return dateA.getTime() - dateB.getTime();
       })
-      .slice(0, 10); // Limit to 10 events
+      .slice(0, 10); // ENFORCE limit to 10 events
   } catch (error) {
     console.error("Error in fetchFeaturedEvents:", error);
     return [];

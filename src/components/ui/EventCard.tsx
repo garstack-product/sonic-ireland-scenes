@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Heart, Ticket, Euro } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -20,15 +19,15 @@ export interface EventCardProps {
   genre?: string;
   subgenre?: string;
   price?: number;
-  maxPrice?: number; // Add maxPrice property for price ranges
+  maxPrice?: number;
   ticketUrl?: string;
-  rawDate?: string; // Raw date for filtering
-  onSaleDate?: string | null; // When tickets went on sale
-  source?: string; // Source of the event (ticketmaster, eventbrite, etc.)
-  venue_id?: string; // Add venue_id property to fix the error
-  is_featured?: boolean; // Adding is_featured flag for featured events
-  is_hidden?: boolean; // Adding is_hidden flag
-  rawData?: any; // Adding rawData for Ticketmaster original response data
+  rawDate?: string;
+  onSaleDate?: string | null;
+  source?: string;
+  venue_id?: string;
+  is_featured?: boolean;
+  is_hidden?: boolean;
+  rawData?: any;
 }
 
 const EventCard = ({ 
@@ -79,25 +78,23 @@ const EventCard = ({
     }
   };
 
-  // Format price display based on available information
   const renderPrice = () => {
     if (price === undefined || price === null) {
       return null;
     }
-    
-    if (maxPrice && maxPrice > price) {
-      return (
-        <div className="mt-1 flex items-center text-gray-400">
-          <Euro size={14} className="mr-1" /> 
-          <span>{price.toFixed(2)} - €{maxPrice.toFixed(2)}</span>
-        </div>
-      );
-    }
-    
     return (
       <div className="mt-1 flex items-center text-gray-400">
-        <Euro size={14} className="mr-1" /> 
-        <span>{price.toFixed(2)}</span>
+        {maxPrice && maxPrice > price ? (
+          <>
+            <span className="mr-1">From</span><span>€{price.toFixed(2)}</span>
+            <span className="mx-1">-</span>
+            <span>€{maxPrice.toFixed(2)}</span>
+          </>
+        ) : (
+          <>
+            <span className="mr-1">From</span><span>€{price.toFixed(2)}</span>
+          </>
+        )}
       </div>
     );
   };

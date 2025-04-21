@@ -1,4 +1,3 @@
-
 import { EventCardProps } from "@/components/ui/EventCard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchTicketmasterEvents } from "../ticketmasterService";
@@ -38,18 +37,15 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
     
     // Map database events to EventCardProps format
     return events.map(event => {
-      // Extract min and max price from raw_data if available
-      let price = event.price;
-      let maxPrice = undefined;
+      // Prefer explicit start_price/max_price columns, fallback to priceRanges in raw_data
+      let price = event.start_price !== undefined ? event.start_price : event.price;
+      let maxPrice = event.max_price !== undefined ? event.max_price : undefined;
       
-      if (event.raw_data && typeof event.raw_data === 'object') {
+      if ((event.raw_data && typeof event.raw_data === 'object') && (price === undefined || maxPrice === undefined)) {
         const rawData = event.raw_data as any;
-        
         if (rawData.priceRanges && Array.isArray(rawData.priceRanges) && rawData.priceRanges.length > 0) {
           price = rawData.priceRanges[0].min;
           maxPrice = rawData.priceRanges[0].max;
-          
-          // Only set maxPrice if it's different from price
           if (maxPrice <= price) {
             maxPrice = undefined;
           }
@@ -75,7 +71,9 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
         onSaleDate: event.on_sale_date || null,
         is_featured: event.is_featured,
         is_hidden: event.is_hidden,
-        rawData: event.raw_data
+        rawData: event.raw_data,
+        start_price: price,
+        max_price: maxPrice
       };
     });
   } catch (error) {
