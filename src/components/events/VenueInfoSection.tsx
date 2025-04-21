@@ -18,10 +18,10 @@ const VenueInfoSection: React.FC<VenueInfoSectionProps> = ({
   venueEvents,
   EventGrid,
 }) => {
-  // Extract venue image, fallback, etc.
+  // Extract venue image from venueData or event
   const venueImage =
     venueData?.images?.[0]?.url ||
-    event?.venueData?.images?.[0]?.url ||
+    event?.rawData?._embedded?.venues?.[0]?.images?.[0]?.url ||
     "/placeholder.svg";
 
   // Extract social links from artist_links if present, fallback to venue
@@ -35,6 +35,7 @@ const VenueInfoSection: React.FC<VenueInfoSectionProps> = ({
       null;
     // 2. Fallback to venue links
     const venueLinks = venueData?.externalLinks || {};
+    
     // Only show these predefined icons if they exist
     const iconDefs = [
       {
@@ -44,7 +45,6 @@ const VenueInfoSection: React.FC<VenueInfoSectionProps> = ({
         color: "#4a5568",
         icon: "home",
       },
-      // Removed Spotify icon (not available in lucide-react)
       {
         key: "instagram",
         name: "Instagram",

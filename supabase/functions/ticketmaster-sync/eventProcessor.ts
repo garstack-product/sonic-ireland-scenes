@@ -1,4 +1,3 @@
-
 import { CountryConfig, ProcessedEvent, VenueData, ArtistLinks } from './types.ts';
 import { formatDate, formatTime } from './utils.ts';
 

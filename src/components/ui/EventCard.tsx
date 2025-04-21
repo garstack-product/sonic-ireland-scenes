@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Heart, Ticket } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -84,7 +83,6 @@ const EventCard = ({
   };
 
   const renderPrice = () => {
-    // Use start_price and max_price if available, otherwise fallback to price and maxPrice
     const showStartPrice = start_price ?? price;
     const showMaxPrice = max_price ?? maxPrice;
     

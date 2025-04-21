@@ -1,4 +1,3 @@
-
 import { EventCardProps } from "@/components/ui/EventCard";
 import { formatDate, formatTime } from "../utils/formatUtils";
 import { isSportsEvent } from "../utils/filterUtils";
