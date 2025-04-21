@@ -119,6 +119,10 @@ export function processEvents(events: any[]): { events: ProcessedEvent[], venues
     
     const isFestival = true; // All events are festivals due to our API query
     
+    // Get price ranges
+    const minPrice = event.priceRanges?.[0]?.min || null;
+    const maxPrice = event.priceRanges?.[0]?.max || null;
+    
     return {
       id: event.id,
       title: event.name,
@@ -133,7 +137,9 @@ export function processEvents(events: any[]): { events: ProcessedEvent[], venues
       ticket_url: event.url,
       genre: event.classifications?.[0]?.genre?.name !== "Undefined" ? event.classifications?.[0]?.genre?.name : null,
       subgenre: event.classifications?.[0]?.subGenre?.name !== "Undefined" ? event.classifications?.[0]?.subGenre?.name : null,
-      price: event.priceRanges?.[0]?.min || null,
+      price: minPrice,
+      start_price: minPrice,
+      max_price: maxPrice,
       raw_data: event,
       type: 'festival',
       description: event.info || null,

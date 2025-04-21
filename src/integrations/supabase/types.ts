@@ -47,10 +47,12 @@ export type Database = {
           is_featured: boolean | null
           is_festival: boolean | null
           is_hidden: boolean | null
+          max_price: number | null
           on_sale_date: string | null
           price: number | null
           raw_data: Json | null
           raw_date: string | null
+          start_price: number | null
           subgenre: string | null
           ticket_url: string | null
           time: string | null
@@ -73,10 +75,12 @@ export type Database = {
           is_featured?: boolean | null
           is_festival?: boolean | null
           is_hidden?: boolean | null
+          max_price?: number | null
           on_sale_date?: string | null
           price?: number | null
           raw_data?: Json | null
           raw_date?: string | null
+          start_price?: number | null
           subgenre?: string | null
           ticket_url?: string | null
           time?: string | null
@@ -99,10 +103,12 @@ export type Database = {
           is_featured?: boolean | null
           is_festival?: boolean | null
           is_hidden?: boolean | null
+          max_price?: number | null
           on_sale_date?: string | null
           price?: number | null
           raw_data?: Json | null
           raw_date?: string | null
+          start_price?: number | null
           subgenre?: string | null
           ticket_url?: string | null
           time?: string | null

@@ -1,3 +1,4 @@
+
 import { EventCardProps } from "@/components/ui/EventCard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchTicketmasterEvents } from "../ticketmasterService";
@@ -37,16 +38,16 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
     
     // Map database events to EventCardProps format
     return events.map(event => {
-      // Prefer explicit start_price/max_price columns, fallback to priceRanges in raw_data
-      let price = event.start_price !== undefined ? event.start_price : event.price;
-      let maxPrice = event.max_price !== undefined ? event.max_price : undefined;
+      // Use the dedicated start_price and max_price fields
+      let startPrice = event.start_price !== null ? event.start_price : event.price;
+      let maxPrice = event.max_price !== null ? event.max_price : undefined;
       
-      if ((event.raw_data && typeof event.raw_data === 'object') && (price === undefined || maxPrice === undefined)) {
+      if ((event.raw_data && typeof event.raw_data === 'object') && (startPrice === null || startPrice === undefined)) {
         const rawData = event.raw_data as any;
         if (rawData.priceRanges && Array.isArray(rawData.priceRanges) && rawData.priceRanges.length > 0) {
-          price = rawData.priceRanges[0].min;
+          startPrice = rawData.priceRanges[0].min;
           maxPrice = rawData.priceRanges[0].max;
-          if (maxPrice <= price) {
+          if (maxPrice <= startPrice) {
             maxPrice = undefined;
           }
         }
@@ -64,7 +65,7 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
         category: 'listing' as const,
         genre: event.genre || undefined,
         subgenre: event.subgenre || undefined,
-        price: price || undefined,
+        price: startPrice || undefined,
         maxPrice: maxPrice,
         ticketUrl: event.ticket_url || undefined,
         rawDate: event.raw_date || undefined,
@@ -72,7 +73,7 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
         is_featured: event.is_featured,
         is_hidden: event.is_hidden,
         rawData: event.raw_data,
-        start_price: price,
+        start_price: startPrice,
         max_price: maxPrice
       };
     });

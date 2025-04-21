@@ -1,5 +1,6 @@
+
 import { Link } from "react-router-dom";
-import { Heart, Ticket, Euro } from "lucide-react";
+import { Heart, Ticket } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,6 +29,8 @@ export interface EventCardProps {
   is_featured?: boolean;
   is_hidden?: boolean;
   rawData?: any;
+  start_price?: number;
+  max_price?: number;
 }
 
 const EventCard = ({ 
@@ -44,7 +47,9 @@ const EventCard = ({
   subgenre,
   price,
   maxPrice,
-  ticketUrl
+  ticketUrl,
+  start_price,
+  max_price
 }: EventCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const { user, likeEvent, unlikeEvent, isEventLiked } = useAuth();
@@ -79,20 +84,25 @@ const EventCard = ({
   };
 
   const renderPrice = () => {
-    if (price === undefined || price === null) {
+    // Use start_price and max_price if available, otherwise fallback to price and maxPrice
+    const showStartPrice = start_price ?? price;
+    const showMaxPrice = max_price ?? maxPrice;
+    
+    if (showStartPrice === undefined || showStartPrice === null) {
       return null;
     }
+    
     return (
       <div className="mt-1 flex items-center text-gray-400">
-        {maxPrice && maxPrice > price ? (
+        {showMaxPrice && showMaxPrice > showStartPrice ? (
           <>
-            <span className="mr-1">From</span><span>€{price.toFixed(2)}</span>
+            <span className="mr-1">From</span><span>€{showStartPrice.toFixed(2)}</span>
             <span className="mx-1">-</span>
-            <span>€{maxPrice.toFixed(2)}</span>
+            <span>€{showMaxPrice.toFixed(2)}</span>
           </>
         ) : (
           <>
-            <span className="mr-1">From</span><span>€{price.toFixed(2)}</span>
+            <span className="mr-1">From</span><span>€{showStartPrice.toFixed(2)}</span>
           </>
         )}
       </div>

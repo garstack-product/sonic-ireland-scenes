@@ -46,6 +46,8 @@ export interface ProcessedEvent {
   genre?: string;
   subgenre?: string;
   price?: number;
+  start_price?: number;
+  max_price?: number;
   raw_data: any;
   type: 'festival' | 'concert';
   description?: string;
