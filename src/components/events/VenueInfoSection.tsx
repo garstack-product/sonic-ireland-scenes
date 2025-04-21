@@ -1,6 +1,6 @@
 
 import React from "react";
-import { MapPin, ExternalLink } from "lucide-react";
+import { MapPin, ExternalLink, Home, Spotify, Instagram, Twitter } from "lucide-react";
 import SocialIcons from "@/components/ui/SocialIcons";
 
 interface VenueInfoSectionProps {
@@ -66,17 +66,18 @@ const VenueInfoSection: React.FC<VenueInfoSectionProps> = ({
         icon: "twitter",
       },
     ];
-    const { Home, Spotify, Instagram, Twitter } = require("lucide-react");
-
-    // Use artist_links first, fallback to venue links
-    const linksSource = linksObj || venueLinks;
-    if (!linksSource) return [];
+    
+    // Use imported lucide-react icons instead of requiring them
     const iconMap = {
       home: <Home size={20} />,
       spotify: <Spotify size={20} />,
       instagram: <Instagram size={20} />,
       twitter: <Twitter size={20} />,
     };
+
+    // Use artist_links first, fallback to venue links
+    const linksSource = linksObj || venueLinks;
+    if (!linksSource) return [];
 
     const links = iconDefs
       .map((def) => {
