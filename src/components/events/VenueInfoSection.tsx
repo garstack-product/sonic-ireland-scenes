@@ -1,6 +1,6 @@
 
 import React from "react";
-import { MapPin, ExternalLink, Home, Spotify, Instagram, Twitter } from "lucide-react";
+import { MapPin, ExternalLink, Home, Instagram, Twitter } from "lucide-react";
 import SocialIcons from "@/components/ui/SocialIcons";
 
 interface VenueInfoSectionProps {
@@ -44,13 +44,7 @@ const VenueInfoSection: React.FC<VenueInfoSectionProps> = ({
         color: "#4a5568",
         icon: "home",
       },
-      {
-        key: "spotify",
-        name: "Spotify",
-        field: "spotify",
-        color: "#1DB954",
-        icon: "spotify",
-      },
+      // Removed Spotify icon (not available in lucide-react)
       {
         key: "instagram",
         name: "Instagram",
@@ -66,11 +60,9 @@ const VenueInfoSection: React.FC<VenueInfoSectionProps> = ({
         icon: "twitter",
       },
     ];
-    
-    // Use imported lucide-react icons instead of requiring them
+
     const iconMap = {
       home: <Home size={20} />,
-      spotify: <Spotify size={20} />,
       instagram: <Instagram size={20} />,
       twitter: <Twitter size={20} />,
     };
