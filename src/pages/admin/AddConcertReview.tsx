@@ -1,70 +1,50 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { addConcertReview } from "@/services/concertReviewService";
 
 const AddConcertReview = () => {
-  const [title, setTitle] = useState("");
-  const [artist, setArtist] = useState("");
-  const [venue, setVenue] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [content, setContent] = useState("");
-  const [featuredImage, setFeaturedImage] = useState<File | null>(null);
-  const [additionalImages, setAdditionalImages] = useState<File[]>([]);
+  const [formData, setFormData] = useState({
+    title: "",
+    artist: "",
+    venue: "",
+    date: "",
+    time: "",
+    content: "",
+    imageUrl: "/placeholder.svg" // Default image for now
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleFeaturedImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFeaturedImage(e.target.files[0]);
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setAdditionalImages(Array.from(e.target.files));
-    }
-  };
+  // In your handleSubmit function:
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsSubmitting(true);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    // Here you would handle the upload to Supabase
-    // For now we'll just simulate a response
-
-    setTimeout(() => {
-      toast.success("Concert review added successfully!");
-      setIsSubmitting(false);
-      
-      // Reset form
-      setTitle("");
-      setArtist("");
-      setVenue("");
-      setDate("");
-      setTime("");
-      setContent("");
-      setFeaturedImage(null);
-      setAdditionalImages([]);
-    }, 1500);
-  };
-
-  const handlePasteFromHTML = () => {
-    // This would be enhanced to parse HTML content
-    navigator.clipboard.readText().then(
-      text => {
-        // Simple HTML strip - in a real app you'd use a proper HTML parser
-        const strippedText = text.replace(/<[^>]*>?/gm, '');
-        setContent(strippedText);
-        toast.success("Content pasted from clipboard");
-      },
-      () => {
-        toast.error("Failed to read clipboard");
-      }
-    );
-  };
+  try {
+    await addConcertReview({
+      title: formData.title,
+      artist: formData.artist,
+      venue: formData.venue,
+      date: formData.date,
+      imageUrl: formData.imageUrl || '/placeholder.svg',
+      content: formData.content,
+    });
+    
+    toast.success("Review added successfully!");
+    setFormData({ /* reset form */ });
+  } catch (error) {
+    toast.error("Failed to add review");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="bg-dark-300 p-6 rounded-lg shadow-md">
@@ -78,8 +58,9 @@ const AddConcertReview = () => {
             </label>
             <Input
               id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
               required
               className="bg-dark-200 border-gray-700 text-white"
             />
@@ -91,8 +72,9 @@ const AddConcertReview = () => {
             </label>
             <Input
               id="artist"
-              value={artist}
-              onChange={(e) => setArtist(e.target.value)}
+              name="artist"
+              value={formData.artist}
+              onChange={handleChange}
               required
               className="bg-dark-200 border-gray-700 text-white"
             />
@@ -104,8 +86,9 @@ const AddConcertReview = () => {
             </label>
             <Input
               id="venue"
-              value={venue}
-              onChange={(e) => setVenue(e.target.value)}
+              name="venue"
+              value={formData.venue}
+              onChange={handleChange}
               required
               className="bg-dark-200 border-gray-700 text-white"
             />
@@ -117,9 +100,10 @@ const AddConcertReview = () => {
             </label>
             <Input
               id="date"
+              name="date"
               type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
+              value={formData.date}
+              onChange={handleChange}
               required
               className="bg-dark-200 border-gray-700 text-white"
             />
@@ -131,60 +115,37 @@ const AddConcertReview = () => {
             </label>
             <Input
               id="time"
+              name="time"
               type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
+              value={formData.time}
+              onChange={handleChange}
               className="bg-dark-200 border-gray-700 text-white"
             />
           </div>
           
           <div>
-            <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-300 mb-1">
-              Featured Image
+            <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-300 mb-1">
+              Image URL
             </label>
             <Input
-              id="featuredImage"
-              type="file"
-              accept="image/*"
-              onChange={handleFeaturedImageChange}
-              required
+              id="imageUrl"
+              name="imageUrl"
+              value={formData.imageUrl}
+              onChange={handleChange}
               className="bg-dark-200 border-gray-700 text-white"
             />
           </div>
         </div>
         
         <div>
-          <label htmlFor="additionalImages" className="block text-sm font-medium text-gray-300 mb-1">
-            Additional Images
+          <label htmlFor="content" className="block text-sm font-medium text-gray-300 mb-1">
+            Review Content
           </label>
-          <Input
-            id="additionalImages"
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleAdditionalImagesChange}
-            className="bg-dark-200 border-gray-700 text-white"
-          />
-        </div>
-        
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <label htmlFor="content" className="block text-sm font-medium text-gray-300">
-              Review Content
-            </label>
-            <Button 
-              type="button" 
-              variant="outline" 
-              size="sm"
-              onClick={handlePasteFromHTML}
-            >
-              Paste from HTML
-            </Button>
-          </div>
           <Textarea
             id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
+            name="content"
+            value={formData.content}
+            onChange={handleChange}
             required
             className="min-h-[300px] bg-dark-200 border-gray-700 text-white"
           />
