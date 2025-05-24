@@ -120,6 +120,42 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          artist: string
+          content: string
+          created_at: string
+          date: string
+          id: string
+          image_url: string | null
+          title: string
+          updated_at: string
+          venue: string
+        }
+        Insert: {
+          artist: string
+          content: string
+          created_at?: string
+          date: string
+          id?: string
+          image_url?: string | null
+          title: string
+          updated_at?: string
+          venue: string
+        }
+        Update: {
+          artist?: string
+          content?: string
+          created_at?: string
+          date?: string
+          id?: string
+          image_url?: string | null
+          title?: string
+          updated_at?: string
+          venue?: string
+        }
+        Relationships: []
+      }
       user_favorite_events: {
         Row: {
           created_at: string

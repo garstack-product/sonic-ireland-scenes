@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getConcertReviews } from '@/services/concertReviewService';
@@ -8,10 +9,9 @@ interface ConcertReview {
   artist: string;
   venue: string;
   date: string;
-  imageUrl: string;
+  image_url?: string;
   content: string;
-  type: 'concert';
-  category: 'review';
+  created_at: string;
 }
 
 const ConcertReviewDetail = () => {
@@ -53,7 +53,7 @@ const ConcertReviewDetail = () => {
       
       <div className="mb-8">
         <img 
-          src={review.imageUrl} 
+          src={review.image_url || '/placeholder.svg'} 
           alt={`${review.artist} at ${review.venue}`}
           className="w-full h-auto rounded-lg"
         />

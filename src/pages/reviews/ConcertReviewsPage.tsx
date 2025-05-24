@@ -12,7 +12,18 @@ interface ConcertReview {
   artist: string;
   venue: string;
   date: string;
-  image_url: string;
+  image_url?: string;
+  content: string;
+  created_at: string;
+}
+
+interface EventCardData {
+  id: string;
+  title: string;
+  artist: string;
+  venue: string;
+  date: string;
+  imageUrl: string;
   content: string;
   created_at: string;
   type: 'concert';
@@ -21,16 +32,22 @@ interface ConcertReview {
 
 const ConcertReviewsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [reviews, setReviews] = useState<ConcertReview[]>([]);
+  const [reviews, setReviews] = useState<EventCardData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const fetchReviews = async () => {
     try {
       const data = await getConcertReviews();
       // Transform the data to match the expected format for EventGrid
-      const transformedReviews = data.map(review => ({
-        ...review,
+      const transformedReviews: EventCardData[] = data.map(review => ({
+        id: review.id,
+        title: review.title,
+        artist: review.artist,
+        venue: review.venue,
+        date: review.date,
         imageUrl: review.image_url || '/placeholder.svg',
+        content: review.content,
+        created_at: review.created_at,
         type: 'concert' as const,
         category: 'review' as const
       }));

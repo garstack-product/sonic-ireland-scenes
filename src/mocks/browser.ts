@@ -1,3 +1,6 @@
-import { setupWorker } from 'msw';
-import { handlers } from './handlers';
-export const worker = setupWorker(...handlers);
+
+// Remove MSW setup since we're using Supabase
+export const worker = {
+  start: () => Promise.resolve(),
+  stop: () => Promise.resolve(),
+};
