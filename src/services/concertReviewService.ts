@@ -1,8 +1,8 @@
-// src/services/concertReviewService.ts
-const API_URL = 'http://localhost:5000/api';
+
+import { supabase } from "@/integrations/supabase/client";
 
 interface ConcertReview {
-  id: number;
+  id: string;
   title: string;
   artist: string;
   venue: string;
@@ -13,19 +13,39 @@ interface ConcertReview {
 }
 
 export const getConcertReviews = async (): Promise<ConcertReview[]> => {
-  const response = await fetch(`${API_URL}/reviews`);
-  if (!response.ok) throw new Error('Failed to fetch reviews');
-  return response.json();
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching reviews:', error);
+    throw new Error('Failed to fetch reviews');
+  }
+  
+  return data || [];
 };
 
 export const addConcertReview = async (
   review: Omit<ConcertReview, 'id' | 'created_at'>
 ): Promise<ConcertReview> => {
-  const response = await fetch(`${API_URL}/reviews`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(review),
-  });
-  if (!response.ok) throw new Error('Failed to add review');
-  return response.json();
+  const { data, error } = await supabase
+    .from('reviews')
+    .insert([{
+      title: review.title,
+      artist: review.artist,
+      venue: review.venue,
+      date: review.date,
+      image_url: review.image_url,
+      content: review.content
+    }])
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error adding review:', error);
+    throw new Error('Failed to add review');
+  }
+  
+  return data;
 };

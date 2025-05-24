@@ -13,7 +13,7 @@ const AddConcertReview = () => {
     date: "",
     time: "",
     content: "",
-    imageUrl: "/placeholder.svg" // Default image for now
+    imageUrl: "/placeholder.svg"
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -22,29 +22,39 @@ const AddConcertReview = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // In your handleSubmit function:
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setIsSubmitting(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
 
-  try {
-    await addConcertReview({
-      title: formData.title,
-      artist: formData.artist,
-      venue: formData.venue,
-      date: formData.date,
-      imageUrl: formData.imageUrl || '/placeholder.svg',
-      content: formData.content,
-    });
-    
-    toast.success("Review added successfully!");
-    setFormData({ /* reset form */ });
-  } catch (error) {
-    toast.error("Failed to add review");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+    try {
+      await addConcertReview({
+        title: formData.title,
+        artist: formData.artist,
+        venue: formData.venue,
+        date: formData.date,
+        image_url: formData.imageUrl || '/placeholder.svg',
+        content: formData.content,
+      });
+      
+      toast.success("Review added successfully!");
+      
+      // Reset form
+      setFormData({
+        title: "",
+        artist: "",
+        venue: "",
+        date: "",
+        time: "",
+        content: "",
+        imageUrl: "/placeholder.svg"
+      });
+    } catch (error) {
+      console.error('Error adding review:', error);
+      toast.error("Failed to add review");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="bg-dark-300 p-6 rounded-lg shadow-md">

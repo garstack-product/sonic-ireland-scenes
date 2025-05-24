@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
@@ -11,7 +12,9 @@ interface ConcertReview {
   artist: string;
   venue: string;
   date: string;
-  imageUrl: string;
+  image_url: string;
+  content: string;
+  created_at: string;
   type: 'concert';
   category: 'review';
 }
@@ -24,7 +27,14 @@ const ConcertReviewsPage = () => {
   const fetchReviews = async () => {
     try {
       const data = await getConcertReviews();
-      setReviews(data);
+      // Transform the data to match the expected format for EventGrid
+      const transformedReviews = data.map(review => ({
+        ...review,
+        imageUrl: review.image_url || '/placeholder.svg',
+        type: 'concert' as const,
+        category: 'review' as const
+      }));
+      setReviews(transformedReviews);
     } catch (error) {
       console.error("Failed to fetch concert reviews:", error);
     } finally {
@@ -35,8 +45,6 @@ const ConcertReviewsPage = () => {
   useEffect(() => {
     fetchReviews();
   }, []);
-
-  // ... rest of your component
 
   const filteredReviews = reviews.filter(review => 
     review.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
