@@ -120,6 +120,87 @@ export type Database = {
         }
         Relationships: []
       }
+      festival_reviews: {
+        Row: {
+          artist: string
+          content: string
+          created_at: string
+          end_date: string
+          id: string
+          image_url: string | null
+          start_date: string
+          title: string
+          updated_at: string
+          venue: string
+        }
+        Insert: {
+          artist: string
+          content: string
+          created_at?: string
+          end_date: string
+          id?: string
+          image_url?: string | null
+          start_date: string
+          title: string
+          updated_at?: string
+          venue: string
+        }
+        Update: {
+          artist?: string
+          content?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          image_url?: string | null
+          start_date?: string
+          title?: string
+          updated_at?: string
+          venue?: string
+        }
+        Relationships: []
+      }
+      news_items: {
+        Row: {
+          author: string | null
+          category: string | null
+          content: string
+          created_at: string
+          date: string
+          excerpt: string | null
+          id: string
+          image_url: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          category?: string | null
+          content: string
+          created_at?: string
+          date: string
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          category?: string | null
+          content?: string
+          created_at?: string
+          date?: string
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           artist: string
@@ -155,6 +236,86 @@ export type Database = {
           venue?: string
         }
         Relationships: []
+      }
+      rss_feeds: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_fetched: string | null
+          name: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_fetched?: string | null
+          name: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_fetched?: string | null
+          name?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      rss_items: {
+        Row: {
+          author: string | null
+          content: string | null
+          created_at: string
+          excerpt: string | null
+          feed_id: string | null
+          id: string
+          image_url: string | null
+          is_deleted: boolean | null
+          is_published: boolean | null
+          published_date: string | null
+          title: string
+          url: string | null
+        }
+        Insert: {
+          author?: string | null
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          feed_id?: string | null
+          id?: string
+          image_url?: string | null
+          is_deleted?: boolean | null
+          is_published?: boolean | null
+          published_date?: string | null
+          title: string
+          url?: string | null
+        }
+        Update: {
+          author?: string | null
+          content?: string | null
+          created_at?: string
+          excerpt?: string | null
+          feed_id?: string | null
+          id?: string
+          image_url?: string | null
+          is_deleted?: boolean | null
+          is_published?: boolean | null
+          published_date?: string | null
+          title?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rss_items_feed_id_fkey"
+            columns: ["feed_id"]
+            isOneToOne: false
+            referencedRelation: "rss_feeds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_favorite_events: {
         Row: {

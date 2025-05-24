@@ -7,6 +7,7 @@ import AddConcertReview from "./AddConcertReview";
 import AddFestivalReview from "./AddFestivalReview";
 import AddNewsItem from "./AddNewsItem";
 import ManageFeaturedEvents from "./ManageFeaturedEvents";
+import ManageRssFeeds from "./ManageRssFeeds";
 import AddEvent from "./AddEvent";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -76,6 +77,7 @@ const AdminPage = () => {
                 <TabsTrigger value="concert-reviews">Concert Reviews</TabsTrigger>
                 <TabsTrigger value="festival-reviews">Festival Reviews</TabsTrigger>
                 <TabsTrigger value="news">News</TabsTrigger>
+                <TabsTrigger value="rss-feeds">RSS Feeds</TabsTrigger>
                 <TabsTrigger value="featured">Featured Events</TabsTrigger>
               </>
             )}
@@ -99,6 +101,10 @@ const AdminPage = () => {
               
               <TabsContent value="news">
                 <AddNewsItem />
+              </TabsContent>
+
+              <TabsContent value="rss-feeds">
+                <ManageRssFeeds />
               </TabsContent>
               
               <TabsContent value="featured">

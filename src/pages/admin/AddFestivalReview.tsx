@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { addFestivalReview } from "@/services/festivalReviewService";
 
 const AddFestivalReview = () => {
   const [title, setTitle] = useState("");
@@ -28,16 +29,26 @@ const AddFestivalReview = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Here you would handle the upload to Supabase
-    // For now we'll just simulate a response
+    try {
+      // For now, use placeholder for image URL
+      // In a real implementation, you'd upload the image to storage first
+      const imageUrl = featuredImage ? '/placeholder.svg' : undefined;
 
-    setTimeout(() => {
+      await addFestivalReview({
+        title,
+        artist,
+        venue,
+        start_date: startDate,
+        end_date: endDate,
+        content,
+        image_url: imageUrl
+      });
+
       toast.success("Festival review added successfully!");
-      setIsSubmitting(false);
       
       // Reset form
       setTitle("");
@@ -48,14 +59,17 @@ const AddFestivalReview = () => {
       setContent("");
       setFeaturedImage(null);
       setAdditionalImages([]);
-    }, 1500);
+    } catch (error) {
+      console.error('Error adding festival review:', error);
+      toast.error("Failed to add festival review");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handlePasteFromHTML = () => {
-    // This would be enhanced to parse HTML content
     navigator.clipboard.readText().then(
       text => {
-        // Simple HTML strip - in a real app you'd use a proper HTML parser
         const strippedText = text.replace(/<[^>]*>?/gm, '');
         setContent(strippedText);
         toast.success("Content pasted from clipboard");
