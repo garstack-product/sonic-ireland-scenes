@@ -157,7 +157,7 @@ export const publishRssItem = async (itemId: string): Promise<void> => {
   const cleanContent = rssItem.content ? cleanUnicodeText(rssItem.content) : '';
   const cleanExcerpt = rssItem.excerpt ? cleanUnicodeText(rssItem.excerpt) : '';
 
-  // Insert into news_items table
+  // Insert into news_items table with the original URL
   const { error: newsError } = await supabase
     .from('news_items')
     .insert([{
@@ -166,9 +166,10 @@ export const publishRssItem = async (itemId: string): Promise<void> => {
       excerpt: cleanExcerpt,
       author: rssItem.author || 'RSS Feed',
       date: rssItem.published_date || new Date().toISOString(),
-      category: 'RSS News',
+      category: 'News',
       image_url: rssItem.image_url,
-      tags: ['RSS Feed']
+      tags: ['RSS Feed'],
+      url: rssItem.url
     }]);
 
   if (newsError) {

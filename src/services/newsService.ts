@@ -12,6 +12,7 @@ interface NewsItem {
   image_url?: string;
   tags?: string[];
   created_at: string;
+  url?: string;
 }
 
 export const getNewsItems = async (): Promise<NewsItem[]> => {
@@ -41,7 +42,8 @@ export const addNewsItem = async (
       date: news.date,
       category: news.category || 'General',
       image_url: news.image_url,
-      tags: news.tags || []
+      tags: news.tags || [],
+      url: news.url
     }])
     .select()
     .single();

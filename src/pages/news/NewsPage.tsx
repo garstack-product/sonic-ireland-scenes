@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarIcon, ChevronRightIcon } from 'lucide-react';
+import { CalendarIcon, ExternalLinkIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 import { getNewsItems } from '@/services/newsService';
@@ -18,6 +18,7 @@ interface NewsItem {
   image_url?: string;
   tags?: string[];
   created_at: string;
+  url?: string;
 }
 
 const NewsPage = () => {
@@ -69,44 +70,44 @@ const NewsPage = () => {
           <p className="text-gray-400">No news items available at the moment.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
           {sortedNewsItems.map((item) => (
-            <Card key={item.id} className="bg-dark-300 border-gray-700 hover:bg-dark-400 transition-colors">
-              <div className="aspect-video overflow-hidden">
+            <Card key={item.id} className="bg-dark-300 border-gray-700 hover:bg-dark-400 transition-colors h-full flex flex-col">
+              <div className="aspect-video overflow-hidden rounded-t-lg flex-shrink-0">
                 <img 
                   src={item.image_url || '/placeholder.svg'} 
                   alt={item.title} 
                   className="w-full h-full object-cover"
                 />
               </div>
-              <CardHeader>
+              <CardHeader className="flex-1">
                 <div className="flex items-center text-sm text-gray-400 space-x-4 mb-2">
                   <span className="flex items-center">
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {formatDate(item.date)}
                   </span>
-                  {item.category && (
+                  {item.category && item.category !== 'RSS Feed' && (
                     <span className="px-2 py-1 bg-dark-400 rounded text-xs">
                       {item.category}
                     </span>
                   )}
                 </div>
-                <CardTitle className="text-xl text-white">{item.title}</CardTitle>
+                <CardTitle className="text-xl text-white line-clamp-3">{item.title}</CardTitle>
                 {item.excerpt && (
-                  <CardDescription className="text-gray-300">
+                  <CardDescription className="text-gray-300 line-clamp-2">
                     {item.excerpt}
                   </CardDescription>
                 )}
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1">
                 <p className="text-gray-300 line-clamp-3">
                   {item.content}
                 </p>
               </CardContent>
-              <CardFooter className="flex flex-col items-start">
+              <CardFooter className="flex flex-col items-start mt-auto">
                 {item.tags && item.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {item.tags.map((tag) => (
+                    {item.tags.filter(tag => tag !== 'RSS Feed').map((tag) => (
                       <span 
                         key={tag} 
                         className="px-2 py-1 bg-dark-500 text-gray-300 rounded-full text-xs"
@@ -116,13 +117,25 @@ const NewsPage = () => {
                     ))}
                   </div>
                 )}
-                <Link 
-                  to={`/news/${item.id}`} 
-                  className="flex items-center text-primary hover:underline"
-                >
-                  Read more
-                  <ChevronRightIcon className="ml-1 h-4 w-4" />
-                </Link>
+                {item.url ? (
+                  <a 
+                    href={item.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center text-primary hover:underline"
+                  >
+                    Read more
+                    <ExternalLinkIcon className="ml-1 h-4 w-4" />
+                  </a>
+                ) : (
+                  <Link 
+                    to={`/news/${item.id}`} 
+                    className="flex items-center text-primary hover:underline"
+                  >
+                    Read more
+                    <ExternalLinkIcon className="ml-1 h-4 w-4" />
+                  </Link>
+                )}
               </CardFooter>
             </Card>
           ))}
