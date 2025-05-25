@@ -38,31 +38,52 @@ const ConcertReviewDetail = () => {
   }, [id]);
 
   if (isLoading) {
-    return <div className="text-white">Loading...</div>;
+    return (
+      <div className="flex justify-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+      </div>
+    );
   }
 
   if (!review) {
-    return <div className="text-white">Review not found</div>;
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-400">Review not found</p>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold text-white mb-2">{review.title}</h1>
-      <h2 className="text-xl text-gray-300 mb-4">{review.artist} at {review.venue}</h2>
-      <p className="text-gray-400 mb-6">{review.date}</p>
-      
-      <div className="mb-8">
-        <img 
-          src={review.image_url || '/placeholder.svg'} 
-          alt={`${review.artist} at ${review.venue}`}
-          className="w-full h-auto rounded-lg"
-        />
-      </div>
-      
-      <div className="prose prose-invert max-w-none">
-        {review.content.split('\n').map((paragraph, i) => (
-          <p key={i} className="mb-4 text-gray-300">{paragraph}</p>
-        ))}
+    <div className="min-h-screen bg-dark-400">
+      <div className="w-full">
+        {/* Hero Section */}
+        <div className="relative h-96 overflow-hidden">
+          <img 
+            src={review.image_url || '/placeholder.svg'} 
+            alt={`${review.artist} at ${review.venue}`}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-end">
+            <div className="container mx-auto px-4 py-8">
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{review.title}</h1>
+              <h2 className="text-xl md:text-2xl text-gray-200 mb-2">{review.artist}</h2>
+              <p className="text-gray-300">{review.venue} • {review.date}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="prose prose-invert prose-lg max-w-none">
+            {review.content.split('\n').map((paragraph, i) => (
+              paragraph.trim() && (
+                <p key={i} className="mb-6 text-gray-300 leading-relaxed">
+                  {paragraph}
+                </p>
+              )
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

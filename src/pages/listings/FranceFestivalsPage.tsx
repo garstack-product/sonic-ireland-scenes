@@ -66,7 +66,7 @@ const FranceFestivalsPage = () => {
           return;
         }
 
-        // Map database events to our format
+        // Map database events to our format with proper image handling
         const mappedEvents: EventCardProps[] = (events || []).map(event => {
           let price = event.price;
           let maxPrice = undefined;
@@ -84,6 +84,14 @@ const FranceFestivalsPage = () => {
             }
           }
 
+          // Ensure image URL is properly set
+          let imageUrl = event.image_url || '/placeholder.svg';
+          
+          // If image_url is present but might be broken, ensure it's a valid URL
+          if (event.image_url && !event.image_url.startsWith('http') && !event.image_url.startsWith('/')) {
+            imageUrl = '/placeholder.svg';
+          }
+
           return {
             id: event.id,
             title: event.title,
@@ -91,7 +99,7 @@ const FranceFestivalsPage = () => {
             venue: event.venue || '',
             date: event.date || '',
             time: event.time || '',
-            imageUrl: event.image_url || '/placeholder.svg',
+            imageUrl: imageUrl,
             type: (event.type as 'concert' | 'festival') || 'festival',
             category: 'listing' as const,
             genre: event.genre || undefined,
@@ -109,6 +117,7 @@ const FranceFestivalsPage = () => {
           };
         });
 
+        console.log(`Mapped ${mappedEvents.length} France festivals from database`);
         setFestivals(mappedEvents);
       } catch (error) {
         console.error("Error loading French festivals:", error);

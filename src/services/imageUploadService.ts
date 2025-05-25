@@ -3,6 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const uploadImage = async (file: File, bucket: string, path?: string): Promise<string> => {
   try {
+    // Check if bucket exists, if not return placeholder
+    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    
+    if (bucketsError || !buckets?.some(b => b.name === bucket)) {
+      console.warn(`Storage bucket '${bucket}' not found, using placeholder image`);
+      return '/placeholder.svg';
+    }
+
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = path ? `${path}/${fileName}` : fileName;
@@ -12,7 +20,8 @@ export const uploadImage = async (file: File, bucket: string, path?: string): Pr
       .upload(filePath, file);
 
     if (uploadError) {
-      throw uploadError;
+      console.warn('Upload failed, using placeholder:', uploadError);
+      return '/placeholder.svg';
     }
 
     const { data } = supabase.storage
@@ -22,7 +31,7 @@ export const uploadImage = async (file: File, bucket: string, path?: string): Pr
     return data.publicUrl;
   } catch (error) {
     console.error('Error uploading image:', error);
-    throw new Error('Failed to upload image');
+    return '/placeholder.svg';
   }
 };
 
