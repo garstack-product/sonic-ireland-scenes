@@ -23,6 +23,7 @@ interface RssItem {
   is_published: boolean;
   is_deleted: boolean;
   created_at: string;
+  rss_feeds?: { name: string };
 }
 
 // Function to clean unicode characters from text
@@ -47,6 +48,16 @@ const cleanUnicodeText = (text: string): string => {
     .replace(/&#\d+;/g, "")
     // Clean up extra whitespace
     .replace(/\s+/g, " ")
+    .trim();
+};
+
+// Function to remove HTML tags from text
+const stripHtmlTags = (text: string): string => {
+  if (!text) return text;
+  
+  return text
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
     .trim();
 };
 
@@ -101,12 +112,12 @@ export const getRssItems = async (searchTerm?: string, feedId?: string, month?: 
     throw new Error('Failed to fetch RSS items');
   }
   
-  // Clean unicode characters from the returned data
+  // Clean unicode characters and HTML tags from the returned data
   const cleanedData = (data || []).map(item => ({
     ...item,
-    title: cleanUnicodeText(item.title),
-    content: item.content ? cleanUnicodeText(item.content) : item.content,
-    excerpt: item.excerpt ? cleanUnicodeText(item.excerpt) : item.excerpt
+    title: stripHtmlTags(cleanUnicodeText(item.title)),
+    content: item.content ? stripHtmlTags(cleanUnicodeText(item.content)) : item.content,
+    excerpt: item.excerpt ? stripHtmlTags(cleanUnicodeText(item.excerpt)) : item.excerpt
   }));
   
   return cleanedData;
@@ -140,6 +151,8 @@ export const toggleFeedActive = async (feedId: string, isActive: boolean): Promi
 };
 
 export const publishRssItem = async (itemId: string): Promise<void> => {
+  console.log('Publishing RSS item:', itemId);
+  
   // First get the RSS item
   const { data: rssItem, error: fetchError } = await supabase
     .from('rss_items')
@@ -152,10 +165,12 @@ export const publishRssItem = async (itemId: string): Promise<void> => {
     throw new Error('Failed to fetch RSS item');
   }
 
-  // Clean the content before publishing
-  const cleanTitle = cleanUnicodeText(rssItem.title);
-  const cleanContent = rssItem.content ? cleanUnicodeText(rssItem.content) : '';
-  const cleanExcerpt = rssItem.excerpt ? cleanUnicodeText(rssItem.excerpt) : '';
+  console.log('RSS item data:', rssItem);
+
+  // Clean the content before publishing and remove HTML tags
+  const cleanTitle = stripHtmlTags(cleanUnicodeText(rssItem.title));
+  const cleanContent = rssItem.content ? stripHtmlTags(cleanUnicodeText(rssItem.content)) : '';
+  const cleanExcerpt = rssItem.excerpt ? stripHtmlTags(cleanUnicodeText(rssItem.excerpt)) : '';
 
   // Insert into news_items table with the original URL
   const { error: newsError } = await supabase
@@ -177,6 +192,8 @@ export const publishRssItem = async (itemId: string): Promise<void> => {
     throw new Error('Failed to publish to news');
   }
 
+  console.log('Successfully published to news_items');
+
   // Mark RSS item as published
   const { error: updateError } = await supabase
     .from('rss_items')
@@ -187,6 +204,8 @@ export const publishRssItem = async (itemId: string): Promise<void> => {
     console.error('Error updating RSS item status:', updateError);
     throw new Error('Failed to update RSS item status');
   }
+
+  console.log('Successfully marked RSS item as published');
 };
 
 export const deleteRssItem = async (itemId: string): Promise<void> => {

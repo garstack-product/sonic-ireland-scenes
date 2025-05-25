@@ -54,6 +54,18 @@ const NewsPage = () => {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
+  // Check if an item is from RSS feed
+  const isRssItem = (item: NewsItem) => {
+    return item.tags?.includes('RSS Feed') && item.url;
+  };
+
+  // Handle card click
+  const handleCardClick = (item: NewsItem) => {
+    if (isRssItem(item) && item.url) {
+      window.open(item.url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <div>
       <PageHeader 
@@ -72,7 +84,11 @@ const NewsPage = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
           {sortedNewsItems.map((item) => (
-            <Card key={item.id} className="bg-dark-300 border-gray-700 hover:bg-dark-400 transition-colors h-full flex flex-col">
+            <Card 
+              key={item.id} 
+              className={`bg-dark-300 border-gray-700 hover:bg-dark-400 transition-colors h-full flex flex-col ${isRssItem(item) ? 'cursor-pointer' : ''}`}
+              onClick={() => handleCardClick(item)}
+            >
               <div className="aspect-video overflow-hidden rounded-t-lg flex-shrink-0">
                 <img 
                   src={item.image_url || '/placeholder.svg'} 
@@ -117,20 +133,11 @@ const NewsPage = () => {
                     ))}
                   </div>
                 )}
-                {item.url ? (
-                  <a 
-                    href={item.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center text-primary hover:underline"
-                  >
-                    Read more
-                    <ExternalLinkIcon className="ml-1 h-4 w-4" />
-                  </a>
-                ) : (
+                {!isRssItem(item) && (
                   <Link 
                     to={`/news/${item.id}`} 
                     className="flex items-center text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     Read more
                     <ExternalLinkIcon className="ml-1 h-4 w-4" />

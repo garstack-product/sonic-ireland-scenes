@@ -40,6 +40,16 @@ const cleanText = (text: string): string => {
     .trim();
 };
 
+// Function to remove HTML tags from text
+const stripHtmlTags = (text: string): string => {
+  if (!text) return text;
+  
+  return text
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/\s+/g, ' ') // Replace multiple whitespace with single space
+    .trim();
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -96,16 +106,17 @@ Deno.serve(async (req) => {
           const pubDate = (pubDateMatch?.[1] || '').trim();
           const author = (authorMatch?.[1] || authorMatch?.[2] || '').trim();
           
-          // Clean unicode characters and HTML entities
-          title = cleanText(title);
-          description = cleanText(description);
+          // Clean unicode characters and HTML entities, then strip HTML tags
+          title = stripHtmlTags(cleanText(title));
+          description = stripHtmlTags(cleanText(description));
           
-          // Extract image from description
-          const imageMatch = description.match(/<img[^>]+src=['"]([^'"]+)['"]/i);
+          // Extract image from original description before stripping HTML
+          const originalDescription = (descriptionMatch?.[1] || descriptionMatch?.[2] || '').trim();
+          const imageMatch = originalDescription.match(/<img[^>]+src=['"]([^'"]+)['"]/i);
           const imageUrl = imageMatch ? imageMatch[1] : null;
           
-          // Clean description of HTML tags for excerpt
-          const cleanDescription = description.replace(/<[^>]*>/g, '').substring(0, 200);
+          // Create clean excerpt from description
+          const cleanDescription = description.substring(0, 200);
           
           if (!title || !link) continue;
           
