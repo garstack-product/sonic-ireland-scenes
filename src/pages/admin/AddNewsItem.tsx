@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { addNewsItem } from "@/services/newsService";
+import { uploadImage, uploadMultipleImages } from "@/services/imageUploadService";
 
 const AddNewsItem = () => {
   const [title, setTitle] = useState("");
@@ -35,9 +35,17 @@ const AddNewsItem = () => {
     setIsSubmitting(true);
 
     try {
-      // For now, use placeholder for image URL
-      // In a real implementation, you'd upload the image to storage first
-      const imageUrl = featuredImage ? '/placeholder.svg' : undefined;
+      let imageUrl = '/placeholder.svg';
+      
+      if (featuredImage) {
+        imageUrl = await uploadImage(featuredImage, 'news');
+      }
+
+      // Upload additional images but for now we won't store the URLs
+      if (additionalImages.length > 0) {
+        await uploadMultipleImages(additionalImages, 'news', 'additional');
+      }
+
       const tagsArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
 
       await addNewsItem({

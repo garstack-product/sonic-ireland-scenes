@@ -1,3 +1,4 @@
+
 import { EventCardProps } from "@/components/ui/EventCard";
 import { fetchAllEvents } from "./fetchService";
 
@@ -6,17 +7,45 @@ export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
   try {
     const events = await fetchAllEvents();
     
-    // Get events with recent on sale dates (within last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    // Get events with recent on sale dates (within last 30 days) OR recently created events
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
     return events.filter(event => {
+      // Skip sports events
+      if (event.genre === 'GAA' || event.genre === 'Sports' || 
+          event.subgenre === 'GAA' || event.subgenre === 'Sports') {
+        return false;
+      }
+      
+      // Check if the event has a recent on sale date
       if (event.onSaleDate) {
         const onSaleDate = new Date(event.onSaleDate);
-        return onSaleDate > sevenDaysAgo;
+        if (onSaleDate > thirtyDaysAgo) {
+          return true;
+        }
       }
+      
+      // Fallback: if no onSaleDate, check if the event is in the future and within a reasonable range
+      if (event.rawDate) {
+        const eventDate = new Date(event.rawDate);
+        const today = new Date();
+        const sixMonthsFromNow = new Date();
+        sixMonthsFromNow.setMonth(today.getMonth() + 6);
+        
+        // Include events that are in the future and within 6 months
+        return eventDate > today && eventDate < sixMonthsFromNow;
+      }
+      
       return false;
-    }).slice(0, 20); // Limit to 20 events
+    })
+    .sort((a, b) => {
+      // Sort by onSaleDate if available, otherwise by rawDate
+      const dateA = new Date(a.onSaleDate || a.rawDate || 0);
+      const dateB = new Date(b.onSaleDate || b.rawDate || 0);
+      return dateB.getTime() - dateA.getTime(); // Most recent first
+    })
+    .slice(0, 50); // Limit to 50 events
   } catch (error) {
     console.error("Error in fetchJustAnnouncedEvents:", error);
     return [];

@@ -1,9 +1,11 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { addConcertReview } from "@/services/concertReviewService";
+import { uploadImage } from "@/services/imageUploadService";
 
 const AddConcertReview = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +17,7 @@ const AddConcertReview = () => {
     content: "",
     imageUrl: "/placeholder.svg"
   });
+  const [featuredImage, setFeaturedImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -22,17 +25,29 @@ const AddConcertReview = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleFeaturedImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFeaturedImage(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      let imageUrl = '/placeholder.svg';
+      
+      if (featuredImage) {
+        imageUrl = await uploadImage(featuredImage, 'reviews', 'concerts');
+      }
+
       await addConcertReview({
         title: formData.title,
         artist: formData.artist,
         venue: formData.venue,
         date: formData.date,
-        image_url: formData.imageUrl || '/placeholder.svg',
+        image_url: imageUrl,
         content: formData.content,
       });
       
@@ -48,6 +63,7 @@ const AddConcertReview = () => {
         content: "",
         imageUrl: "/placeholder.svg"
       });
+      setFeaturedImage(null);
     } catch (error) {
       console.error('Error adding review:', error);
       toast.error("Failed to add review");
@@ -134,14 +150,15 @@ const AddConcertReview = () => {
           </div>
           
           <div>
-            <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-300 mb-1">
-              Image URL
+            <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-300 mb-1">
+              Featured Image
             </label>
             <Input
-              id="imageUrl"
-              name="imageUrl"
-              value={formData.imageUrl}
-              onChange={handleChange}
+              id="featuredImage"
+              type="file"
+              accept="image/*"
+              onChange={handleFeaturedImageChange}
+              required
               className="bg-dark-200 border-gray-700 text-white"
             />
           </div>

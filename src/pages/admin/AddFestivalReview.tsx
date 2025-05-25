@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { addFestivalReview } from "@/services/festivalReviewService";
+import { uploadImage, uploadMultipleImages } from "@/services/imageUploadService";
 
 const AddFestivalReview = () => {
   const [title, setTitle] = useState("");
@@ -34,9 +34,17 @@ const AddFestivalReview = () => {
     setIsSubmitting(true);
 
     try {
-      // For now, use placeholder for image URL
-      // In a real implementation, you'd upload the image to storage first
-      const imageUrl = featuredImage ? '/placeholder.svg' : undefined;
+      let imageUrl = '/placeholder.svg';
+      
+      if (featuredImage) {
+        imageUrl = await uploadImage(featuredImage, 'reviews', 'festivals');
+      }
+
+      // For now, we'll just upload additional images but not store the URLs
+      // This could be extended to store multiple images in the database
+      if (additionalImages.length > 0) {
+        await uploadMultipleImages(additionalImages, 'reviews', 'festivals/additional');
+      }
 
       await addFestivalReview({
         title,
