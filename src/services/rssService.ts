@@ -57,7 +57,7 @@ export const getRssItems = async (): Promise<RssItem[]> => {
 export const addRssFeed = async (name: string, url: string): Promise<RssFeed> => {
   const { data, error } = await supabase
     .from('rss_feeds')
-    .insert([{ name, url }])
+    .insert([{ name, url, is_active: true }])
     .select()
     .single();
   
@@ -67,6 +67,18 @@ export const addRssFeed = async (name: string, url: string): Promise<RssFeed> =>
   }
   
   return data;
+};
+
+export const toggleFeedActive = async (feedId: string, isActive: boolean): Promise<void> => {
+  const { error } = await supabase
+    .from('rss_feeds')
+    .update({ is_active: isActive })
+    .eq('id', feedId);
+  
+  if (error) {
+    console.error('Error toggling feed active status:', error);
+    throw new Error('Failed to update feed status');
+  }
 };
 
 export const publishRssItem = async (itemId: string): Promise<void> => {

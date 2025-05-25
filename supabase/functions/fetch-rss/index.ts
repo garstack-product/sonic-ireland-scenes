@@ -51,30 +51,34 @@ Deno.serve(async (req) => {
         const response = await fetch(feed.url);
         const xmlText = await response.text();
         
-        // Parse RSS XML
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+        // Use regex to parse RSS XML instead of DOMParser (not available in Deno)
+        const itemMatches = xmlText.match(/<item[^>]*>([\s\S]*?)<\/item>/gi) || [];
+        console.log(`Found ${itemMatches.length} items in ${feed.name}`);
         
-        // Extract items
-        const items = xmlDoc.getElementsByTagName('item');
-        console.log(`Found ${items.length} items in ${feed.name}`);
-        
-        for (let i = 0; i < Math.min(items.length, 10); i++) { // Limit to 10 items per feed
-          const item = items[i];
+        for (let i = 0; i < Math.min(itemMatches.length, 10); i++) {
+          const itemXml = itemMatches[i];
           
-          const title = item.getElementsByTagName('title')[0]?.textContent || '';
-          const link = item.getElementsByTagName('link')[0]?.textContent || '';
-          const description = item.getElementsByTagName('description')[0]?.textContent || '';
-          const pubDate = item.getElementsByTagName('pubDate')[0]?.textContent || '';
-          const author = item.getElementsByTagName('author')[0]?.textContent || 
-                        item.getElementsByTagName('dc:creator')[0]?.textContent || '';
+          // Extract data using regex
+          const titleMatch = itemXml.match(/<title[^>]*><!\[CDATA\[(.*?)\]\]><\/title>|<title[^>]*>(.*?)<\/title>/i);
+          const linkMatch = itemXml.match(/<link[^>]*>(.*?)<\/link>/i);
+          const descriptionMatch = itemXml.match(/<description[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description[^>]*>([\s\S]*?)<\/description>/i);
+          const pubDateMatch = itemXml.match(/<pubDate[^>]*>(.*?)<\/pubDate>/i);
+          const authorMatch = itemXml.match(/<author[^>]*>(.*?)<\/author>|<dc:creator[^>]*>(.*?)<\/dc:creator>/i);
           
-          // Extract image from description or content
-          const imageMatch = description.match(/<img[^>]+src="([^">]+)"/);
+          const title = (titleMatch?.[1] || titleMatch?.[2] || '').trim();
+          const link = (linkMatch?.[1] || '').trim();
+          const description = (descriptionMatch?.[1] || descriptionMatch?.[2] || '').trim();
+          const pubDate = (pubDateMatch?.[1] || '').trim();
+          const author = (authorMatch?.[1] || authorMatch?.[2] || '').trim();
+          
+          // Extract image from description
+          const imageMatch = description.match(/<img[^>]+src=['"]([^'"]+)['"]/i);
           const imageUrl = imageMatch ? imageMatch[1] : null;
           
           // Clean description of HTML tags for excerpt
           const cleanDescription = description.replace(/<[^>]*>/g, '').substring(0, 200);
+          
+          if (!title || !link) continue;
           
           // Check if item already exists
           const { data: existingItem } = await supabase
@@ -84,13 +88,13 @@ Deno.serve(async (req) => {
             .eq('feed_id', feed.id)
             .single();
           
-          if (!existingItem && title && link) {
+          if (!existingItem) {
             // Insert new RSS item
             const { error: insertError } = await supabase
               .from('rss_items')
               .insert({
                 feed_id: feed.id,
-                title: title.trim(),
+                title: title,
                 content: description,
                 excerpt: cleanDescription,
                 author: author || null,

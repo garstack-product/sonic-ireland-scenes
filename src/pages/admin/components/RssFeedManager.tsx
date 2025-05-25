@@ -1,12 +1,14 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { getRssFeeds, getRssItems, publishRssItem, deleteRssItem } from "@/services/rssService";
+import { getRssFeeds, getRssItems, publishRssItem, deleteRssItem, addRssFeed, toggleFeedActive } from "@/services/rssService";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Eye, RefreshCw } from "lucide-react";
+import { Trash2, Eye, RefreshCw, Plus } from "lucide-react";
 
 interface RssFeed {
   id: string;
@@ -37,10 +39,31 @@ const RssFeedManager = () => {
   const [items, setItems] = useState<RssItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
+  const [isAddingFeed, setIsAddingFeed] = useState(false);
+  const [newFeedName, setNewFeedName] = useState("");
+  const [newFeedUrl, setNewFeedUrl] = useState("");
+  const [showAddForm, setShowAddForm] = useState(false);
 
   useEffect(() => {
     fetchData();
+    // Add some example feeds if none exist
+    addExampleFeeds();
   }, []);
+
+  const addExampleFeeds = async () => {
+    try {
+      const existingFeeds = await getRssFeeds();
+      if (existingFeeds.length === 0) {
+        // Add some working example feeds
+        await addRssFeed("Pitchfork", "https://pitchfork.com/rss/news/");
+        await addRssFeed("Rolling Stone", "https://www.rollingstone.com/music/rss/");
+        await addRssFeed("BBC Music News", "http://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml");
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Error adding example feeds:', error);
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -58,6 +81,41 @@ const RssFeedManager = () => {
     }
   };
 
+  const handleAddFeed = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newFeedName.trim() || !newFeedUrl.trim()) {
+      toast.error('Please provide both name and URL');
+      return;
+    }
+
+    setIsAddingFeed(true);
+    try {
+      await addRssFeed(newFeedName.trim(), newFeedUrl.trim());
+      toast.success('RSS feed added successfully');
+      setNewFeedName("");
+      setNewFeedUrl("");
+      setShowAddForm(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error adding RSS feed:', error);
+      toast.error('Failed to add RSS feed');
+    } finally {
+      setIsAddingFeed(false);
+    }
+  };
+
+  const handleToggleActive = async (feedId: string, currentActive: boolean) => {
+    try {
+      await toggleFeedActive(feedId, !currentActive);
+      toast.success(`Feed ${!currentActive ? 'activated' : 'deactivated'}`);
+      fetchData();
+    } catch (error) {
+      console.error('Error toggling feed status:', error);
+      toast.error('Failed to update feed status');
+    }
+  };
+
   const handleFetchRssFeeds = async () => {
     setIsFetching(true);
     try {
@@ -68,7 +126,7 @@ const RssFeedManager = () => {
         toast.error('Failed to fetch RSS feeds');
       } else {
         toast.success('RSS feeds fetched successfully');
-        fetchData(); // Refresh the data
+        fetchData();
       }
     } catch (error) {
       console.error('Error invoking RSS fetch function:', error);
@@ -108,15 +166,65 @@ const RssFeedManager = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-white">RSS Feed Management</h2>
-        <Button 
-          onClick={handleFetchRssFeeds} 
-          disabled={isFetching}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-          {isFetching ? 'Fetching...' : 'Fetch RSS Feeds'}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowAddForm(!showAddForm)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Add Feed
+          </Button>
+          <Button 
+            onClick={handleFetchRssFeeds} 
+            disabled={isFetching}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+            {isFetching ? 'Fetching...' : 'Fetch RSS Feeds'}
+          </Button>
+        </div>
       </div>
+
+      {showAddForm && (
+        <Card className="bg-dark-200 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white">Add New RSS Feed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleAddFeed} className="space-y-4">
+              <div>
+                <Input
+                  placeholder="Feed Name (e.g., NME Music News)"
+                  value={newFeedName}
+                  onChange={(e) => setNewFeedName(e.target.value)}
+                  className="bg-dark-300 border-gray-600 text-white"
+                />
+              </div>
+              <div>
+                <Input
+                  placeholder="RSS URL (e.g., https://www.nme.com/feed)"
+                  value={newFeedUrl}
+                  onChange={(e) => setNewFeedUrl(e.target.value)}
+                  className="bg-dark-300 border-gray-600 text-white"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" disabled={isAddingFeed}>
+                  {isAddingFeed ? 'Adding...' : 'Add Feed'}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowAddForm(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {feeds.map((feed) => (
@@ -128,16 +236,20 @@ const RssFeedManager = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center mb-2">
                 <Badge variant={feed.is_active ? "default" : "secondary"}>
                   {feed.is_active ? "Active" : "Inactive"}
                 </Badge>
-                {feed.last_fetched && (
-                  <span className="text-xs text-gray-500">
-                    Last: {new Date(feed.last_fetched).toLocaleDateString()}
-                  </span>
-                )}
+                <Switch
+                  checked={feed.is_active}
+                  onCheckedChange={(checked) => handleToggleActive(feed.id, feed.is_active)}
+                />
               </div>
+              {feed.last_fetched && (
+                <span className="text-xs text-gray-500">
+                  Last: {new Date(feed.last_fetched).toLocaleDateString()}
+                </span>
+              )}
             </CardContent>
           </Card>
         ))}

@@ -18,6 +18,7 @@ import FestivalListingsPage from "./pages/listings/FestivalListingsPage";
 import JustAnnouncedPage from "./pages/listings/JustAnnouncedPage";
 import MapPage from "./pages/listings/MapPage";
 import NewsPage from "./pages/news/NewsPage";
+import NewsDetailPage from "./pages/news/NewsDetailPage";
 import AboutPage from "./pages/About";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
@@ -82,6 +83,7 @@ const App = () => (
               
               {/* Other Pages */}
               <Route path="/news" element={<NewsPage />} />
+              <Route path="/news/:id" element={<NewsDetailPage />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/admin" element={<AdminPage />} />
               
