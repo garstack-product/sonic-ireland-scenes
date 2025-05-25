@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { getRssFeeds, getRssItems, publishRssItem, deleteRssItem, addRssFeed, toggleFeedActive } from "@/services/rssService";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Eye, RefreshCw, Plus } from "lucide-react";
+import { Trash2, Eye, RefreshCw, Plus, Search, Filter } from "lucide-react";
 
 interface RssFeed {
   id: string;
@@ -32,6 +33,7 @@ interface RssItem {
   is_published: boolean;
   is_deleted: boolean;
   created_at: string;
+  rss_feeds?: { name: string };
 }
 
 const RssFeedManager = () => {
@@ -43,21 +45,28 @@ const RssFeedManager = () => {
   const [newFeedName, setNewFeedName] = useState("");
   const [newFeedUrl, setNewFeedUrl] = useState("");
   const [showAddForm, setShowAddForm] = useState(false);
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFeed, setSelectedFeed] = useState("all");
+  const [selectedMonth, setSelectedMonth] = useState("all");
 
   useEffect(() => {
     fetchData();
-    // Add some example feeds if none exist
     addExampleFeeds();
   }, []);
+
+  useEffect(() => {
+    fetchItems();
+  }, [searchTerm, selectedFeed, selectedMonth]);
 
   const addExampleFeeds = async () => {
     try {
       const existingFeeds = await getRssFeeds();
       if (existingFeeds.length === 0) {
-        // Add some working example feeds
-        await addRssFeed("Pitchfork", "https://pitchfork.com/rss/news/");
-        await addRssFeed("Rolling Stone", "https://www.rollingstone.com/music/rss/");
+        await addRssFeed("NME Music News", "https://www.nme.com/feed");
         await addRssFeed("BBC Music News", "http://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml");
+        await addRssFeed("Pitchfork", "https://pitchfork.com/rss/news/");
         fetchData();
       }
     } catch (error) {
@@ -67,15 +76,21 @@ const RssFeedManager = () => {
 
   const fetchData = async () => {
     try {
-      const [feedsData, itemsData] = await Promise.all([
-        getRssFeeds(),
-        getRssItems()
-      ]);
+      const feedsData = await getRssFeeds();
       setFeeds(feedsData);
+    } catch (error) {
+      console.error('Error fetching RSS feeds:', error);
+      toast.error('Failed to load RSS feeds');
+    }
+  };
+
+  const fetchItems = async () => {
+    try {
+      const itemsData = await getRssItems(searchTerm, selectedFeed, selectedMonth);
       setItems(itemsData);
     } catch (error) {
-      console.error('Error fetching RSS data:', error);
-      toast.error('Failed to load RSS data');
+      console.error('Error fetching RSS items:', error);
+      toast.error('Failed to load RSS items');
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +141,7 @@ const RssFeedManager = () => {
         toast.error('Failed to fetch RSS feeds');
       } else {
         toast.success('RSS feeds fetched successfully');
-        fetchData();
+        fetchItems();
       }
     } catch (error) {
       console.error('Error invoking RSS fetch function:', error);
@@ -140,7 +155,7 @@ const RssFeedManager = () => {
     try {
       await publishRssItem(itemId);
       toast.success('RSS item published to news');
-      fetchData();
+      fetchItems();
     } catch (error) {
       console.error('Error publishing RSS item:', error);
       toast.error('Failed to publish RSS item');
@@ -151,11 +166,34 @@ const RssFeedManager = () => {
     try {
       await deleteRssItem(itemId);
       toast.success('RSS item deleted');
-      fetchData();
+      fetchItems();
     } catch (error) {
       console.error('Error deleting RSS item:', error);
       toast.error('Failed to delete RSS item');
     }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const getMonthOptions = () => {
+    const months = [
+      { value: "all", label: "All Months" },
+      { value: "1", label: "January" },
+      { value: "2", label: "February" },
+      { value: "3", label: "March" },
+      { value: "4", label: "April" },
+      { value: "5", label: "May" },
+      { value: "6", label: "June" },
+      { value: "7", label: "July" },
+      { value: "8", label: "August" },
+      { value: "9", label: "September" },
+      { value: "10", label: "October" },
+      { value: "11", label: "November" },
+      { value: "12", label: "December" }
+    ];
+    return months;
   };
 
   if (isLoading) {
@@ -247,7 +285,7 @@ const RssFeedManager = () => {
               </div>
               {feed.last_fetched && (
                 <span className="text-xs text-gray-500">
-                  Last: {new Date(feed.last_fetched).toLocaleDateString()}
+                  Last: {formatDate(feed.last_fetched)}
                 </span>
               )}
             </CardContent>
@@ -258,8 +296,48 @@ const RssFeedManager = () => {
       <div className="bg-dark-300 p-6 rounded-lg shadow-md">
         <h3 className="text-lg font-semibold text-white mb-4">RSS Feed Items</h3>
         
+        {/* Search and Filter Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search items..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-dark-200 border-gray-600 text-white"
+            />
+          </div>
+          
+          <Select value={selectedFeed} onValueChange={setSelectedFeed}>
+            <SelectTrigger className="bg-dark-200 border-gray-600 text-white">
+              <SelectValue placeholder="Filter by feed" />
+            </SelectTrigger>
+            <SelectContent className="bg-dark-200 border-gray-600">
+              <SelectItem value="all">All Feeds</SelectItem>
+              {feeds.map((feed) => (
+                <SelectItem key={feed.id} value={feed.id}>
+                  {feed.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="bg-dark-200 border-gray-600 text-white">
+              <SelectValue placeholder="Filter by month" />
+            </SelectTrigger>
+            <SelectContent className="bg-dark-200 border-gray-600">
+              {getMonthOptions().map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
         {items.length === 0 ? (
-          <p className="text-gray-400">No RSS items found. Click "Fetch RSS Feeds" to load items.</p>
+          <p className="text-gray-400">No RSS items found. Try adjusting your filters or click "Fetch RSS Feeds" to load items.</p>
         ) : (
           <div className="space-y-4">
             {items.map((item) => (
@@ -274,9 +352,19 @@ const RssFeedManager = () => {
                         </CardDescription>
                       )}
                       <div className="flex gap-4 mt-2 text-sm text-gray-500">
+                        {item.rss_feeds?.name && (
+                          <Badge variant="outline" className="text-xs">
+                            {item.rss_feeds.name}
+                          </Badge>
+                        )}
                         {item.author && <span>By {item.author}</span>}
                         {item.published_date && (
-                          <span>{new Date(item.published_date).toLocaleDateString()}</span>
+                          <span>{formatDate(item.published_date)}</span>
+                        )}
+                        {item.is_published && (
+                          <Badge variant="default" className="text-xs">
+                            Published
+                          </Badge>
                         )}
                       </div>
                     </div>

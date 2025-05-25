@@ -15,6 +15,31 @@ interface RSSItem {
   content?: string;
 }
 
+// Function to clean unicode characters and HTML entities
+const cleanText = (text: string): string => {
+  if (!text) return text;
+  
+  return text
+    // Replace common HTML entities
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#8211;/g, "–")
+    .replace(/&#8212;/g, "—")
+    .replace(/&#8230;/g, "...")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&nbsp;/g, " ")
+    // Remove other numeric HTML entities
+    .replace(/&#\d+;/g, "")
+    // Clean up extra whitespace
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -65,11 +90,15 @@ Deno.serve(async (req) => {
           const pubDateMatch = itemXml.match(/<pubDate[^>]*>(.*?)<\/pubDate>/i);
           const authorMatch = itemXml.match(/<author[^>]*>(.*?)<\/author>|<dc:creator[^>]*>(.*?)<\/dc:creator>/i);
           
-          const title = (titleMatch?.[1] || titleMatch?.[2] || '').trim();
+          let title = (titleMatch?.[1] || titleMatch?.[2] || '').trim();
           const link = (linkMatch?.[1] || '').trim();
-          const description = (descriptionMatch?.[1] || descriptionMatch?.[2] || '').trim();
+          let description = (descriptionMatch?.[1] || descriptionMatch?.[2] || '').trim();
           const pubDate = (pubDateMatch?.[1] || '').trim();
           const author = (authorMatch?.[1] || authorMatch?.[2] || '').trim();
+          
+          // Clean unicode characters and HTML entities
+          title = cleanText(title);
+          description = cleanText(description);
           
           // Extract image from description
           const imageMatch = description.match(/<img[^>]+src=['"]([^'"]+)['"]/i);
