@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 
-interface EventCardProps {
+export interface EventCardProps {
   id: string;
   title: string;
   artist: string;
@@ -11,6 +11,21 @@ interface EventCardProps {
   imageUrl: string;
   type: 'concert' | 'festival';
   category: 'review' | 'listing';
+  time?: string;
+  genre?: string;
+  subgenre?: string;
+  price?: number;
+  maxPrice?: number;
+  ticketUrl?: string;
+  rawDate?: string;
+  onSaleDate?: string | null;
+  source?: string;
+  venue_id?: string;
+  is_featured?: boolean;
+  is_hidden?: boolean;
+  rawData?: any;
+  start_price?: number;
+  max_price?: number;
 }
 
 const EventCard = ({ id, title, artist, venue, date, imageUrl, type, category }: EventCardProps) => {
