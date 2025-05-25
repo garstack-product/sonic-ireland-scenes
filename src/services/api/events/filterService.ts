@@ -2,16 +2,38 @@
 import { EventCardProps } from "@/components/ui/EventCard";
 import { fetchAllEvents } from "./fetchService";
 
-// Get the just announced events
+// Helper function to filter events for Ireland only
+const filterIrelandEvents = (events: EventCardProps[]): EventCardProps[] => {
+  return events.filter(event => {
+    // Check if event is in Ireland based on country field or venue location
+    const isIreland = event.country === 'Ireland' || 
+                     event.venue?.toLowerCase().includes('dublin') ||
+                     event.venue?.toLowerCase().includes('cork') ||
+                     event.venue?.toLowerCase().includes('galway') ||
+                     event.venue?.toLowerCase().includes('belfast') ||
+                     event.venue?.toLowerCase().includes('limerick') ||
+                     event.venue?.toLowerCase().includes('waterford') ||
+                     event.venue?.toLowerCase().includes('kilkenny') ||
+                     event.venue?.toLowerCase().includes('derry') ||
+                     event.venue?.toLowerCase().includes('ireland');
+    
+    return isIreland;
+  });
+};
+
+// Get the just announced events (Ireland only)
 export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
   try {
     const events = await fetchAllEvents();
+    
+    // Filter for Ireland events first
+    const irelandEvents = filterIrelandEvents(events);
     
     // Get events with recent on sale dates (within last 30 days) OR recently created events
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    return events.filter(event => {
+    return irelandEvents.filter(event => {
       // Skip sports events
       if (event.genre === 'GAA' || event.genre === 'Sports' || 
           event.subgenre === 'GAA' || event.subgenre === 'Sports') {
@@ -52,17 +74,20 @@ export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
   }
 };
 
-// Get upcoming events in the next X days
+// Get upcoming events in the next X days (Ireland only)
 export const fetchUpcomingEvents = async (days: number = 7): Promise<EventCardProps[]> => {
   try {
     const events = await fetchAllEvents();
+    
+    // Filter for Ireland events first
+    const irelandEvents = filterIrelandEvents(events);
     
     const today = new Date();
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + days);
     
     // Filter for events in the next 7 days and exclude sports/GAA
-    return events.filter(event => {
+    return irelandEvents.filter(event => {
       if (!event.rawDate) return false;
       
       // Skip sports events
@@ -80,14 +105,18 @@ export const fetchUpcomingEvents = async (days: number = 7): Promise<EventCardPr
   }
 };
 
-// Get featured events
+// Get featured events (Ireland only)
 export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
   try {
     const allEvents = await fetchAllEvents();
+    
+    // Filter for Ireland events first
+    const irelandEvents = filterIrelandEvents(allEvents);
+    
     const today = new Date();
 
     // Filter events that are both featured and upcoming
-    return allEvents
+    return irelandEvents
       .filter(event => {
         if (!event.rawDate) return false;
         // Skip sports events

@@ -42,7 +42,7 @@ const FeaturedEventsCarousel = ({ events, isLoading }: FeaturedEventsCarouselPro
         <CarouselContent>
           {events.map((event) => (
             <CarouselItem key={event.id} className="md:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-              <div className="p-1">
+              <div className="p-1 h-full">
                 <EventCard {...event} />
               </div>
             </CarouselItem>
