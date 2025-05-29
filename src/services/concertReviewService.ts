@@ -8,6 +8,7 @@ interface ConcertReview {
   venue: string;
   date: string;
   image_url?: string;
+  additional_images?: string[];
   content: string;
   created_at: string;
 }
@@ -37,6 +38,7 @@ export const addConcertReview = async (
       venue: review.venue,
       date: review.date,
       image_url: review.image_url,
+      additional_images: review.additional_images,
       content: review.content
     }])
     .select()

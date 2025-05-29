@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,15 +36,14 @@ const AddFestivalReview = () => {
 
     try {
       let imageUrl = '/placeholder.svg';
+      let additionalImageUrls: string[] = [];
       
       if (featuredImage) {
         imageUrl = await uploadImage(featuredImage, 'reviews', 'festivals');
       }
 
-      // For now, we'll just upload additional images but not store the URLs
-      // This could be extended to store multiple images in the database
       if (additionalImages.length > 0) {
-        await uploadMultipleImages(additionalImages, 'reviews', 'festivals/additional');
+        additionalImageUrls = await uploadMultipleImages(additionalImages, 'reviews', 'festivals/additional');
       }
 
       await addFestivalReview({
@@ -53,7 +53,8 @@ const AddFestivalReview = () => {
         start_date: startDate,
         end_date: endDate,
         content,
-        image_url: imageUrl
+        image_url: imageUrl,
+        additional_images: additionalImageUrls
       });
 
       toast.success("Festival review added successfully!");
@@ -188,6 +189,7 @@ const AddFestivalReview = () => {
             onChange={handleAdditionalImagesChange}
             className="bg-dark-200 border-gray-700 text-white"
           />
+          <p className="text-xs text-gray-400 mt-1">You can select multiple images for the gallery</p>
         </div>
         
         <div>

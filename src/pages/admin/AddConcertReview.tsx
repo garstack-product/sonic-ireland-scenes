@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { addConcertReview } from "@/services/concertReviewService";
-import { uploadImage } from "@/services/imageUploadService";
+import { uploadImage, uploadMultipleImages } from "@/services/imageUploadService";
 
 const AddConcertReview = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +18,7 @@ const AddConcertReview = () => {
     imageUrl: "/placeholder.svg"
   });
   const [featuredImage, setFeaturedImage] = useState<File | null>(null);
+  const [additionalImages, setAdditionalImages] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -31,15 +32,26 @@ const AddConcertReview = () => {
     }
   };
 
+  const handleAdditionalImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAdditionalImages(Array.from(e.target.files));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
       let imageUrl = '/placeholder.svg';
+      let additionalImageUrls: string[] = [];
       
       if (featuredImage) {
         imageUrl = await uploadImage(featuredImage, 'reviews', 'concerts');
+      }
+
+      if (additionalImages.length > 0) {
+        additionalImageUrls = await uploadMultipleImages(additionalImages, 'reviews', 'concerts/additional');
       }
 
       await addConcertReview({
@@ -48,6 +60,7 @@ const AddConcertReview = () => {
         venue: formData.venue,
         date: formData.date,
         image_url: imageUrl,
+        additional_images: additionalImageUrls,
         content: formData.content,
       });
       
@@ -64,6 +77,7 @@ const AddConcertReview = () => {
         imageUrl: "/placeholder.svg"
       });
       setFeaturedImage(null);
+      setAdditionalImages([]);
     } catch (error) {
       console.error('Error adding review:', error);
       toast.error("Failed to add review");
@@ -162,6 +176,21 @@ const AddConcertReview = () => {
               className="bg-dark-200 border-gray-700 text-white"
             />
           </div>
+        </div>
+        
+        <div>
+          <label htmlFor="additionalImages" className="block text-sm font-medium text-gray-300 mb-1">
+            Additional Images
+          </label>
+          <Input
+            id="additionalImages"
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={handleAdditionalImagesChange}
+            className="bg-dark-200 border-gray-700 text-white"
+          />
+          <p className="text-xs text-gray-400 mt-1">You can select multiple images</p>
         </div>
         
         <div>

@@ -9,6 +9,7 @@ interface FestivalReview {
   start_date: string;
   end_date: string;
   image_url?: string;
+  additional_images?: string[];
   content: string;
   created_at: string;
 }
@@ -39,6 +40,7 @@ export const addFestivalReview = async (
       start_date: review.start_date,
       end_date: review.end_date,
       image_url: review.image_url,
+      additional_images: review.additional_images,
       content: review.content
     }])
     .select()
