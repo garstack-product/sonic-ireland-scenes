@@ -151,13 +151,13 @@ const ManageFeaturedEvents = () => {
           break;
         case "date":
         default:
-          const aDate = new Date(a.raw_date || a.date);
-          const bDate = new Date(b.raw_date || b.date);
+          const aDate = new Date(a.rawDate || a.date);
+          const bDate = new Date(b.rawDate || b.date);
           return aDate.getTime() - bDate.getTime();
       }
       // Default secondary sort by date
-      const aDate = new Date(a.raw_date || a.date);
-      const bDate = new Date(b.raw_date || b.date);
+      const aDate = new Date(a.rawDate || a.date);
+      const bDate = new Date(b.rawDate || b.date);
       return aDate.getTime() - bDate.getTime();
     });
   };
