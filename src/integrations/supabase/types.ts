@@ -122,6 +122,7 @@ export type Database = {
       }
       festival_reviews: {
         Row: {
+          additional_images: string[] | null
           artist: string
           content: string
           created_at: string
@@ -134,6 +135,7 @@ export type Database = {
           venue: string
         }
         Insert: {
+          additional_images?: string[] | null
           artist: string
           content: string
           created_at?: string
@@ -146,6 +148,7 @@ export type Database = {
           venue: string
         }
         Update: {
+          additional_images?: string[] | null
           artist?: string
           content?: string
           created_at?: string
@@ -206,6 +209,7 @@ export type Database = {
       }
       reviews: {
         Row: {
+          additional_images: string[] | null
           artist: string
           content: string
           created_at: string
@@ -217,6 +221,7 @@ export type Database = {
           venue: string
         }
         Insert: {
+          additional_images?: string[] | null
           artist: string
           content: string
           created_at?: string
@@ -228,6 +233,7 @@ export type Database = {
           venue: string
         }
         Update: {
+          additional_images?: string[] | null
           artist?: string
           content?: string
           created_at?: string

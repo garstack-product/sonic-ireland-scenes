@@ -10,6 +10,7 @@ interface ConcertReview {
   venue: string;
   date: string;
   image_url?: string;
+  additional_images?: string[];
   content: string;
   created_at: string;
 }
@@ -83,6 +84,24 @@ const ConcertReviewDetail = () => {
               )
             ))}
           </div>
+
+          {/* Additional Images Gallery */}
+          {review.additional_images && review.additional_images.length > 0 && (
+            <div className="mt-12">
+              <h3 className="text-2xl font-bold text-white mb-6">Photo Gallery</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {review.additional_images.map((imageUrl, index) => (
+                  <div key={index} className="overflow-hidden rounded-lg">
+                    <img 
+                      src={imageUrl} 
+                      alt={`${review.artist} additional photo ${index + 1}`}
+                      className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
