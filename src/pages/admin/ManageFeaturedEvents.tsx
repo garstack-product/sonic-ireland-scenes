@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Loader2, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { fetchAllEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
@@ -17,6 +18,7 @@ const ManageFeaturedEvents = () => {
   const [allEvents, setAllEvents] = useState<EventCardProps[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [lastSyncInfo, setLastSyncInfo] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("date");
 
   const [hiddenEvents, setHiddenEvents] = useState<string[]>([]);
   const [festivalEvents, setFestivalEvents] = useState<string[]>([]); 
@@ -101,6 +103,8 @@ const ManageFeaturedEvents = () => {
       }
       
       toast.success("Events updated successfully!");
+      // Reload events to reflect changes
+      await loadEvents();
     } catch (error) {
       console.error('Error saving event settings:', error);
       toast.error('Failed to save event settings');
@@ -127,11 +131,44 @@ const ManageFeaturedEvents = () => {
     );
   };
 
+  const getSortedEvents = (events: EventCardProps[]) => {
+    return [...events].sort((a, b) => {
+      switch (sortBy) {
+        case "visibility":
+          const aHidden = hiddenEvents.includes(a.id);
+          const bHidden = hiddenEvents.includes(b.id);
+          if (aHidden !== bHidden) return aHidden ? 1 : -1;
+          break;
+        case "featured":
+          const aFeatured = featuredEvents.includes(a.id);
+          const bFeatured = featuredEvents.includes(b.id);
+          if (aFeatured !== bFeatured) return aFeatured ? -1 : 1;
+          break;
+        case "festival":
+          const aFestival = festivalEvents.includes(a.id);
+          const bFestival = festivalEvents.includes(b.id);
+          if (aFestival !== bFestival) return aFestival ? -1 : 1;
+          break;
+        case "date":
+        default:
+          const aDate = new Date(a.raw_date || a.date);
+          const bDate = new Date(b.raw_date || b.date);
+          return aDate.getTime() - bDate.getTime();
+      }
+      // Default secondary sort by date
+      const aDate = new Date(a.raw_date || a.date);
+      const bDate = new Date(b.raw_date || b.date);
+      return aDate.getTime() - bDate.getTime();
+    });
+  };
+
   const filteredEvents = allEvents.filter(event => 
     event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     event.artist.toLowerCase().includes(searchTerm.toLowerCase()) ||
     event.venue.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const sortedEvents = getSortedEvents(filteredEvents);
 
   return (
     <div className="bg-dark-300 p-6 rounded-lg shadow-md">
@@ -147,17 +184,34 @@ const ManageFeaturedEvents = () => {
         />
       </div>
       
-      <div className="mb-6 relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+      <div className="mb-6 space-y-4">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <Input
+            type="text"
+            placeholder="Search events..."
+            className="pl-10 bg-dark-200 border-gray-700 text-white"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-        <Input
-          type="text"
-          placeholder="Search events..."
-          className="pl-10 bg-dark-200 border-gray-700 text-white"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+        
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-gray-400" />
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-48 bg-dark-200 border-gray-700 text-white">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent className="bg-dark-200 border-gray-700">
+              <SelectItem value="date">Sort by Date</SelectItem>
+              <SelectItem value="featured">Featured First</SelectItem>
+              <SelectItem value="festival">Festivals First</SelectItem>
+              <SelectItem value="visibility">Visible First</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       
       <form onSubmit={handleSubmit}>
@@ -167,7 +221,7 @@ const ManageFeaturedEvents = () => {
           </div>
         ) : (
           <EventsList
-            events={filteredEvents}
+            events={sortedEvents}
             hiddenEvents={hiddenEvents}
             festivalEvents={festivalEvents}
             featuredEvents={featuredEvents}

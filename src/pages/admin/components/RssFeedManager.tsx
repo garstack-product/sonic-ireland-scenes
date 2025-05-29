@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { getRssFeeds, getRssItems, publishRssItem, deleteRssItem, addRssFeed, toggleFeedActive } from "@/services/rssService";
+import { getRssFeeds, getRssItems, publishRssItem, unpublishRssItem, deleteRssItem, addRssFeed, toggleFeedActive } from "@/services/rssService";
 import { supabase } from "@/integrations/supabase/client";
-import { Trash2, Eye, RefreshCw, Plus, Search, Filter } from "lucide-react";
+import { Trash2, Eye, EyeOff, RefreshCw, Plus, Search, Filter } from "lucide-react";
 
 interface RssFeed {
   id: string;
@@ -162,6 +161,17 @@ const RssFeedManager = () => {
     }
   };
 
+  const handleUnpublishItem = async (itemId: string) => {
+    try {
+      await unpublishRssItem(itemId);
+      toast.success('RSS item unpublished from news');
+      fetchItems();
+    } catch (error) {
+      console.error('Error unpublishing RSS item:', error);
+      toast.error('Failed to unpublish RSS item');
+    }
+  };
+
   const handleDeleteItem = async (itemId: string) => {
     try {
       await deleteRssItem(itemId);
@@ -179,20 +189,32 @@ const RssFeedManager = () => {
 
   const getMonthOptions = () => {
     const months = [
-      { value: "all", label: "All Months" },
-      { value: "1", label: "January" },
-      { value: "2", label: "February" },
-      { value: "3", label: "March" },
-      { value: "4", label: "April" },
-      { value: "5", label: "May" },
-      { value: "6", label: "June" },
-      { value: "7", label: "July" },
-      { value: "8", label: "August" },
-      { value: "9", label: "September" },
-      { value: "10", label: "October" },
-      { value: "11", label: "November" },
-      { value: "12", label: "December" }
+      { value: "all", label: "All Months" }
     ];
+    
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+    
+    // Generate months for current and previous year in chronological order (newest first)
+    for (let yearOffset = 0; yearOffset <= 1; yearOffset++) {
+      const year = currentYear - yearOffset;
+      const startMonth = yearOffset === 0 ? currentMonth : 11;
+      const endMonth = yearOffset === 1 ? Math.max(0, currentMonth - 12) : 0;
+      
+      for (let month = startMonth; month >= endMonth; month--) {
+        const monthNames = [
+          "January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"
+        ];
+        
+        months.push({
+          value: (month + 1).toString(),
+          label: `${year} - ${monthNames[month]}`
+        });
+      }
+    }
+    
     return months;
   };
 
@@ -369,14 +391,23 @@ const RssFeedManager = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      {!item.is_published && (
+                      {!item.is_published ? (
                         <Button
                           size="sm"
                           onClick={() => handlePublishItem(item.id)}
-                          className="flex items-center gap-1"
+                          className="flex items-center gap-1 bg-white text-black hover:bg-gray-200"
                         >
                           <Eye className="h-4 w-4" />
                           Publish
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => handleUnpublishItem(item.id)}
+                          className="flex items-center gap-1 bg-green-600 text-white hover:bg-green-700"
+                        >
+                          <EyeOff className="h-4 w-4" />
+                          Unpublish
                         </Button>
                       )}
                       <Button

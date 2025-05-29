@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface RssFeed {
@@ -218,4 +217,50 @@ export const deleteRssItem = async (itemId: string): Promise<void> => {
     console.error('Error deleting RSS item:', error);
     throw new Error('Failed to delete RSS item');
   }
+};
+
+export const unpublishRssItem = async (itemId: string): Promise<void> => {
+  console.log('Unpublishing RSS item:', itemId);
+  
+  // First get the RSS item to find the corresponding news item
+  const { data: rssItem, error: fetchError } = await supabase
+    .from('rss_items')
+    .select('*')
+    .eq('id', itemId)
+    .single();
+
+  if (fetchError || !rssItem) {
+    console.error('Error fetching RSS item:', fetchError);
+    throw new Error('Failed to fetch RSS item');
+  }
+
+  console.log('RSS item data:', rssItem);
+
+  // Remove from news_items table using the original URL
+  if (rssItem.url) {
+    const { error: deleteError } = await supabase
+      .from('news_items')
+      .delete()
+      .eq('url', rssItem.url);
+
+    if (deleteError) {
+      console.error('Error removing from news:', deleteError);
+      throw new Error('Failed to remove from news');
+    }
+
+    console.log('Successfully removed from news_items');
+  }
+
+  // Mark RSS item as unpublished
+  const { error: updateError } = await supabase
+    .from('rss_items')
+    .update({ is_published: false })
+    .eq('id', itemId);
+  
+  if (updateError) {
+    console.error('Error updating RSS item status:', updateError);
+    throw new Error('Failed to update RSS item status');
+  }
+
+  console.log('Successfully marked RSS item as unpublished');
 };
