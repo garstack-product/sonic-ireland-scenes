@@ -6,6 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 interface RssFeed {
   id: string;
@@ -21,30 +23,18 @@ const RssFeedManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [newFeedName, setNewFeedName] = useState("");
+  const [newFeedUrl, setNewFeedUrl] = useState("");
+  const [newFeedCategory, setNewFeedCategory] = useState("music");
 
-  // Safe category options with validation
   const categoryOptions = [
     { value: "all", label: "All Categories" },
     { value: "music", label: "Music" },
     { value: "events", label: "Events" },
     { value: "festivals", label: "Festivals" },
     { value: "news", label: "News" }
-  ].filter(option => {
-    const isValid = option && 
-                   option.value && 
-                   typeof option.value === 'string' && 
-                   option.value.trim().length > 0 &&
-                   option.label &&
-                   typeof option.label === 'string' &&
-                   option.label.trim().length > 0;
-    
-    if (!isValid) {
-      console.log(`RssFeedManager: Filtering out invalid category option:`, option);
-    }
-    return isValid;
-  });
-
-  console.log("RssFeedManager: Valid category options:", categoryOptions);
+  ];
 
   const loadFeeds = async () => {
     try {
@@ -63,6 +53,37 @@ const RssFeedManager = () => {
     loadFeeds();
   }, []);
 
+  const handleAddFeed = async () => {
+    if (!newFeedName || !newFeedUrl) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      // Add feed logic here
+      const newFeed: RssFeed = {
+        id: `feed-${Date.now()}`,
+        name: newFeedName,
+        url: newFeedUrl,
+        category: newFeedCategory,
+        isActive: true,
+        lastUpdated: new Date().toISOString()
+      };
+
+      setFeeds(prev => [...prev, newFeed]);
+      toast.success('RSS feed added successfully');
+      
+      // Reset form
+      setNewFeedName("");
+      setNewFeedUrl("");
+      setNewFeedCategory("music");
+      setIsAddDialogOpen(false);
+    } catch (error) {
+      console.error('Error adding RSS feed:', error);
+      toast.error('Failed to add RSS feed');
+    }
+  };
+
   const filteredFeeds = feeds.filter(feed => {
     const matchesSearch = feed.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          feed.url.toLowerCase().includes(searchTerm.toLowerCase());
@@ -74,10 +95,63 @@ const RssFeedManager = () => {
     <div className="bg-dark-300 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-white">Manage RSS Feeds</h2>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Feed
-        </Button>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Feed
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="bg-dark-300 border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">Add New RSS Feed</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="feedName" className="text-gray-300">Feed Name</Label>
+                <Input
+                  id="feedName"
+                  value={newFeedName}
+                  onChange={(e) => setNewFeedName(e.target.value)}
+                  placeholder="Enter feed name"
+                  className="bg-dark-200 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label htmlFor="feedUrl" className="text-gray-300">Feed URL</Label>
+                <Input
+                  id="feedUrl"
+                  value={newFeedUrl}
+                  onChange={(e) => setNewFeedUrl(e.target.value)}
+                  placeholder="Enter RSS feed URL"
+                  className="bg-dark-200 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <Label htmlFor="feedCategory" className="text-gray-300">Category</Label>
+                <Select value={newFeedCategory} onValueChange={setNewFeedCategory}>
+                  <SelectTrigger className="bg-dark-200 border-gray-700 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-dark-200 border-gray-700">
+                    <SelectItem value="music">Music</SelectItem>
+                    <SelectItem value="events">Events</SelectItem>
+                    <SelectItem value="festivals">Festivals</SelectItem>
+                    <SelectItem value="news">News</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleAddFeed}>
+                  Add Feed
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -99,24 +173,11 @@ const RssFeedManager = () => {
             <SelectValue placeholder="Select Category" />
           </SelectTrigger>
           <SelectContent className="bg-dark-200 border-gray-700 text-white">
-            {categoryOptions.length > 0 ? (
-              categoryOptions.map((option) => {
-                console.log(`RssFeedManager: Rendering SelectItem for category: "${option.value}"`);
-                return (
-                  <SelectItem 
-                    key={option.value} 
-                    value={option.value}
-                    className="hover:bg-dark-100"
-                  >
-                    {option.label}
-                  </SelectItem>
-                );
-              })
-            ) : (
-              <SelectItem key="fallback-all" value="all" className="hover:bg-dark-100">
-                All Categories
+            {categoryOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value} className="hover:bg-dark-100">
+                {option.label}
               </SelectItem>
-            )}
+            ))}
           </SelectContent>
         </Select>
       </div>
