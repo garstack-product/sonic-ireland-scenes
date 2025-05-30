@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Edit, Trash2, Eye, EyeOff, Calendar, ExternalLink } from "lucide-react";
+import { Search, Plus, Calendar, ExternalLink, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -44,6 +43,7 @@ const ManageRssFeeds = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [newFeedName, setNewFeedName] = useState("");
   const [newFeedUrl, setNewFeedUrl] = useState("");
+  const [isSyncing, setIsSyncing] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch RSS feeds
@@ -145,53 +145,92 @@ const ManageRssFeeds = () => {
     { value: "12", label: "December" },
   ];
 
+  const handleSyncFeeds = async () => {
+    setIsSyncing(true);
+    try {
+      // Call the RSS sync edge function
+      const response = await fetch('https://eckohtoprkgolyjdiown.supabase.co/functions/v1/fetch-rss', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to sync RSS feeds');
+      }
+      
+      const result = await response.json();
+      toast.success(`RSS feeds synced successfully. Processed ${result.totalProcessed || 0} items.`);
+      
+      // Refresh the data
+      refetchFeeds();
+      refetchItems();
+    } catch (error) {
+      console.error('Error syncing RSS feeds:', error);
+      toast.error('Failed to sync RSS feeds');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   return (
     <div className="bg-dark-300 p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-semibold text-white">Manage RSS Feeds</h2>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Feed
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="bg-dark-300 border-gray-700">
-            <DialogHeader>
-              <DialogTitle className="text-white">Add New RSS Feed</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="feedName" className="text-gray-300">Feed Name</Label>
-                <Input
-                  id="feedName"
-                  value={newFeedName}
-                  onChange={(e) => setNewFeedName(e.target.value)}
-                  placeholder="Enter feed name"
-                  className="bg-dark-200 border-gray-700 text-white"
-                />
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleSyncFeeds} 
+            disabled={isSyncing}
+            variant="outline"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? 'Syncing...' : 'Sync Feeds'}
+          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Feed
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-dark-300 border-gray-700">
+              <DialogHeader>
+                <DialogTitle className="text-white">Add New RSS Feed</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="feedName" className="text-gray-300">Feed Name</Label>
+                  <Input
+                    id="feedName"
+                    value={newFeedName}
+                    onChange={(e) => setNewFeedName(e.target.value)}
+                    placeholder="Enter feed name"
+                    className="bg-dark-200 border-gray-700 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="feedUrl" className="text-gray-300">Feed URL</Label>
+                  <Input
+                    id="feedUrl"
+                    value={newFeedUrl}
+                    onChange={(e) => setNewFeedUrl(e.target.value)}
+                    placeholder="Enter RSS feed URL"
+                    className="bg-dark-200 border-gray-700 text-white"
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleAddFeed}>
+                    Add Feed
+                  </Button>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="feedUrl" className="text-gray-300">Feed URL</Label>
-                <Input
-                  id="feedUrl"
-                  value={newFeedUrl}
-                  onChange={(e) => setNewFeedUrl(e.target.value)}
-                  placeholder="Enter RSS feed URL"
-                  className="bg-dark-200 border-gray-700 text-white"
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddFeed}>
-                  Add Feed
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Tabs defaultValue="feeds" className="w-full">
@@ -218,12 +257,12 @@ const ManageRssFeeds = () => {
                       <h3 className="text-lg font-semibold text-white">{feed.name}</h3>
                       <div className="flex gap-2">
                         <Button 
-                          variant="ghost" 
+                          variant="outline" 
                           size="sm" 
-                          className={feed.is_active ? "text-red-400 hover:text-red-300" : "text-green-400 hover:text-green-300"}
+                          className={feed.is_active ? "text-red-400 border-red-400 hover:bg-red-400 hover:text-white" : "text-green-400 border-green-400 hover:bg-green-400 hover:text-white"}
                           onClick={() => handleToggleFeedActive(feed.id, feed.is_active)}
                         >
-                          {feed.is_active ? <EyeOff size={16} /> : <Eye size={16} />}
+                          {feed.is_active ? "Deactivate" : "Activate"}
                         </Button>
                       </div>
                     </div>
@@ -313,40 +352,41 @@ const ManageRssFeeds = () => {
                       <div className="flex gap-2 ml-4">
                         {item.is_published ? (
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="text-orange-400 hover:text-orange-300"
+                            className="text-orange-400 border-orange-400 hover:bg-orange-400 hover:text-white"
                             onClick={() => handleUnpublishItem(item.id)}
                           >
-                            <EyeOff size={16} />
+                            Unpublish
                           </Button>
                         ) : (
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="text-green-400 hover:text-green-300"
+                            className="text-green-400 border-green-400 hover:bg-green-400 hover:text-white"
                             onClick={() => handlePublishItem(item.id)}
                           >
-                            <Eye size={16} />
+                            Publish
                           </Button>
                         )}
                         {item.url && (
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="text-blue-400 hover:text-blue-300"
+                            className="text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white"
                             onClick={() => window.open(item.url, '_blank')}
                           >
-                            <ExternalLink size={16} />
+                            <ExternalLink className="h-4 w-4 mr-1" />
+                            View
                           </Button>
                         )}
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="text-red-400 hover:text-red-300"
+                          className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white"
                           onClick={() => handleDeleteItem(item.id)}
                         >
-                          <Trash2 size={16} />
+                          Delete
                         </Button>
                       </div>
                     </div>
