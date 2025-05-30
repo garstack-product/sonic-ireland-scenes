@@ -8,8 +8,8 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-white text-lg font-semibold mb-4">SonicShots</h3>
-            <p className="text-gray-400">Music photography and event coverage throughout Ireland.</p>
+            <h3 className="text-white text-lg font-semibold mb-4">Dirty Boots</h3>
+            <p className="text-gray-400">Music photography and event coverage throughout Ireland and Europe.</p>
           </div>
           
           <div>
@@ -47,7 +47,7 @@ const Footer = () => {
         </div>
         
         <div className="mt-12 pt-4 border-t border-gray-800 text-center text-gray-500 text-sm">
-          <p>&copy; {new Date().getFullYear()} SonicShots. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Dirty Boots. All rights reserved.</p>
         </div>
       </div>
     </footer>

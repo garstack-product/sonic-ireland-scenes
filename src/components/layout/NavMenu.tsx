@@ -1,203 +1,136 @@
 
-import React from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { ChevronDown } from "lucide-react";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
-// Navigation items configuration
-const navItems = [
-  { label: "Home", path: "/" },
-  {
-    label: "Listings",
-    path: "/listings",
-    subItems: [
-      { label: "Concerts", path: "/listings/concerts" },
-      { 
-        label: "Festivals", 
-        path: "/listings/festivals",
-        subItems: [
-          { label: "Ireland", path: "/listings/festivals/ireland" },
-          { label: "UK", path: "/listings/festivals/uk" },
-          { label: "France", path: "/listings/festivals/france" },
-          { label: "Spain", path: "/listings/festivals/spain" },
-          { label: "Germany", path: "/listings/festivals/germany" },
-          { label: "Netherlands", path: "/listings/festivals/netherlands" },
-        ]
-      },
-      { label: "Just Announced", path: "/listings/just-announced" },
-      { label: "Map", path: "/listings/map" },
-    ],
-  },
-  {
-    label: "Reviews",
-    path: "/reviews",
-    subItems: [
-      { label: "Concerts", path: "/reviews/concerts" },
-      { label: "Festivals", path: "/reviews/festivals" },
-    ],
-  },
-  { label: "News", path: "/news" },
-  { label: "About", path: "/about" },
-  { label: "Admin", path: "/admin" }, // Ensuring Admin link is present
-];
-
-// Nav menu component 
 const NavMenu = () => {
   const location = useLocation();
-  const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null);
-  const [activeSubDropdown, setActiveSubDropdown] = React.useState<string | null>(null);
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
 
-  const isActive = (path: string) => {
-    if (path === "/") {
-      return location.pathname === "/";
-    }
-    return location.pathname.startsWith(path);
+  const isActivePath = (path: string) => {
+    return location.pathname === path;
   };
 
-  const handleMouseEnter = (label: string) => {
-    setActiveDropdown(label);
+  const isActiveSection = (paths: string[]) => {
+    return paths.some(path => location.pathname.startsWith(path));
   };
 
-  const handleSubMouseEnter = (label: string) => {
-    setActiveSubDropdown(label);
-  };
-
-  const handleMouseLeave = () => {
-    setActiveDropdown(null);
-    setActiveSubDropdown(null);
+  const handleMenuToggle = (menuName: string) => {
+    setOpenMenu(openMenu === menuName ? null : menuName);
   };
 
   return (
-    <nav className="hidden md:flex space-x-1 items-center">
-      {navItems.map((item) => (
-        <div
-          key={item.label}
-          className="relative"
-          onMouseEnter={() => handleMouseEnter(item.label)}
-          onMouseLeave={handleMouseLeave}
-        >
-          <Link
-            to={item.path}
-            className={cn(
-              "px-4 py-2 rounded-md text-sm font-medium transition-colors",
-              isActive(item.path)
-                ? "text-white bg-dark-400"
-                : "text-gray-300 hover:text-white hover:bg-dark-400"
-            )}
+    <NavigationMenu className="flex-1">
+      <NavigationMenuList className="space-x-8">
+        <NavigationMenuItem>
+          <Link 
+            to="/" 
+            className={`text-white hover:text-gray-300 transition-colors ${
+              isActivePath('/') ? 'text-gray-300' : ''
+            }`}
           >
-            {item.label}
-            {item.subItems && (
-              <span className="ml-1 inline-block">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="inline"
-                >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </span>
-            )}
+            Home
           </Link>
+        </NavigationMenuItem>
 
-          {item.subItems && activeDropdown === item.label && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-dark-400 ring-1 ring-black ring-opacity-5 z-50"
-            >
-              <div className="py-1" role="menu" aria-orientation="vertical">
-                {item.subItems.map((subItem) => (
-                  <div key={subItem.path} className="relative">
-                    {subItem.subItems ? (
-                      <div
-                        className="relative"
-                        onMouseEnter={() => handleSubMouseEnter(subItem.label)}
-                      >
-                        <Link
-                          to={subItem.path}
-                          className={cn(
-                            "block px-4 py-2 text-sm text-gray-300 hover:bg-dark-500 hover:text-white",
-                            location.pathname === subItem.path
-                              ? "bg-dark-500 text-white"
-                              : ""
-                          )}
-                          role="menuitem"
-                        >
-                          {subItem.label}
-                          <span className="float-right mt-1">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="12"
-                              height="12"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="m9 6 6 6-6 6" />
-                            </svg>
-                          </span>
-                        </Link>
-                        
-                        {activeSubDropdown === subItem.label && (
-                          <motion.div
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute left-full top-0 w-48 rounded-md shadow-lg bg-dark-400 ring-1 ring-black ring-opacity-5"
-                          >
-                            <div className="py-1">
-                              {subItem.subItems.map((nestedItem) => (
-                                <Link
-                                  key={nestedItem.path}
-                                  to={nestedItem.path}
-                                  className={cn(
-                                    "block px-4 py-2 text-sm text-gray-300 hover:bg-dark-500 hover:text-white",
-                                    location.pathname === nestedItem.path
-                                      ? "bg-dark-500 text-white"
-                                      : ""
-                                  )}
-                                >
-                                  {nestedItem.label}
-                                </Link>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
-                      </div>
-                    ) : (
-                      <Link
-                        to={subItem.path}
-                        className={cn(
-                          "block px-4 py-2 text-sm text-gray-300 hover:bg-dark-500 hover:text-white",
-                          location.pathname === subItem.path
-                            ? "bg-dark-500 text-white"
-                            : ""
-                        )}
-                        role="menuitem"
-                      >
-                        {subItem.label}
-                      </Link>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </div>
-      ))}
-    </nav>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger 
+            className={`bg-transparent text-white hover:text-gray-300 hover:bg-transparent data-[state=open]:bg-transparent data-[active]:bg-transparent ${
+              isActiveSection(['/listings']) ? 'text-gray-300' : ''
+            }`}
+            onClick={() => handleMenuToggle('listings')}
+          >
+            <span className="pointer-events-none">Listings</span>
+            <ChevronDown className="ml-1 h-4 w-4" />
+          </NavigationMenuTrigger>
+          <NavigationMenuContent className="bg-dark-400 border-dark-300 p-4 min-w-[200px]">
+            <div className="grid gap-3">
+              <Link 
+                to="/listings/concerts" 
+                className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors"
+              >
+                Concerts
+              </Link>
+              <Link 
+                to="/listings/festivals" 
+                className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors"
+              >
+                Festivals
+              </Link>
+              <Link 
+                to="/listings/just-announced" 
+                className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors"
+              >
+                Just Announced
+              </Link>
+              <Link 
+                to="/listings/map" 
+                className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors"
+              >
+                Map
+              </Link>
+            </div>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <NavigationMenuTrigger 
+            className={`bg-transparent text-white hover:text-gray-300 hover:bg-transparent data-[state=open]:bg-transparent data-[active]:bg-transparent ${
+              isActiveSection(['/reviews']) ? 'text-gray-300' : ''
+            }`}
+            onClick={() => handleMenuToggle('reviews')}
+          >
+            <span className="pointer-events-none">Reviews</span>
+            <ChevronDown className="ml-1 h-4 w-4" />
+          </NavigationMenuTrigger>
+          <NavigationMenuContent className="bg-dark-400 border-dark-300 p-4 min-w-[200px]">
+            <div className="grid gap-3">
+              <Link 
+                to="/reviews/concerts" 
+                className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors"
+              >
+                Concert Reviews
+              </Link>
+              <Link 
+                to="/reviews/festivals" 
+                className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors"
+              >
+                Festival Reviews
+              </Link>
+            </div>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <Link 
+            to="/news" 
+            className={`text-white hover:text-gray-300 transition-colors ${
+              isActivePath('/news') ? 'text-gray-300' : ''
+            }`}
+          >
+            News
+          </Link>
+        </NavigationMenuItem>
+
+        <NavigationMenuItem>
+          <Link 
+            to="/about" 
+            className={`text-white hover:text-gray-300 transition-colors ${
+              isActivePath('/about') ? 'text-gray-300' : ''
+            }`}
+          >
+            About
+          </Link>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 };
 

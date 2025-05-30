@@ -10,8 +10,8 @@ interface FeaturedEventsSectionProps {
 }
 
 const FeaturedEventsSection = ({ featuredEvents, isLoading }: FeaturedEventsSectionProps) => {
-  // Show a max of 10 featured events
-  const limitedEvents = featuredEvents.slice(0, 10);
+  // Only show actually featured events (no artificial limit or fallback)
+  const actualFeaturedEvents = featuredEvents.filter(event => event.is_featured === true);
 
   return (
     <section className="py-8">
@@ -27,12 +27,12 @@ const FeaturedEventsSection = ({ featuredEvents, isLoading }: FeaturedEventsSect
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-white"></div>
         </div>
-      ) : limitedEvents.length === 0 ? (
+      ) : actualFeaturedEvents.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
-          No featured events found
+          No featured events found. Visit the admin page to set featured events.
         </div>
       ) : (
-        <EventsCarousel events={limitedEvents} title="Featured Events" />
+        <EventsCarousel events={actualFeaturedEvents} title="Featured Events" />
       )}
     </section>
   );

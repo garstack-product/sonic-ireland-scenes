@@ -5,7 +5,7 @@ const AboutPage = () => {
   return (
     <div className="max-w-4xl mx-auto">
       <PageHeader
-        title="About SonicShots"
+        title="About Dirty Boots"
         subtitle="Dedicated to documenting Ireland's vibrant music scene through photography and journalism"
       />
       
@@ -13,7 +13,7 @@ const AboutPage = () => {
         <section>
           <h2 className="text-2xl font-bold text-white mb-4">Our Mission</h2>
           <p className="text-gray-300 leading-relaxed">
-            SonicShots aims to be the definitive resource for concert and festival photography and information in Ireland. 
+            Dirty Boots aims to be the definitive resource for concert and festival news and photography in Ireland and further afield. 
             We're passionate about capturing the energy, emotion, and artistry of live music performances, 
             while also providing a comprehensive guide to upcoming events throughout the country.
           </p>
@@ -78,9 +78,9 @@ const AboutPage = () => {
             For inquiries about event coverage, collaborations, or to license photographs, please get in touch:
           </p>
           <div className="bg-dark-300 p-6 rounded-lg">
-            <p className="text-gray-300 mb-2"><strong className="text-white">Email:</strong> info@sonicshots.com</p>
-            <p className="text-gray-300 mb-2"><strong className="text-white">Instagram:</strong> @sonicshotsireland</p>
-            <p className="text-gray-300"><strong className="text-white">Twitter:</strong> @sonicshotsie</p>
+            <p className="text-gray-300 mb-2"><strong className="text-white">Email:</strong> info@dirtyboots.com</p>
+            <p className="text-gray-300 mb-2"><strong className="text-white">Instagram:</strong> @gotdirtyboots</p>
+            <p className="text-gray-300"><strong className="text-white">Twitter:</strong> @gotdirtyboots</p>
           </div>
         </section>
       </div>

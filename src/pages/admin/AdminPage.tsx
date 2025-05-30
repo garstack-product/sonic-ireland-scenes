@@ -77,6 +77,7 @@ const AdminPage = () => {
                 <TabsTrigger value="concert-reviews">Concert Reviews</TabsTrigger>
                 <TabsTrigger value="festival-reviews">Festival Reviews</TabsTrigger>
                 <TabsTrigger value="news">News</TabsTrigger>
+                <TabsTrigger value="manage-news">Manage News</TabsTrigger>
                 <TabsTrigger value="rss-feeds">RSS Feeds</TabsTrigger>
                 <TabsTrigger value="featured">Featured Events</TabsTrigger>
               </>
@@ -101,6 +102,10 @@ const AdminPage = () => {
               
               <TabsContent value="news">
                 <AddNewsItem />
+              </TabsContent>
+
+              <TabsContent value="manage-news">
+                <ManageNewsItems />
               </TabsContent>
 
               <TabsContent value="rss-feeds">
