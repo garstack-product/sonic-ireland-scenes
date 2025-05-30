@@ -21,18 +21,31 @@ export const useEventFiltering = ({ events, initialVisibleCount = 80 }: UseEvent
   const [visibleItemCount, setVisibleItemCount] = useState(initialVisibleCount);
   const [displayedEvents, setDisplayedEvents] = useState<EventCardProps[]>([]);
 
-  // Extract genres from events
+  // Extract genres from events with robust filtering
   useEffect(() => {
     const allGenres = new Set<string>();
     allGenres.add("All Genres");
     
     events.forEach(event => {
-      if (event.genre && event.genre !== "Undefined") {
-        allGenres.add(event.genre);
+      // Only add genres that are valid, non-empty strings
+      if (event.genre && 
+          typeof event.genre === 'string' && 
+          event.genre.trim() !== "" && 
+          event.genre !== "Undefined" &&
+          event.genre !== "undefined" &&
+          event.genre !== null) {
+        allGenres.add(event.genre.trim());
       }
     });
     
-    setGenres(Array.from(allGenres));
+    // Convert to array and ensure no empty strings made it through
+    const genreArray = Array.from(allGenres).filter(genre => 
+      genre && 
+      typeof genre === 'string' && 
+      genre.trim() !== ""
+    );
+    
+    setGenres(genreArray);
   }, [events]);
 
   // Filter events based on criteria
