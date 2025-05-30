@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Calendar, ExternalLink, RefreshCw } from "lucide-react";
+import { Search, Plus, Calendar, ExternalLink, RefreshCw, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -41,8 +41,12 @@ const ManageRssFeeds = () => {
   const [selectedFeed, setSelectedFeed] = useState("all");
   const [selectedMonth, setSelectedMonth] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [newFeedName, setNewFeedName] = useState("");
   const [newFeedUrl, setNewFeedUrl] = useState("");
+  const [editingFeed, setEditingFeed] = useState<RssFeed | null>(null);
+  const [editFeedName, setEditFeedName] = useState("");
+  const [editFeedUrl, setEditFeedUrl] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const queryClient = useQueryClient();
 
@@ -78,6 +82,79 @@ const ManageRssFeeds = () => {
     } catch (error) {
       console.error('Error adding RSS feed:', error);
       toast.error('Failed to add RSS feed');
+    }
+  };
+
+  const handleEditFeed = (feed: RssFeed) => {
+    setEditingFeed(feed);
+    setEditFeedName(feed.name);
+    setEditFeedUrl(feed.url);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateFeed = async () => {
+    if (!editingFeed || !editFeedName.trim() || !editFeedUrl.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      // Update feed using Supabase
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase
+        .from('rss_feeds')
+        .update({ 
+          name: editFeedName.trim(), 
+          url: editFeedUrl.trim() 
+        })
+        .eq('id', editingFeed.id);
+
+      if (error) throw error;
+
+      toast.success('RSS feed updated successfully');
+      
+      // Reset form
+      setEditingFeed(null);
+      setEditFeedName("");
+      setEditFeedUrl("");
+      setIsEditDialogOpen(false);
+      
+      // Refetch data
+      refetchFeeds();
+    } catch (error) {
+      console.error('Error updating RSS feed:', error);
+      toast.error('Failed to update RSS feed');
+    }
+  };
+
+  const handleDeleteFeed = async (feedId: string, feedName: string) => {
+    if (!confirm(`Are you sure you want to delete the RSS feed "${feedName}"? This will also delete all associated RSS items.`)) {
+      return;
+    }
+
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      // First delete all RSS items associated with this feed
+      await supabase
+        .from('rss_items')
+        .delete()
+        .eq('feed_id', feedId);
+
+      // Then delete the feed
+      const { error } = await supabase
+        .from('rss_feeds')
+        .delete()
+        .eq('id', feedId);
+
+      if (error) throw error;
+
+      toast.success('RSS feed deleted successfully');
+      refetchFeeds();
+      refetchItems();
+    } catch (error) {
+      console.error('Error deleting RSS feed:', error);
+      toast.error('Failed to delete RSS feed');
     }
   };
 
@@ -148,27 +225,41 @@ const ManageRssFeeds = () => {
   const handleSyncFeeds = async () => {
     setIsSyncing(true);
     try {
-      // Call the RSS sync edge function
+      console.log("Starting RSS feeds sync...");
+      
+      // Call the RSS sync edge function with proper headers
       const response = await fetch('https://eckohtoprkgolyjdiown.supabase.co/functions/v1/fetch-rss', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVja29odG9wcmtnb2x5amRpb3duIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ1MjUyNTcsImV4cCI6MjA2MDEwMTI1N30.-pEsBnwaXjqnuspEa8arMrxfRa4m9yMkJQuBAFY5VII'
+        },
+        body: JSON.stringify({})
       });
       
+      console.log("Response status:", response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to sync RSS feeds');
+        const errorText = await response.text();
+        console.error(`Sync failed with status: ${response.status}`, errorText);
+        throw new Error(`Sync failed: ${response.status} ${response.statusText}`);
       }
       
       const result = await response.json();
-      toast.success(`RSS feeds synced successfully. Processed ${result.totalProcessed || 0} items.`);
+      console.log("Sync result:", result);
+      
+      if (result.error) {
+        throw new Error(result.error);
+      }
+      
+      toast.success('RSS feeds synced successfully! New items have been fetched.');
       
       // Refresh the data
       refetchFeeds();
       refetchItems();
     } catch (error) {
       console.error('Error syncing RSS feeds:', error);
-      toast.error('Failed to sync RSS feeds');
+      toast.error(`Failed to sync RSS feeds: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSyncing(false);
     }
@@ -233,6 +324,45 @@ const ManageRssFeeds = () => {
         </div>
       </div>
 
+      {/* Edit Feed Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="bg-dark-300 border-gray-700">
+          <DialogHeader>
+            <DialogTitle className="text-white">Edit RSS Feed</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editFeedName" className="text-gray-300">Feed Name</Label>
+              <Input
+                id="editFeedName"
+                value={editFeedName}
+                onChange={(e) => setEditFeedName(e.target.value)}
+                placeholder="Enter feed name"
+                className="bg-dark-200 border-gray-700 text-white"
+              />
+            </div>
+            <div>
+              <Label htmlFor="editFeedUrl" className="text-gray-300">Feed URL</Label>
+              <Input
+                id="editFeedUrl"
+                value={editFeedUrl}
+                onChange={(e) => setEditFeedUrl(e.target.value)}
+                placeholder="Enter RSS feed URL"
+                className="bg-dark-200 border-gray-700 text-white"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleUpdateFeed}>
+                Update Feed
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Tabs defaultValue="feeds" className="w-full">
         <TabsList className="grid w-full grid-cols-2 bg-dark-200">
           <TabsTrigger value="feeds" className="text-white data-[state=active]:bg-dark-100">RSS Feeds</TabsTrigger>
@@ -263,6 +393,24 @@ const ManageRssFeeds = () => {
                           onClick={() => handleToggleFeedActive(feed.id, feed.is_active)}
                         >
                           {feed.is_active ? "Deactivate" : "Activate"}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-blue-400 border-blue-400 hover:bg-blue-400 hover:text-white"
+                          onClick={() => handleEditFeed(feed)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-400 border-red-400 hover:bg-red-400 hover:text-white"
+                          onClick={() => handleDeleteFeed(feed.id, feed.name)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
                         </Button>
                       </div>
                     </div>
