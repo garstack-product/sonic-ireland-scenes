@@ -23,10 +23,25 @@ const AddEvent = () => {
   const [isFeatured, setIsFeatured] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Ultra-robust genre options with comprehensive validation
   const genreOptions = [
     "Rock", "Pop", "Electronic", "Hip-Hop", "R&B", "Jazz", "Blues", 
     "Classical", "Country", "Folk", "Metal", "Indie", "Alternative"
-  ].filter(option => option && option.trim() !== ""); // Ensure no empty strings
+  ].filter(option => {
+    const isValid = option && 
+                   typeof option === 'string' && 
+                   option.trim().length > 0 &&
+                   option.trim() !== "" &&
+                   option !== null &&
+                   option !== undefined;
+    
+    if (!isValid) {
+      console.log(`AddEvent: Filtering out invalid genre option:`, option);
+    }
+    return isValid;
+  });
+
+  console.log("AddEvent: Valid genre options:", genreOptions);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,9 +231,16 @@ const AddEvent = () => {
                 <SelectValue placeholder="Select genre" />
               </SelectTrigger>
               <SelectContent className="bg-dark-200 border-gray-700 text-white">
-                {genreOptions.map((option) => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))}
+                {genreOptions.length > 0 ? (
+                  genreOptions.map((option) => {
+                    console.log(`AddEvent: Rendering SelectItem for genre: "${option}"`);
+                    return (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    );
+                  })
+                ) : (
+                  <SelectItem key="no-genres" value="No Genres Available">No Genres Available</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
