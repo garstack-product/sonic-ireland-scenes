@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +26,7 @@ const AddEvent = () => {
   const genreOptions = [
     "Rock", "Pop", "Electronic", "Hip-Hop", "R&B", "Jazz", "Blues", 
     "Classical", "Country", "Folk", "Metal", "Indie", "Alternative"
-  ];
+  ].filter(option => option && option.trim() !== ""); // Ensure no empty strings
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
