@@ -32,8 +32,15 @@ const EventFilters = ({
   showDatePicker,
   setShowDatePicker,
 }: EventFiltersProps) => {
-  // Filter out empty genres and ensure we have valid values
-  const validGenres = genres.filter(genre => genre && genre.trim() !== "");
+  // Filter out empty genres with more robust validation
+  const validGenres = genres.filter(genre => {
+    return genre && 
+           typeof genre === 'string' && 
+           genre.trim() !== "" && 
+           genre.length > 0 &&
+           genre !== null &&
+           genre !== undefined;
+  });
 
   return (
     <div className="space-y-6">
@@ -59,11 +66,17 @@ const EventFilters = ({
             <SelectValue placeholder="Select Genre" />
           </SelectTrigger>
           <SelectContent className="bg-dark-200 border-gray-700 text-white">
-            {validGenres.map(genre => (
-              <SelectItem key={genre} value={genre} className="hover:bg-dark-100">
-                {genre}
+            {validGenres.length > 0 ? (
+              validGenres.map(genre => (
+                <SelectItem key={genre} value={genre} className="hover:bg-dark-100">
+                  {genre}
+                </SelectItem>
+              ))
+            ) : (
+              <SelectItem key="all-genres" value="All Genres" className="hover:bg-dark-100">
+                All Genres
               </SelectItem>
-            ))}
+            )}
           </SelectContent>
         </Select>
         
