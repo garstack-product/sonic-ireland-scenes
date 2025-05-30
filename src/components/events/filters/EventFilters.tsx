@@ -32,15 +32,23 @@ const EventFilters = ({
   showDatePicker,
   setShowDatePicker,
 }: EventFiltersProps) => {
-  // Filter out empty genres with more robust validation
+  // Ultra-robust genre validation with logging
   const validGenres = genres.filter(genre => {
-    return genre && 
-           typeof genre === 'string' && 
-           genre.trim() !== "" && 
-           genre.length > 0 &&
-           genre !== null &&
-           genre !== undefined;
+    const isValid = genre && 
+                   typeof genre === 'string' && 
+                   genre.trim().length > 0 &&
+                   genre.trim() !== "" &&
+                   genre !== null &&
+                   genre !== undefined;
+    
+    if (!isValid) {
+      console.log(`EventFilters: Filtering out invalid genre:`, genre);
+    }
+    
+    return isValid;
   });
+
+  console.log("EventFilters: Valid genres for Select:", validGenres);
 
   return (
     <div className="space-y-6">
@@ -67,13 +75,16 @@ const EventFilters = ({
           </SelectTrigger>
           <SelectContent className="bg-dark-200 border-gray-700 text-white">
             {validGenres.length > 0 ? (
-              validGenres.map(genre => (
-                <SelectItem key={genre} value={genre} className="hover:bg-dark-100">
-                  {genre}
-                </SelectItem>
-              ))
+              validGenres.map(genre => {
+                console.log(`Rendering SelectItem for genre: "${genre}"`);
+                return (
+                  <SelectItem key={genre} value={genre} className="hover:bg-dark-100">
+                    {genre}
+                  </SelectItem>
+                );
+              })
             ) : (
-              <SelectItem key="all-genres" value="All Genres" className="hover:bg-dark-100">
+              <SelectItem key="fallback-all-genres" value="All Genres" className="hover:bg-dark-100">
                 All Genres
               </SelectItem>
             )}

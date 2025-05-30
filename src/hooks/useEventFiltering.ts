@@ -21,30 +21,48 @@ export const useEventFiltering = ({ events, initialVisibleCount = 80 }: UseEvent
   const [visibleItemCount, setVisibleItemCount] = useState(initialVisibleCount);
   const [displayedEvents, setDisplayedEvents] = useState<EventCardProps[]>([]);
 
-  // Extract genres from events with robust filtering
+  // Extract genres from events with ultra-robust filtering
   useEffect(() => {
+    console.log("Processing events for genres:", events.length);
     const allGenres = new Set<string>();
     allGenres.add("All Genres");
     
-    events.forEach(event => {
-      // Only add genres that are valid, non-empty strings
+    events.forEach((event, index) => {
+      console.log(`Event ${index} genre:`, event.genre, typeof event.genre);
+      
+      // Ultra-strict validation for genres
       if (event.genre && 
           typeof event.genre === 'string' && 
-          event.genre.trim() !== "" && 
-          event.genre !== "Undefined" &&
-          event.genre !== "undefined" &&
-          event.genre !== null) {
-        allGenres.add(event.genre.trim());
+          event.genre.trim().length > 0 && 
+          event.genre.trim() !== "Undefined" &&
+          event.genre.trim() !== "undefined" &&
+          event.genre.trim() !== "null" &&
+          event.genre.trim() !== "NULL" &&
+          event.genre !== null &&
+          event.genre !== undefined) {
+        
+        const cleanGenre = event.genre.trim();
+        console.log(`Adding valid genre: "${cleanGenre}"`);
+        allGenres.add(cleanGenre);
+      } else {
+        console.log(`Skipping invalid genre:`, event.genre);
       }
     });
     
-    // Convert to array and ensure no empty strings made it through
-    const genreArray = Array.from(allGenres).filter(genre => 
-      genre && 
-      typeof genre === 'string' && 
-      genre.trim() !== ""
-    );
+    // Convert to array with final validation
+    const genreArray = Array.from(allGenres).filter(genre => {
+      const isValid = genre && 
+                     typeof genre === 'string' && 
+                     genre.trim().length > 0 &&
+                     genre.trim() !== "";
+      
+      if (!isValid) {
+        console.log(`Filtering out invalid genre in final step:`, genre);
+      }
+      return isValid;
+    });
     
+    console.log("Final genre array:", genreArray);
     setGenres(genreArray);
   }, [events]);
 
