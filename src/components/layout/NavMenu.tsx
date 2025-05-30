@@ -59,12 +59,6 @@ const NavMenu = () => {
               </div>
               <div className="absolute left-full top-0 ml-2 hidden group-hover/festivals:block bg-dark-400 border border-dark-300 rounded-md shadow-lg z-50 min-w-[180px]">
                 <Link 
-                  to="/listings/festivals/ireland" 
-                  className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors whitespace-nowrap"
-                >
-                  Ireland
-                </Link>
-                <Link 
                   to="/listings/festivals/uk" 
                   className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors whitespace-nowrap"
                 >
@@ -129,13 +123,13 @@ const NavMenu = () => {
               to="/reviews/concerts" 
               className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors"
             >
-              Concert Reviews
+              Concerts
             </Link>
             <Link 
               to="/reviews/festivals" 
               className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors"
             >
-              Festival Reviews
+              Festivals
             </Link>
           </div>
         </li>
