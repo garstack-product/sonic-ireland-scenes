@@ -50,7 +50,7 @@ const NavMenu = () => {
             <span className="pointer-events-none">Listings</span>
             <ChevronDown className="ml-1 h-4 w-4" />
           </NavigationMenuTrigger>
-          <NavigationMenuContent className="bg-dark-400 border-dark-300 p-4 min-w-[200px]">
+          <NavigationMenuContent className="bg-dark-400 border-dark-300 p-4 min-w-[250px]">
             <div className="grid gap-3">
               <Link 
                 to="/listings/concerts" 
@@ -58,12 +58,51 @@ const NavMenu = () => {
               >
                 Concerts
               </Link>
-              <Link 
-                to="/listings/festivals" 
-                className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors"
-              >
-                Festivals
-              </Link>
+              
+              <div className="relative group">
+                <div className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors cursor-pointer">
+                  Festivals
+                </div>
+                <div className="absolute left-full top-0 ml-2 hidden group-hover:block bg-dark-400 border border-dark-300 rounded-md p-2 min-w-[180px] z-50">
+                  <Link 
+                    to="/listings/festivals/ireland" 
+                    className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors whitespace-nowrap"
+                  >
+                    Ireland
+                  </Link>
+                  <Link 
+                    to="/listings/festivals/uk" 
+                    className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors whitespace-nowrap"
+                  >
+                    United Kingdom
+                  </Link>
+                  <Link 
+                    to="/listings/festivals/france" 
+                    className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors whitespace-nowrap"
+                  >
+                    France
+                  </Link>
+                  <Link 
+                    to="/listings/festivals/germany" 
+                    className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors whitespace-nowrap"
+                  >
+                    Germany
+                  </Link>
+                  <Link 
+                    to="/listings/festivals/netherlands" 
+                    className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors whitespace-nowrap"
+                  >
+                    Netherlands
+                  </Link>
+                  <Link 
+                    to="/listings/festivals/spain" 
+                    className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors whitespace-nowrap"
+                  >
+                    Spain
+                  </Link>
+                </div>
+              </div>
+              
               <Link 
                 to="/listings/just-announced" 
                 className="block px-3 py-2 text-gray-300 hover:text-white hover:bg-dark-300 rounded transition-colors"
