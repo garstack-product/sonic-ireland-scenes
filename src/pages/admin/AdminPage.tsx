@@ -8,6 +8,7 @@ import AddFestivalReview from "./AddFestivalReview";
 import AddNewsItem from "./AddNewsItem";
 import ManageFeaturedEvents from "./ManageFeaturedEvents";
 import ManageRssFeeds from "./ManageRssFeeds";
+import ManageNewsItems from "./ManageNewsItems";
 import AddEvent from "./AddEvent";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
