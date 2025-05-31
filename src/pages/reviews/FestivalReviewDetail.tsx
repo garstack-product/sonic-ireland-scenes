@@ -1,7 +1,12 @@
-
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getFestivalReviews } from '@/services/festivalReviewService';
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { X } from 'lucide-react';
 
 interface FestivalReview {
   id: string;
@@ -20,6 +25,7 @@ const FestivalReviewDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [review, setReview] = useState<FestivalReview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchReview = async () => {
@@ -55,21 +61,36 @@ const FestivalReviewDetail = () => {
     );
   }
 
+  const additionalImages = review.additional_images?.filter(img => img && img.trim() !== '') || [];
+
   return (
     <div className="min-h-screen bg-dark-400">
       <div className="w-full">
-        {/* Hero Section */}
+        {/* Hero Section with Featured Image */}
         <div className="relative h-96 overflow-hidden">
-          <img 
-            src={review.image_url || '/placeholder.svg'} 
-            alt={`${review.artist} at ${review.venue}`}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-end">
+          {review.image_url && review.image_url !== '/placeholder.svg' ? (
+            <img 
+              src={review.image_url} 
+              alt={`${review.artist} at ${review.venue}`}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                console.error('Failed to load featured image:', review.image_url);
+                e.currentTarget.src = '/placeholder.svg';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">{review.title}</h1>
+                <p className="text-xl text-gray-200">{review.artist}</p>
+              </div>
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
             <div className="container mx-auto px-4 py-8">
-              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{review.title}</h1>
-              <h2 className="text-xl md:text-2xl text-gray-200 mb-2">{review.artist}</h2>
-              <p className="text-gray-300">{review.venue} • {review.start_date} - {review.end_date}</p>
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">{review.title}</h1>
+              <h2 className="text-xl md:text-2xl text-gray-200 mb-2 drop-shadow-lg">{review.artist}</h2>
+              <p className="text-gray-300 drop-shadow-lg">{review.venue} • {review.start_date} - {review.end_date}</p>
             </div>
           </div>
         </div>
@@ -86,20 +107,194 @@ const FestivalReviewDetail = () => {
             ))}
           </div>
 
-          {/* Additional Images Gallery */}
-          {review.additional_images && review.additional_images.length > 0 && (
+          {/* Photo Gallery */}
+          {additionalImages.length > 0 && (
             <div className="mt-12">
               <h3 className="text-2xl font-bold text-white mb-6">Photo Gallery</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {review.additional_images.map((imageUrl, index) => (
-                  <div key={index} className="overflow-hidden rounded-lg">
-                    <img 
-                      src={imageUrl} 
-                      alt={`${review.artist} additional photo ${index + 1}`}
-                      className="w-full h-64 object-cover hover:scale-105 transition-transform duration-300"
-                    />
+              
+              {/* Professional Collage Layout */}
+              <div className="grid gap-4">
+                {additionalImages.length === 1 && (
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                        <img 
+                          src={additionalImages[0]} 
+                          alt="Festival photo"
+                          className="w-full h-96 object-cover"
+                        />
+                      </div>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-5xl w-[90vw] h-[90vh] p-0 bg-black">
+                      <div className="relative w-full h-full flex items-center justify-center">
+                        <img 
+                          src={additionalImages[0]} 
+                          alt="Festival photo"
+                          className="max-w-full max-h-full object-contain"
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+
+                {additionalImages.length === 2 && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {additionalImages.map((imageUrl, index) => (
+                      <Dialog key={index}>
+                        <DialogTrigger asChild>
+                          <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                            <img 
+                              src={imageUrl} 
+                              alt={`Festival photo ${index + 1}`}
+                              className="w-full h-64 object-cover"
+                            />
+                          </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-5xl w-[90vw] h-[90vh] p-0 bg-black">
+                          <div className="relative w-full h-full flex items-center justify-center">
+                            <img 
+                              src={imageUrl} 
+                              alt={`Festival photo ${index + 1}`}
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {additionalImages.length === 3 && (
+                  <div className="grid grid-cols-2 gap-4 h-96">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                          <img 
+                            src={additionalImages[0]} 
+                            alt="Festival photo 1"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-5xl w-[90vw] h-[90vh] p-0 bg-black">
+                        <div className="relative w-full h-full flex items-center justify-center">
+                          <img 
+                            src={additionalImages[0]} 
+                            alt="Festival photo 1"
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <div className="grid grid-rows-2 gap-4">
+                      {additionalImages.slice(1, 3).map((imageUrl, index) => (
+                        <Dialog key={index + 1}>
+                          <DialogTrigger asChild>
+                            <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                              <img 
+                                src={imageUrl} 
+                                alt={`Festival photo ${index + 2}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-5xl w-[90vw] h-[90vh] p-0 bg-black">
+                            <div className="relative w-full h-full flex items-center justify-center">
+                              <img 
+                                src={imageUrl} 
+                                alt={`Festival photo ${index + 2}`}
+                                className="max-w-full max-h-full object-contain"
+                              />
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {additionalImages.length >= 4 && (
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* First large image */}
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <div className="lg:row-span-2 cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                          <img 
+                            src={additionalImages[0]} 
+                            alt="Festival photo 1"
+                            className="w-full h-64 lg:h-full object-cover"
+                          />
+                        </div>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-5xl w-[90vw] h-[90vh] p-0 bg-black">
+                        <div className="relative w-full h-full flex items-center justify-center">
+                          <img 
+                            src={additionalImages[0]} 
+                            alt="Festival photo 1"
+                            className="max-w-full max-h-full object-contain"
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+
+                    {/* Rest of the images */}
+                    {additionalImages.slice(1, 5).map((imageUrl, index) => (
+                      <Dialog key={index + 1}>
+                        <DialogTrigger asChild>
+                          <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300 relative">
+                            <img 
+                              src={imageUrl} 
+                              alt={`Festival photo ${index + 2}`}
+                              className="w-full h-32 object-cover"
+                            />
+                            {index === 3 && additionalImages.length > 5 && (
+                              <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                                <span className="text-white text-xl font-bold">+{additionalImages.length - 5}</span>
+                              </div>
+                            )}
+                          </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-5xl w-[90vw] h-[90vh] p-0 bg-black">
+                          <div className="relative w-full h-full flex items-center justify-center">
+                            <img 
+                              src={imageUrl} 
+                              alt={`Festival photo ${index + 2}`}
+                              className="max-w-full max-h-full object-contain"
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ))}
+
+                    {/* Show remaining images if more than 5 */}
+                    {additionalImages.length > 5 && (
+                      <div className="col-span-2 lg:col-span-3 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+                        {additionalImages.slice(5).map((imageUrl, index) => (
+                          <Dialog key={index + 5}>
+                            <DialogTrigger asChild>
+                              <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                                <img 
+                                  src={imageUrl} 
+                                  alt={`Festival photo ${index + 6}`}
+                                  className="w-full h-24 object-cover"
+                                />
+                              </div>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-5xl w-[90vw] h-[90vh] p-0 bg-black">
+                              <div className="relative w-full h-full flex items-center justify-center">
+                                <img 
+                                  src={imageUrl} 
+                                  alt={`Festival photo ${index + 6}`}
+                                  className="max-w-full max-h-full object-contain"
+                                />
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
