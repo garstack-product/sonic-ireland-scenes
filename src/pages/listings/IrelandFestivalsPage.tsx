@@ -4,34 +4,18 @@ import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { toast } from "sonner";
+import { fetchAllEvents } from "@/services/api";
 import EventFilters from "@/components/events/filters/EventFilters";
 import EventListingsStatus from "@/components/events/EventListingsStatus";
 import { useEventFiltering } from "@/hooks/useEventFiltering";
-import { fetchFestivalsByCountry } from "@/services/api/ticketmaster/countryApi";
-import EventSyncButton from "@/components/admin/EventSyncButton";
+import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
 
 const IrelandFestivalsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [festivals, setFestivals] = useState<EventCardProps[]>([]);
-  const [lastSyncInfo, setLastSyncInfo] = useState<string>("Last sync: Unknown");
-
-  const loadFestivals = async () => {
-    try {
-      setIsLoading(true);
-      const events = await fetchFestivalsByCountry('IE');
-      setFestivals(events);
-    } catch (error) {
-      console.error("Error loading Irish festivals:", error);
-      toast.error("Failed to load Irish festivals");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadFestivals();
-  }, []);
-
+  const [festivalListings, setFestivalListings] = useState<EventCardProps[]>([]);
+  
+  // Use the filtering hook that includes all the filtering logic
   const {
     searchTerm,
     setSearchTerm,
@@ -47,22 +31,98 @@ const IrelandFestivalsPage = () => {
     filteredEvents: filteredListings,
     displayedEvents: displayedListings,
     handleLoadMore
-  } = useEventFiltering({ events: festivals });
+  } = useEventFiltering({ events: festivalListings });
+  
+  useEffect(() => {
+    const loadFestivals = async () => {
+      try {
+        setIsLoading(true);
+        const events = await fetchAllEvents();
+        
+        // Filter for Ireland festivals only, future events only, and visible events
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of today
+        
+        const irelandFutureFestivals = events.filter(event => {
+          // Only show visible events (not hidden)
+          if (event.is_hidden === true) {
+            return false;
+          }
+          
+          // Check if event is a festival
+          const isFestival = event.type === 'festival' || 
+                           event.is_festival === true ||
+                           event.title.toLowerCase().includes('festival') ||
+                           event.venue?.toLowerCase().includes('festival');
+          
+          // Check if event is in Ireland or Northern Ireland
+          const isIreland = event.country === 'Ireland' || 
+                           event.venue?.toLowerCase().includes('dublin') ||
+                           event.venue?.toLowerCase().includes('cork') ||
+                           event.venue?.toLowerCase().includes('galway') ||
+                           event.venue?.toLowerCase().includes('belfast') ||
+                           event.venue?.toLowerCase().includes('limerick') ||
+                           event.venue?.toLowerCase().includes('waterford') ||
+                           event.venue?.toLowerCase().includes('kilkenny') ||
+                           event.venue?.toLowerCase().includes('derry') ||
+                           event.venue?.toLowerCase().includes('northern ireland') ||
+                           event.venue?.toLowerCase().includes('ireland');
+          
+          // Check if event is in the future
+          let isFuture = false;
+          if (event.rawDate) {
+            const eventDate = new Date(event.rawDate);
+            isFuture = eventDate >= today;
+          } else if (event.date) {
+            // Try to parse the formatted date as fallback
+            const eventDate = new Date(event.date);
+            isFuture = !isNaN(eventDate.getTime()) && eventDate >= today;
+          }
+          
+          return isFestival && isIreland && isFuture;
+        });
+        
+        // Sort events by date (earliest first)
+        const sortedEvents = sortEventsByDate(irelandFutureFestivals);
+        setFestivalListings(sortedEvents);
+        console.log(`Loaded ${sortedEvents.length} future festivals in Ireland`);
+      } catch (error) {
+        console.error("Error loading festival data:", error);
+        toast.error("Failed to load festival data. Please try again later.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadFestivals();
+  }, []);
+  
+  // Helper function to sort events by date
+  const sortEventsByDate = (events: EventCardProps[]) => {
+    return [...events].sort((a, b) => {
+      const dateA = new Date(a.rawDate || a.date);
+      const dateB = new Date(b.rawDate || b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
+  };
+
+  // Group displayed events by month for dividers
+  const groupedByMonth = displayedListings.reduce((groups, event) => {
+    const eventDate = new Date(event.rawDate || event.date);
+    const monthYear = format(eventDate, 'MMMM yyyy');
+    if (!groups[monthYear]) {
+      groups[monthYear] = [];
+    }
+    groups[monthYear].push(event);
+    return groups;
+  }, {} as Record<string, EventCardProps[]>);
 
   return (
     <div>
       <PageHeader 
-        title="Irish Festivals" 
-        subtitle="Discover upcoming festivals in Ireland"
+        title="Ireland Festivals" 
+        subtitle="Discover upcoming music festivals in Ireland and Northern Ireland"
       />
-      
-      <div className="mb-6">
-        <EventSyncButton 
-          isLoading={isLoading} 
-          onSyncComplete={loadFestivals}
-          lastSyncInfo={lastSyncInfo}
-        />
-      </div>
       
       <EventFilters
         searchTerm={searchTerm}
@@ -80,7 +140,7 @@ const IrelandFestivalsPage = () => {
       
       <div className="mb-6 mt-4">
         <p className="text-gray-400">
-          {isLoading ? "Loading festivals..." : `${filteredListings.length} festivals found`}
+          {isLoading ? "Loading festivals..." : `${filteredListings.length} upcoming festivals found in Ireland`}
         </p>
       </div>
       
@@ -88,12 +148,36 @@ const IrelandFestivalsPage = () => {
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
         </div>
+      ) : displayedListings.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          No upcoming festivals found in Ireland matching your filters. Try adjusting your search.
+        </div>
       ) : (
         <>
-          <EventGrid 
-            events={displayedListings} 
-            emptyMessage="No festivals found matching your filters."
-          />
+          {Object.entries(groupedByMonth).map(([monthYear, events], monthIndex) => (
+            <div key={monthYear}>
+              {monthIndex > 0 && (
+                <div className="my-8 flex items-center">
+                  <Separator className="flex-1" />
+                  <div className="mx-4 text-sm text-gray-400 font-medium">
+                    {monthYear}
+                  </div>
+                  <Separator className="flex-1" />
+                </div>
+              )}
+              
+              {monthIndex === 0 && (
+                <div className="mb-6 text-center">
+                  <h3 className="text-lg font-medium text-gray-300">{monthYear}</h3>
+                </div>
+              )}
+              
+              <EventGrid 
+                events={events} 
+                emptyMessage=""
+              />
+            </div>
+          ))}
           
           <EventListingsStatus
             isLoading={isLoading}
