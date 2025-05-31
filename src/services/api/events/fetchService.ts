@@ -5,7 +5,7 @@ import { fetchTicketmasterEvents } from "../ticketmasterService";
 import { toast } from "sonner";
 import { checkCacheAge, triggerBackgroundSync } from "./cacheService";
 
-// Fetch events from database
+// Fetch events from database (future events only)
 export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
   try {
     console.log("Fetching events from Supabase database...");
@@ -18,10 +18,15 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
       await triggerBackgroundSync();
     }
     
-    // Query events from Supabase
+    // Get current date for filtering
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of today
+    
+    // Query events from Supabase - only future events
     const { data: events, error } = await supabase
       .from('events')
       .select('*')
+      .gte('raw_date', today.toISOString()) // Only get events on or after today
       .order('raw_date', { ascending: true });
     
     if (error) {
@@ -30,11 +35,11 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
     }
 
     if (!events || events.length === 0) {
-      console.log("No events found in database, falling back to API");
+      console.log("No future events found in database, falling back to API");
       return fetchTicketmasterEvents();
     }
     
-    console.log(`Got ${events.length} events from database`);
+    console.log(`Got ${events.length} future events from database`);
     
     // Map database events to EventCardProps format
     return events.map(event => {
@@ -74,7 +79,8 @@ export const fetchAllEvents = async (): Promise<EventCardProps[]> => {
         is_hidden: event.is_hidden,
         rawData: event.raw_data,
         start_price: startPrice,
-        max_price: maxPrice
+        max_price: maxPrice,
+        country: event.country
       };
     });
   } catch (error) {

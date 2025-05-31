@@ -20,7 +20,7 @@ export const useVenues = () => {
   const loadEvents = async () => {
     try {
       setIsLoading(true);
-      const eventData = await fetchAllEvents();
+      const eventData = await fetchAllEvents(); // This now already filters for future events
       setEvents(eventData);
       
       // First try to get venues from database with proper coordinates
@@ -59,7 +59,7 @@ export const useVenues = () => {
         }
       });
       
-      // Now add events to each venue
+      // Now add events to each venue (eventData is already filtered for future events)
       eventData.forEach(event => {
         // Try to find venue by ID
         const venueId = event.venue_id || '';  // Handle missing venue_id with empty string
@@ -120,7 +120,7 @@ export const useVenues = () => {
   };
   
   const fallbackToEventData = (eventData: EventCardProps[]) => {
-    // Group events by venue and extract venue information
+    // Group events by venue and extract venue information (eventData is already filtered for future events)
     const venuesMap = new Map<string, Venue>();
     
     eventData.forEach(event => {

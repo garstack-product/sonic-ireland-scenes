@@ -37,11 +37,16 @@ const UKFestivalsPage = () => {
     try {
       setIsLoading(true);
       
+      // Get current date for filtering
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set to start of today
+      
       const { data: events, error } = await supabase
         .from('events')
         .select('*')
         .eq('country', 'UK')
         .eq('is_festival', true)
+        .gte('raw_date', today.toISOString()) // Only get future events
         .order('raw_date', { ascending: true });
 
       if (error) throw error;
@@ -147,7 +152,7 @@ const UKFestivalsPage = () => {
       
       <div className="mb-6 mt-4">
         <p className="text-gray-400">
-          {isLoading ? "Loading festivals..." : `${filteredListings.length} festivals found`}
+          {isLoading ? "Loading festivals..." : `${filteredListings.length} upcoming festivals found`}
         </p>
       </div>
       
@@ -159,7 +164,7 @@ const UKFestivalsPage = () => {
         <>
           <EventGrid 
             events={displayedListings} 
-            emptyMessage="No festivals found matching your filters."
+            emptyMessage="No upcoming festivals found matching your filters."
           />
           
           <EventListingsStatus

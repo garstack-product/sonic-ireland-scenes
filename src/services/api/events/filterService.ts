@@ -21,7 +21,20 @@ const filterIrelandEvents = (events: EventCardProps[]): EventCardProps[] => {
   });
 };
 
-// Get the just announced events (Ireland only)
+// Helper function to filter for future events only
+const filterFutureEvents = (events: EventCardProps[]): EventCardProps[] => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set to start of today
+  
+  return events.filter(event => {
+    if (!event.rawDate) return false;
+    
+    const eventDate = new Date(event.rawDate);
+    return eventDate >= today;
+  });
+};
+
+// Get the just announced events (Ireland only, future only)
 export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
   try {
     const events = await fetchAllEvents();
@@ -29,25 +42,18 @@ export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
     // Filter for Ireland events first
     const irelandEvents = filterIrelandEvents(events);
     
+    // Filter for future events only
+    const futureEvents = filterFutureEvents(irelandEvents);
+    
     // Get events with recent on sale dates (within last 30 days) OR recently created events
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    const today = new Date();
-    
-    return irelandEvents.filter(event => {
+    return futureEvents.filter(event => {
       // Skip sports events
       if (event.genre === 'GAA' || event.genre === 'Sports' || 
           event.subgenre === 'GAA' || event.subgenre === 'Sports') {
         return false;
-      }
-      
-      // Only include future events
-      if (event.rawDate) {
-        const eventDate = new Date(event.rawDate);
-        if (eventDate < today) {
-          return false;
-        }
       }
       
       // Check if the event has a recent on sale date
@@ -58,14 +64,14 @@ export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
         }
       }
       
-      // Fallback: if no onSaleDate, check if the event is in the future and within a reasonable range
+      // Fallback: if no onSaleDate, check if the event is within a reasonable range
       if (event.rawDate) {
         const eventDate = new Date(event.rawDate);
         const sixMonthsFromNow = new Date();
-        sixMonthsFromNow.setMonth(today.getMonth() + 6);
+        sixMonthsFromNow.setMonth(sixMonthsFromNow.getMonth() + 6);
         
-        // Include events that are in the future and within 6 months
-        return eventDate > today && eventDate < sixMonthsFromNow;
+        // Include events that are within 6 months
+        return eventDate < sixMonthsFromNow;
       }
       
       return false;
@@ -83,7 +89,7 @@ export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
   }
 };
 
-// Get upcoming events in the next X days (Ireland only)
+// Get upcoming events in the next X days (Ireland only, future only)
 export const fetchUpcomingEvents = async (days: number = 7): Promise<EventCardProps[]> => {
   try {
     const events = await fetchAllEvents();
@@ -91,14 +97,16 @@ export const fetchUpcomingEvents = async (days: number = 7): Promise<EventCardPr
     // Filter for Ireland events first
     const irelandEvents = filterIrelandEvents(events);
     
+    // Filter for future events only
+    const futureEvents = filterFutureEvents(irelandEvents);
+    
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + days);
     
-    // Filter for events in the next 7 days and exclude sports/GAA
-    return irelandEvents.filter(event => {
-      if (!event.rawDate) return false;
-      
+    // Filter for events in the next X days and exclude sports/GAA
+    return futureEvents.filter(event => {
       // Skip sports events
       if (event.genre === 'GAA' || event.genre === 'Sports' || 
           event.subgenre === 'GAA' || event.subgenre === 'Sports') {
@@ -106,7 +114,7 @@ export const fetchUpcomingEvents = async (days: number = 7): Promise<EventCardPr
       }
       
       const eventDate = new Date(event.rawDate);
-      return eventDate >= today && eventDate <= futureDate;
+      return eventDate <= futureDate;
     });
   } catch (error) {
     console.error("Error in fetchUpcomingEvents:", error);
@@ -114,7 +122,7 @@ export const fetchUpcomingEvents = async (days: number = 7): Promise<EventCardPr
   }
 };
 
-// Get featured events (Ireland only)
+// Get featured events (Ireland only, future only)
 export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
   try {
     const allEvents = await fetchAllEvents();
@@ -122,19 +130,18 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
     // Filter for Ireland events first
     const irelandEvents = filterIrelandEvents(allEvents);
     
-    const today = new Date();
+    // Filter for future events only
+    const futureEvents = filterFutureEvents(irelandEvents);
 
     // Filter events that are both featured and upcoming in Ireland
-    return irelandEvents
+    return futureEvents
       .filter(event => {
-        if (!event.rawDate) return false;
         // Skip sports events
         if (event.genre === 'GAA' || event.genre === 'Sports' || 
             event.subgenre === 'GAA' || event.subgenre === 'Sports') {
           return false;
         }
-        const eventDate = new Date(event.rawDate);
-        return eventDate >= today && event.is_featured === true;
+        return event.is_featured === true;
       })
       .sort((a, b) => {
         const dateA = new Date(a.rawDate || 0);
@@ -148,21 +155,21 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
   }
 };
 
-// Fetch events at a specific venue
+// Fetch events at a specific venue (future only)
 export const fetchVenueEvents = async (venueName: string): Promise<EventCardProps[]> => {
   try {
     const allEvents = await fetchAllEvents();
-    const today = new Date();
     
-    return allEvents.filter(event => 
+    // Filter for future events only
+    const futureEvents = filterFutureEvents(allEvents);
+    
+    return futureEvents.filter(event => 
       event.venue.includes(venueName) &&
       // Skip sports events
       event.genre !== 'GAA' && 
       event.genre !== 'Sports' && 
       event.subgenre !== 'GAA' && 
-      event.subgenre !== 'Sports' &&
-      // Only future events
-      (event.rawDate ? new Date(event.rawDate) >= today : true)
+      event.subgenre !== 'Sports'
     );
   } catch (error) {
     console.error(`Error fetching events for venue ${venueName}:`, error);
