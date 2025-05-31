@@ -52,17 +52,15 @@ const NewsPage = () => {
     }
   };
 
-  // Sort news items by created_at date (newest first) for proper chronological ordering
+  // Sort news items by date (newest first)
   const sortedNewsItems = [...newsItems].sort((a, b) => {
-    const dateA = new Date(a.created_at).getTime();
-    const dateB = new Date(b.created_at).getTime();
-    return dateB - dateA; // Most recent first
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   // Get displayed items based on visible count
   const displayedNewsItems = sortedNewsItems.slice(0, visibleItemCount);
 
-  // Group items by month for dividers using created_at for consistency
+  // Group items by month for dividers
   const groupedByMonth = displayedNewsItems.reduce((groups, item) => {
     const monthYear = format(new Date(item.created_at), 'MMMM yyyy');
     if (!groups[monthYear]) {

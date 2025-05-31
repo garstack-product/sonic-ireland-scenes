@@ -1,191 +1,162 @@
 
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
-import { Link } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { ChevronDown } from "lucide-react";
 
 const NavMenu = () => {
+  const location = useLocation();
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  const isActivePath = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const isActiveSection = (paths: string[]) => {
+    return paths.some(path => location.pathname.startsWith(path));
+  };
+
+  const handleMenuToggle = (menuName: string) => {
+    setOpenMenu(openMenu === menuName ? null : menuName);
+  };
+
   return (
-    <NavigationMenu>
-      <NavigationMenuList>
-        <NavigationMenuItem>
-          <NavigationMenuTrigger>Listings</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <div className="grid gap-3 p-6 md:w-[400px] lg:w-[500px]">
-              <NavigationMenuLink asChild>
-                <Link
-                  to="/listings/concerts"
-                  className={cn(
-                    "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  )}
-                >
-                  <div className="text-sm font-medium leading-none">Concerts</div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                    Browse upcoming concerts and live music events
-                  </p>
-                </Link>
-              </NavigationMenuLink>
-              
-              <NavigationMenuLink asChild>
-                <Link
-                  to="/listings/just-announced"
-                  className={cn(
-                    "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  )}
-                >
-                  <div className="text-sm font-medium leading-none">Just Announced</div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                    Recently announced concerts and events
-                  </p>
-                </Link>
-              </NavigationMenuLink>
+    <nav className="flex-1">
+      <ul className="flex space-x-8">
+        <li>
+          <Link 
+            to="/" 
+            className={`text-white hover:text-gray-300 transition-colors ${
+              isActivePath('/') ? 'text-gray-300' : ''
+            }`}
+          >
+            Home
+          </Link>
+        </li>
 
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium leading-none mb-3">Festivals</h4>
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/listings/festivals/ireland"
-                    className={cn(
-                      "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    )}
-                  >
-                    <div className="text-sm font-medium leading-none">Ireland</div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Music festivals in Ireland and Northern Ireland
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/listings/festivals/uk"
-                    className={cn(
-                      "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    )}
-                  >
-                    <div className="text-sm font-medium leading-none">United Kingdom</div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Music festivals across the UK
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/listings/festivals/france"
-                    className={cn(
-                      "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    )}
-                  >
-                    <div className="text-sm font-medium leading-none">France</div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Music festivals in France
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/listings/festivals/germany"
-                    className={cn(
-                      "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    )}
-                  >
-                    <div className="text-sm font-medium leading-none">Germany</div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Music festivals in Germany
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/listings/festivals/netherlands"
-                    className={cn(
-                      "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    )}
-                  >
-                    <div className="text-sm font-medium leading-none">Netherlands</div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Music festivals in the Netherlands
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
-                <NavigationMenuLink asChild>
-                  <Link
-                    to="/listings/festivals/spain"
-                    className={cn(
-                      "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                    )}
-                  >
-                    <div className="text-sm font-medium leading-none">Spain</div>
-                    <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                      Music festivals in Spain
-                    </p>
-                  </Link>
-                </NavigationMenuLink>
+        <li className="relative group">
+          <button 
+            className={`text-white hover:text-gray-300 transition-colors flex items-center ${
+              isActiveSection(['/listings']) ? 'text-gray-300' : ''
+            }`}
+            onClick={() => handleMenuToggle('listings')}
+          >
+            Listings
+            <ChevronDown className="ml-1 h-4 w-4" />
+          </button>
+          <div className={`absolute left-0 top-full mt-2 bg-dark-400 border border-dark-300 rounded-md shadow-lg z-50 min-w-[250px] ${
+            openMenu === 'listings' ? 'block' : 'hidden'
+          } group-hover:block`}>
+            <Link 
+              to="/listings/concerts" 
+              className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors"
+            >
+              Concerts
+            </Link>
+            
+            <div className="relative group/festivals">
+              <div className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors cursor-pointer">
+                Festivals
               </div>
-              
-              <NavigationMenuLink asChild>
-                <Link
-                  to="/listings/map"
-                  className={cn(
-                    "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  )}
+              <div className="absolute left-full top-0 ml-2 hidden group-hover/festivals:block bg-dark-400 border border-dark-300 rounded-md shadow-lg z-50 min-w-[180px]">
+                <Link 
+                  to="/listings/festivals/uk" 
+                  className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors whitespace-nowrap"
                 >
-                  <div className="text-sm font-medium leading-none">Map</div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                    Explore events on an interactive map
-                  </p>
+                  United Kingdom
                 </Link>
-              </NavigationMenuLink>
+                <Link 
+                  to="/listings/festivals/france" 
+                  className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors whitespace-nowrap"
+                >
+                  France
+                </Link>
+                <Link 
+                  to="/listings/festivals/germany" 
+                  className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors whitespace-nowrap"
+                >
+                  Germany
+                </Link>
+                <Link 
+                  to="/listings/festivals/netherlands" 
+                  className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors whitespace-nowrap"
+                >
+                  Netherlands
+                </Link>
+                <Link 
+                  to="/listings/festivals/spain" 
+                  className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors whitespace-nowrap"
+                >
+                  Spain
+                </Link>
+              </div>
             </div>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
+            
+            <Link 
+              to="/listings/just-announced" 
+              className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors"
+            >
+              Just Announced
+            </Link>
+            <Link 
+              to="/listings/map" 
+              className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors"
+            >
+              Map
+            </Link>
+          </div>
+        </li>
 
-        <NavigationMenuItem>
-          <NavigationMenuTrigger>Reviews</NavigationMenuTrigger>
-          <NavigationMenuContent>
-            <div className="grid gap-3 p-6 md:w-[400px] lg:w-[500px]">
-              <NavigationMenuLink asChild>
-                <Link
-                  to="/reviews/concerts"
-                  className={cn(
-                    "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  )}
-                >
-                  <div className="text-sm font-medium leading-none">Concerts</div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                    Read reviews of recent concerts and performances
-                  </p>
-                </Link>
-              </NavigationMenuLink>
-              
-              <NavigationMenuLink asChild>
-                <Link
-                  to="/reviews/festivals"
-                  className={cn(
-                    "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                  )}
-                >
-                  <div className="text-sm font-medium leading-none">Festivals</div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                    Festival reviews and coverage
-                  </p>
-                </Link>
-              </NavigationMenuLink>
-            </div>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
+        <li className="relative group">
+          <button 
+            className={`text-white hover:text-gray-300 transition-colors flex items-center ${
+              isActiveSection(['/reviews']) ? 'text-gray-300' : ''
+            }`}
+            onClick={() => handleMenuToggle('reviews')}
+          >
+            Reviews
+            <ChevronDown className="ml-1 h-4 w-4" />
+          </button>
+          <div className={`absolute left-0 top-full mt-2 bg-dark-400 border border-dark-300 rounded-md shadow-lg z-50 min-w-[200px] ${
+            openMenu === 'reviews' ? 'block' : 'hidden'
+          } group-hover:block`}>
+            <Link 
+              to="/reviews/concerts" 
+              className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors"
+            >
+              Concerts
+            </Link>
+            <Link 
+              to="/reviews/festivals" 
+              className="block px-4 py-2 text-gray-300 hover:text-white hover:bg-dark-300 transition-colors"
+            >
+              Festivals
+            </Link>
+          </div>
+        </li>
 
-        <NavigationMenuItem>
-          <Link to="/news" className={navigationMenuTriggerStyle()}>
+        <li>
+          <Link 
+            to="/news" 
+            className={`text-white hover:text-gray-300 transition-colors ${
+              isActivePath('/news') ? 'text-gray-300' : ''
+            }`}
+          >
             News
           </Link>
-        </NavigationMenuItem>
+        </li>
 
-        <NavigationMenuItem>
-          <Link to="/about" className={navigationMenuTriggerStyle()}>
+        <li>
+          <Link 
+            to="/about" 
+            className={`text-white hover:text-gray-300 transition-colors ${
+              isActivePath('/about') ? 'text-gray-300' : ''
+            }`}
+          >
             About
           </Link>
-        </NavigationMenuItem>
-      </NavigationMenuList>
-    </NavigationMenu>
+        </li>
+      </ul>
+    </nav>
   );
 };
 

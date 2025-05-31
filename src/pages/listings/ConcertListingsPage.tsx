@@ -39,16 +39,11 @@ const ConcertListingsPage = () => {
         setIsLoading(true);
         const events = await fetchTicketmasterEvents();
         
-        // Filter for Ireland events only, future events only, and visible events
+        // Filter for Ireland events only and future events only
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Set to start of today
         
         const irelandFutureConcerts = events.filter(event => {
-          // Only show visible events (not hidden)
-          if (event.is_hidden === true) {
-            return false;
-          }
-          
           // Check if event is in Ireland
           const isIreland = event.country === 'Ireland' || 
                            event.venue?.toLowerCase().includes('dublin') ||

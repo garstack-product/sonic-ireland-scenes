@@ -36,11 +36,6 @@ export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
     const today = new Date();
     
     return irelandEvents.filter(event => {
-      // Only show visible events (not hidden)
-      if (event.is_hidden === true) {
-        return false;
-      }
-      
       // Skip sports events
       if (event.genre === 'GAA' || event.genre === 'Sports' || 
           event.subgenre === 'GAA' || event.subgenre === 'Sports') {
@@ -100,14 +95,9 @@ export const fetchUpcomingEvents = async (days: number = 7): Promise<EventCardPr
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + days);
     
-    // Filter for events in the next 7 days and exclude sports/GAA and hidden events
+    // Filter for events in the next 7 days and exclude sports/GAA
     return irelandEvents.filter(event => {
       if (!event.rawDate) return false;
-      
-      // Only show visible events (not hidden)
-      if (event.is_hidden === true) {
-        return false;
-      }
       
       // Skip sports events
       if (event.genre === 'GAA' || event.genre === 'Sports' || 
@@ -134,16 +124,10 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
     
     const today = new Date();
 
-    // Filter events that are both featured, upcoming, visible in Ireland
+    // Filter events that are both featured and upcoming in Ireland
     return irelandEvents
       .filter(event => {
         if (!event.rawDate) return false;
-        
-        // Only show visible events (not hidden)
-        if (event.is_hidden === true) {
-          return false;
-        }
-        
         // Skip sports events
         if (event.genre === 'GAA' || event.genre === 'Sports' || 
             event.subgenre === 'GAA' || event.subgenre === 'Sports') {
@@ -172,8 +156,6 @@ export const fetchVenueEvents = async (venueName: string): Promise<EventCardProp
     
     return allEvents.filter(event => 
       event.venue.includes(venueName) &&
-      // Only show visible events (not hidden)
-      event.is_hidden !== true &&
       // Skip sports events
       event.genre !== 'GAA' && 
       event.genre !== 'Sports' && 
