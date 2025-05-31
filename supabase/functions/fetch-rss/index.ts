@@ -50,6 +50,71 @@ const stripHtmlTags = (text: string): string => {
     .trim();
 };
 
+// Enhanced function to extract image URL from RSS item
+const extractImageUrl = (itemXml: string): string | null => {
+  // Try multiple methods to find an image
+  
+  // 1. Look for media:content or media:thumbnail (Media RSS)
+  const mediaContentMatch = itemXml.match(/<media:content[^>]+url=['"]([^'"]+)['"][^>]*type=['"]image\/[^'"]*['"][^>]*>|<media:content[^>]+type=['"]image\/[^'"]*['"][^>]*url=['"]([^'"]+)['"][^>]*>/i);
+  if (mediaContentMatch) {
+    return mediaContentMatch[1] || mediaContentMatch[2];
+  }
+  
+  const mediaThumbnailMatch = itemXml.match(/<media:thumbnail[^>]+url=['"]([^'"]+)['"]/i);
+  if (mediaThumbnailMatch) {
+    return mediaThumbnailMatch[1];
+  }
+  
+  // 2. Look for enclosure with image type
+  const enclosureMatch = itemXml.match(/<enclosure[^>]+url=['"]([^'"]+)['"][^>]*type=['"]image\/[^'"]*['"][^>]*>|<enclosure[^>]+type=['"]image\/[^'"]*['"][^>]*url=['"]([^'"]+)['"][^>]*>/i);
+  if (enclosureMatch) {
+    return enclosureMatch[1] || enclosureMatch[2];
+  }
+  
+  // 3. Look for image tag at item level
+  const itemImageMatch = itemXml.match(/<image[^>]*>[\s\S]*?<url[^>]*>([^<]+)<\/url>[\s\S]*?<\/image>/i);
+  if (itemImageMatch) {
+    return itemImageMatch[1].trim();
+  }
+  
+  // 4. Look for img tags in description or content (existing method, enhanced)
+  const descriptionMatch = itemXml.match(/<description[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/description>|<description[^>]*>([\s\S]*?)<\/description>/i);
+  const contentMatch = itemXml.match(/<content:encoded[^>]*><!\[CDATA\[([\s\S]*?)\]\]><\/content:encoded>|<content:encoded[^>]*>([\s\S]*?)<\/content:encoded>/i);
+  
+  const contentToSearch = (descriptionMatch?.[1] || descriptionMatch?.[2] || '') + ' ' + (contentMatch?.[1] || contentMatch?.[2] || '');
+  
+  if (contentToSearch) {
+    // Look for img tags with src attribute
+    const imgMatch = contentToSearch.match(/<img[^>]+src=['"]([^'"]+)['"]/i);
+    if (imgMatch) {
+      const imgUrl = imgMatch[1];
+      // Validate that it's likely an image URL
+      if (imgUrl.match(/\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i) || imgUrl.includes('image')) {
+        return imgUrl;
+      }
+    }
+    
+    // Look for background-image in style attributes
+    const bgImageMatch = contentToSearch.match(/background-image:\s*url\(['"]?([^'")\s]+)['"]?\)/i);
+    if (bgImageMatch) {
+      return bgImageMatch[1];
+    }
+  }
+  
+  // 5. Look for Open Graph or Twitter card images in content
+  const ogImageMatch = contentToSearch.match(/<meta[^>]+property=['"]og:image['"][^>]+content=['"]([^'"]+)['"]/i);
+  if (ogImageMatch) {
+    return ogImageMatch[1];
+  }
+  
+  const twitterImageMatch = contentToSearch.match(/<meta[^>]+name=['"]twitter:image['"][^>]+content=['"]([^'"]+)['"]/i);
+  if (twitterImageMatch) {
+    return twitterImageMatch[1];
+  }
+  
+  return null;
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -110,15 +175,20 @@ Deno.serve(async (req) => {
           title = stripHtmlTags(cleanText(title));
           description = stripHtmlTags(cleanText(description));
           
-          // Extract image from original description before stripping HTML
-          const originalDescription = (descriptionMatch?.[1] || descriptionMatch?.[2] || '').trim();
-          const imageMatch = originalDescription.match(/<img[^>]+src=['"]([^'"]+)['"]/i);
-          const imageUrl = imageMatch ? imageMatch[1] : null;
+          // Extract image using enhanced method
+          const imageUrl = extractImageUrl(itemXml);
           
           // Create clean excerpt from description
           const cleanDescription = description.substring(0, 200);
           
           if (!title || !link) continue;
+          
+          // Log image extraction for debugging
+          if (imageUrl) {
+            console.log(`Found image for "${title}": ${imageUrl}`);
+          } else {
+            console.log(`No image found for "${title}"`);
+          }
           
           // Check if item already exists
           const { data: existingItem } = await supabase
