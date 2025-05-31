@@ -51,7 +51,6 @@ const IrelandFestivalsPage = () => {
           
           // Check if event is a festival
           const isFestival = event.type === 'festival' || 
-                           event.is_festival === true ||
                            event.title.toLowerCase().includes('festival') ||
                            event.venue?.toLowerCase().includes('festival');
           

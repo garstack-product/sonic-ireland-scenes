@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Index from './pages/Index';
 import ConcertListingsPage from './pages/listings/ConcertListingsPage';
 import UKFestivalsPage from './pages/listings/UKFestivalsPage';
@@ -17,20 +19,21 @@ import NewsPage from './pages/news/NewsPage';
 import NewsDetailPage from './pages/news/NewsDetailPage';
 import About from './pages/About';
 import AdminPage from './pages/admin/AdminPage';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
 import NotFound from './pages/NotFound';
 import MainLayout from './components/layout/MainLayout';
 import { Toaster } from 'sonner';
 import { AuthProvider } from './contexts/AuthContext';
-import { QueryClient } from "react-query";
-import MyEventsPage from './pages/MyEventsPage';
+import MyEventsPage from './pages/user/MyEventsPage';
 import JustAnnouncedPage from './pages/listings/JustAnnouncedPage';
 import IrelandFestivalsPage from './pages/listings/IrelandFestivalsPage';
 
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <QueryClient>
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
           <div className="min-h-screen bg-gradient-to-br from-dark-500 to-dark-600 text-white">
@@ -65,7 +68,7 @@ function App() {
           </div>
         </Router>
       </AuthProvider>
-    </QueryClient>
+    </QueryClientProvider>
   );
 }
 
