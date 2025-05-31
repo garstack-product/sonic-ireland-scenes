@@ -8,6 +8,8 @@ import { fetchTicketmasterEvents } from "@/services/api";
 import EventFilters from "@/components/events/filters/EventFilters";
 import EventListingsStatus from "@/components/events/EventListingsStatus";
 import { useEventFiltering } from "@/hooks/useEventFiltering";
+import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
 
 const ConcertListingsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -92,6 +94,17 @@ const ConcertListingsPage = () => {
     });
   };
 
+  // Group displayed events by month for dividers
+  const groupedByMonth = displayedListings.reduce((groups, event) => {
+    const eventDate = new Date(event.rawDate || event.date);
+    const monthYear = format(eventDate, 'MMMM yyyy');
+    if (!groups[monthYear]) {
+      groups[monthYear] = [];
+    }
+    groups[monthYear].push(event);
+    return groups;
+  }, {} as Record<string, EventCardProps[]>);
+
   return (
     <div>
       <PageHeader 
@@ -123,12 +136,36 @@ const ConcertListingsPage = () => {
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
         </div>
+      ) : displayedListings.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          No upcoming concerts found in Ireland matching your filters. Try adjusting your search.
+        </div>
       ) : (
         <>
-          <EventGrid 
-            events={displayedListings} 
-            emptyMessage="No upcoming concerts found in Ireland matching your filters. Try adjusting your search."
-          />
+          {Object.entries(groupedByMonth).map(([monthYear, events], monthIndex) => (
+            <div key={monthYear}>
+              {monthIndex > 0 && (
+                <div className="my-8 flex items-center">
+                  <Separator className="flex-1" />
+                  <div className="mx-4 text-sm text-gray-400 font-medium">
+                    {monthYear}
+                  </div>
+                  <Separator className="flex-1" />
+                </div>
+              )}
+              
+              {monthIndex === 0 && (
+                <div className="mb-6 text-center">
+                  <h3 className="text-lg font-medium text-gray-300">{monthYear}</h3>
+                </div>
+              )}
+              
+              <EventGrid 
+                events={events} 
+                emptyMessage=""
+              />
+            </div>
+          ))}
           
           <EventListingsStatus
             isLoading={isLoading}
