@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getFestivalReviews } from '@/services/festivalReviewService';
@@ -96,28 +97,32 @@ const FestivalReviewDetail = () => {
         </div>
 
         {/* Content Section */}
-        <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <div className="prose prose-invert prose-lg max-w-none">
-            {review.content.split('\n').map((paragraph, i) => (
-              paragraph.trim() && (
-                <p key={i} className="mb-6 text-gray-300 leading-relaxed">
-                  {paragraph}
-                </p>
-              )
-            ))}
+        <div className="w-full">
+          <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <div className="prose prose-invert prose-lg max-w-none">
+              {review.content.split('\n').map((paragraph, i) => (
+                paragraph.trim() && (
+                  <p key={i} className="mb-6 text-gray-300 leading-relaxed">
+                    {paragraph}
+                  </p>
+                )
+              ))}
+            </div>
           </div>
 
-          {/* Photo Gallery */}
+          {/* Photo Gallery - Full Width to Match Featured Image */}
           {additionalImages.length > 0 && (
-            <div className="mt-12">
-              <h3 className="text-2xl font-bold text-white mb-6">Photo Gallery</h3>
+            <div className="w-full mt-12">
+              <div className="container mx-auto px-4">
+                <h3 className="text-2xl font-bold text-white mb-6">Photo Gallery</h3>
+              </div>
               
-              {/* Professional Collage Layout */}
-              <div className="grid gap-4">
+              {/* Professional Collage Layout - Full Width */}
+              <div className="w-full">
                 {additionalImages.length === 1 && (
                   <Dialog>
                     <DialogTrigger asChild>
-                      <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                      <div className="cursor-pointer overflow-hidden hover:scale-105 transition-transform duration-300">
                         <img 
                           src={additionalImages[0]} 
                           alt="Festival photo"
@@ -142,7 +147,7 @@ const FestivalReviewDetail = () => {
                     {additionalImages.map((imageUrl, index) => (
                       <Dialog key={index}>
                         <DialogTrigger asChild>
-                          <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                          <div className="cursor-pointer overflow-hidden hover:scale-105 transition-transform duration-300">
                             <img 
                               src={imageUrl} 
                               alt={`Festival photo ${index + 1}`}
@@ -168,7 +173,7 @@ const FestivalReviewDetail = () => {
                   <div className="grid grid-cols-2 gap-4 h-96">
                     <Dialog>
                       <DialogTrigger asChild>
-                        <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                        <div className="cursor-pointer overflow-hidden hover:scale-105 transition-transform duration-300">
                           <img 
                             src={additionalImages[0]} 
                             alt="Festival photo 1"
@@ -190,7 +195,7 @@ const FestivalReviewDetail = () => {
                       {additionalImages.slice(1, 3).map((imageUrl, index) => (
                         <Dialog key={index + 1}>
                           <DialogTrigger asChild>
-                            <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                            <div className="cursor-pointer overflow-hidden hover:scale-105 transition-transform duration-300">
                               <img 
                                 src={imageUrl} 
                                 alt={`Festival photo ${index + 2}`}
@@ -218,7 +223,7 @@ const FestivalReviewDetail = () => {
                     {/* First large image */}
                     <Dialog>
                       <DialogTrigger asChild>
-                        <div className="lg:row-span-2 cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                        <div className="lg:row-span-2 cursor-pointer overflow-hidden hover:scale-105 transition-transform duration-300">
                           <img 
                             src={additionalImages[0]} 
                             alt="Festival photo 1"
@@ -241,7 +246,7 @@ const FestivalReviewDetail = () => {
                     {additionalImages.slice(1, 5).map((imageUrl, index) => (
                       <Dialog key={index + 1}>
                         <DialogTrigger asChild>
-                          <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300 relative">
+                          <div className="cursor-pointer overflow-hidden hover:scale-105 transition-transform duration-300 relative">
                             <img 
                               src={imageUrl} 
                               alt={`Festival photo ${index + 2}`}
@@ -272,7 +277,7 @@ const FestivalReviewDetail = () => {
                         {additionalImages.slice(5).map((imageUrl, index) => (
                           <Dialog key={index + 5}>
                             <DialogTrigger asChild>
-                              <div className="cursor-pointer overflow-hidden rounded-lg hover:scale-105 transition-transform duration-300">
+                              <div className="cursor-pointer overflow-hidden hover:scale-105 transition-transform duration-300">
                                 <img 
                                   src={imageUrl} 
                                   alt={`Festival photo ${index + 6}`}
