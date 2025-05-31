@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,18 +87,32 @@ const ManageFeaturedEvents = () => {
     try {
       setIsSubmitting(true);
       
-      // Update events in Supabase
-      for (const eventId of allEvents.map(event => event.id)) {
-        const { error } = await supabase
-          .from('events')
-          .update({ 
-            is_featured: featuredEvents.includes(eventId),
-            is_hidden: hiddenEvents.includes(eventId),
-            is_festival: festivalEvents.includes(eventId)
-          })
-          .eq('id', eventId);
-          
-        if (error) throw error;
+      console.log('Updating events with featured status:', featuredEvents);
+      console.log('Updating events with hidden status:', hiddenEvents);
+      console.log('Updating events with festival status:', festivalEvents);
+      
+      // Update events in batches to avoid hitting limits
+      const batchSize = 50;
+      const eventIds = allEvents.map(event => event.id);
+      
+      for (let i = 0; i < eventIds.length; i += batchSize) {
+        const batch = eventIds.slice(i, i + batchSize);
+        
+        for (const eventId of batch) {
+          const { error } = await supabase
+            .from('events')
+            .update({ 
+              is_featured: featuredEvents.includes(eventId),
+              is_hidden: hiddenEvents.includes(eventId),
+              is_festival: festivalEvents.includes(eventId)
+            })
+            .eq('id', eventId);
+            
+          if (error) {
+            console.error('Error updating event:', eventId, error);
+            throw error;
+          }
+        }
       }
       
       toast.success("Events updated successfully!");
@@ -120,9 +133,12 @@ const ManageFeaturedEvents = () => {
   };
 
   const toggleFeature = (id: string) => {
-    setFeaturedEvents(prev => 
-      prev.includes(id) ? prev.filter(eventId => eventId !== id) : [...prev, id]
-    );
+    console.log('Toggling feature for event:', id);
+    setFeaturedEvents(prev => {
+      const newFeatured = prev.includes(id) ? prev.filter(eventId => eventId !== id) : [...prev, id];
+      console.log('New featured events:', newFeatured);
+      return newFeatured;
+    });
   };
 
   const toggleFestival = (id: string) => {
