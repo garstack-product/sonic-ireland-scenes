@@ -37,33 +37,33 @@ function App() {
       <AuthProvider>
         <Router>
           <div className="min-h-screen bg-gradient-to-br from-dark-500 to-dark-600 text-white">
-            <MainLayout>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/listings/concerts" element={<ConcertListingsPage />} />
-                <Route path="/listings/just-announced" element={<JustAnnouncedPage />} />
-                <Route path="/listings/festivals/ireland" element={<IrelandFestivalsPage />} />
-                <Route path="/listings/festivals/uk" element={<UKFestivalsPage />} />
-                <Route path="/listings/festivals/france" element={<FranceFestivalsPage />} />
-                <Route path="/listings/festivals/germany" element={<GermanyFestivalsPage />} />
-                <Route path="/listings/festivals/netherlands" element={<NetherlandsFestivalsPage />} />
-                <Route path="/listings/festivals/spain" element={<SpainFestivalsPage />} />
-                <Route path="/listings/map" element={<MapPage />} />
-                <Route path="/listings/:id" element={<EventDetailPage />} />
-                <Route path="/reviews/concerts" element={<ConcertReviewsPage />} />
-                <Route path="/reviews/festivals" element={<FestivalReviewsPage />} />
-                <Route path="/reviews/concerts/:id" element={<ConcertReviewDetail />} />
-                <Route path="/reviews/festivals/:id" element={<FestivalReviewDetail />} />
-                <Route path="/news" element={<NewsPage />} />
-                <Route path="/news/:id" element={<NewsDetailPage />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/admin" element={<AdminPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/my-events" element={<MyEventsPage />} />
+            <Routes>
+              <Route path="/" element={<MainLayout />}>
+                <Route index element={<Index />} />
+                <Route path="listings/concerts" element={<ConcertListingsPage />} />
+                <Route path="listings/just-announced" element={<JustAnnouncedPage />} />
+                <Route path="listings/festivals/ireland" element={<IrelandFestivalsPage />} />
+                <Route path="listings/festivals/uk" element={<UKFestivalsPage />} />
+                <Route path="listings/festivals/france" element={<FranceFestivalsPage />} />
+                <Route path="listings/festivals/germany" element={<GermanyFestivalsPage />} />
+                <Route path="listings/festivals/netherlands" element={<NetherlandsFestivalsPage />} />
+                <Route path="listings/festivals/spain" element={<SpainFestivalsPage />} />
+                <Route path="listings/map" element={<MapPage />} />
+                <Route path="listings/:id" element={<EventDetailPage />} />
+                <Route path="reviews/concerts" element={<ConcertReviewsPage />} />
+                <Route path="reviews/festivals" element={<FestivalReviewsPage />} />
+                <Route path="reviews/concerts/:id" element={<ConcertReviewDetail />} />
+                <Route path="reviews/festivals/:id" element={<FestivalReviewDetail />} />
+                <Route path="news" element={<NewsPage />} />
+                <Route path="news/:id" element={<NewsDetailPage />} />
+                <Route path="about" element={<About />} />
+                <Route path="admin" element={<AdminPage />} />
+                <Route path="login" element={<LoginPage />} />
+                <Route path="register" element={<RegisterPage />} />
+                <Route path="my-events" element={<MyEventsPage />} />
                 <Route path="*" element={<NotFound />} />
-              </Routes>
-            </MainLayout>
+              </Route>
+            </Routes>
             <Toaster />
           </div>
         </Router>
