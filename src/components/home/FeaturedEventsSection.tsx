@@ -10,8 +10,32 @@ interface FeaturedEventsSectionProps {
 }
 
 const FeaturedEventsSection = ({ featuredEvents, isLoading }: FeaturedEventsSectionProps) => {
-  // Only show actually featured events (no artificial limit or fallback)
-  const actualFeaturedEvents = featuredEvents.filter(event => event.is_featured === true);
+  // Only show actually featured events that are in the future and in Ireland
+  const today = new Date();
+  const actualFeaturedEvents = featuredEvents.filter(event => {
+    // Must be marked as featured
+    if (event.is_featured !== true) return false;
+    
+    // Must be in the future
+    if (event.rawDate) {
+      const eventDate = new Date(event.rawDate);
+      if (eventDate < today) return false;
+    }
+    
+    // Must be in Ireland
+    const isIreland = event.country === 'Ireland' || 
+                     event.venue?.toLowerCase().includes('dublin') ||
+                     event.venue?.toLowerCase().includes('cork') ||
+                     event.venue?.toLowerCase().includes('galway') ||
+                     event.venue?.toLowerCase().includes('belfast') ||
+                     event.venue?.toLowerCase().includes('limerick') ||
+                     event.venue?.toLowerCase().includes('waterford') ||
+                     event.venue?.toLowerCase().includes('kilkenny') ||
+                     event.venue?.toLowerCase().includes('derry') ||
+                     event.venue?.toLowerCase().includes('ireland');
+    
+    return isIreland;
+  });
 
   return (
     <section className="py-8">
