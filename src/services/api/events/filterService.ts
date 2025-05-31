@@ -33,11 +33,21 @@ export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
+    const today = new Date();
+    
     return irelandEvents.filter(event => {
       // Skip sports events
       if (event.genre === 'GAA' || event.genre === 'Sports' || 
           event.subgenre === 'GAA' || event.subgenre === 'Sports') {
         return false;
+      }
+      
+      // Only include future events
+      if (event.rawDate) {
+        const eventDate = new Date(event.rawDate);
+        if (eventDate < today) {
+          return false;
+        }
       }
       
       // Check if the event has a recent on sale date
@@ -51,7 +61,6 @@ export const fetchJustAnnouncedEvents = async (): Promise<EventCardProps[]> => {
       // Fallback: if no onSaleDate, check if the event is in the future and within a reasonable range
       if (event.rawDate) {
         const eventDate = new Date(event.rawDate);
-        const today = new Date();
         const sixMonthsFromNow = new Date();
         sixMonthsFromNow.setMonth(today.getMonth() + 6);
         
@@ -115,7 +124,7 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
     
     const today = new Date();
 
-    // Filter events that are both featured and upcoming
+    // Filter events that are both featured and upcoming in Ireland
     return irelandEvents
       .filter(event => {
         if (!event.rawDate) return false;
@@ -143,13 +152,17 @@ export const fetchFeaturedEvents = async (): Promise<EventCardProps[]> => {
 export const fetchVenueEvents = async (venueName: string): Promise<EventCardProps[]> => {
   try {
     const allEvents = await fetchAllEvents();
+    const today = new Date();
+    
     return allEvents.filter(event => 
       event.venue.includes(venueName) &&
       // Skip sports events
       event.genre !== 'GAA' && 
       event.genre !== 'Sports' && 
       event.subgenre !== 'GAA' && 
-      event.subgenre !== 'Sports'
+      event.subgenre !== 'Sports' &&
+      // Only future events
+      (event.rawDate ? new Date(event.rawDate) >= today : true)
     );
   } catch (error) {
     console.error(`Error fetching events for venue ${venueName}:`, error);
