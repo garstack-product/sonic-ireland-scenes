@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getFestivalReviews } from '@/services/festivalReviewService';
@@ -76,6 +77,9 @@ const FestivalReviewDetail = () => {
             backgroundRepeat: 'no-repeat'
           }}
         >
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+          
           <div className="text-center relative z-10">
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">{review.title}</h1>
             <h2 className="text-xl md:text-2xl text-gray-200 mb-2 drop-shadow-md">{review.artist}</h2>
