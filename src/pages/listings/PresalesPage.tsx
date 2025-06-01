@@ -88,14 +88,16 @@ const PresalesPage = () => {
       
       <EventFilters
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        setSearchTerm={setSearchTerm}
         selectedGenre={selectedGenre}
-        onGenreChange={setSelectedGenre}
+        setSelectedGenre={setSelectedGenre}
         genres={genres}
+        priceRange={[0, 1000]}
+        setPriceRange={() => {}}
         dateRange={dateRange}
-        onDateRangeChange={setDateRange}
+        setDateRange={setDateRange}
         showDatePicker={showDatePicker}
-        onShowDatePickerChange={setShowDatePicker}
+        setShowDatePicker={setShowDatePicker}
       />
 
       {events.length > 0 && (
