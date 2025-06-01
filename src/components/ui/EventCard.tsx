@@ -1,4 +1,5 @@
 
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import ShareMenu from "@/components/events/ShareMenu";
@@ -65,8 +66,8 @@ const EventCard = ({ id, title, artist, venue, date, imageUrl, type, category }:
         </CardContent>
       </Link>
       
-      {/* Social Share Icons - positioned in lower left */}
-      <div className="absolute bottom-4 left-4 z-10" onClick={(e) => e.stopPropagation()}>
+      {/* Social Share Icons - positioned in lower right */}
+      <div className="absolute bottom-4 right-4 z-10" onClick={(e) => e.stopPropagation()}>
         <ShareMenu 
           title={title}
           artist={artist}
@@ -79,3 +80,4 @@ const EventCard = ({ id, title, artist, venue, date, imageUrl, type, category }:
 };
 
 export default EventCard;
+
