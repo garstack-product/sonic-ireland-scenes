@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -16,6 +17,7 @@ import FestivalReviewsPage from "./pages/reviews/FestivalReviewsPage";
 import ConcertListingsPage from "./pages/listings/ConcertListingsPage";
 import FestivalListingsPage from "./pages/listings/FestivalListingsPage";
 import JustAnnouncedPage from "./pages/listings/JustAnnouncedPage";
+import PresalesPage from "./pages/listings/PresalesPage";
 import MapPage from "./pages/listings/MapPage";
 import NewsPage from "./pages/news/NewsPage";
 import NewsDetailPage from "./pages/news/NewsDetailPage";
@@ -73,6 +75,7 @@ const App = () => (
               <Route path="/listings/festivals/germany" element={<GermanyFestivalsPage />} />
               <Route path="/listings/festivals/netherlands" element={<NetherlandsFestivalsPage />} />
               <Route path="/listings/just-announced" element={<JustAnnouncedPage />} />
+              <Route path="/listings/presales" element={<PresalesPage />} />
               <Route path="/listings/map" element={<MapPage />} />
               <Route path="/listings/my-events" element={<MyEventsPage />} />
               <Route path="/listings/:type/:id" element={<EventDetailPage />} />

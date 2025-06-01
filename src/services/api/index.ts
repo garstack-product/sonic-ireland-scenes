@@ -6,6 +6,7 @@ import {
   fetchJustAnnouncedEvents,
   fetchUpcomingEvents,
   fetchFeaturedEvents,
+  fetchPresaleEvents,
   syncTicketmasterEvents
 } from './events';
 import { fetchTicketmasterEvents, fetchTicketmasterEvent } from './ticketmasterService';
@@ -18,6 +19,7 @@ export {
   fetchJustAnnouncedEvents,
   fetchUpcomingEvents,
   fetchFeaturedEvents,
+  fetchPresaleEvents,
   syncTicketmasterEvents,
   
   // Original services we're re-exporting
