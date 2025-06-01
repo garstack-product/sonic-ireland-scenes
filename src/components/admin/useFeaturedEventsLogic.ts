@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { fetchAllEvents } from "@/services/api";
@@ -81,27 +80,26 @@ export const useFeaturedEventsLogic = () => {
       console.log('Updating events with hidden status:', hiddenEvents);
       console.log('Updating events with festival status:', festivalEvents);
       
-      // Update events in batches to avoid hitting limits
-      const batchSize = 50;
-      const eventIds = allEvents.map(event => event.id);
-      
-      for (let i = 0; i < eventIds.length; i += batchSize) {
-        const batch = eventIds.slice(i, i + batchSize);
+      // Update each event individually to ensure proper handling
+      for (const event of allEvents) {
+        const isFeatured = featuredEvents.includes(event.id);
+        const isHidden = hiddenEvents.includes(event.id);
+        const isFestival = festivalEvents.includes(event.id);
         
-        for (const eventId of batch) {
-          const { error } = await supabase
-            .from('events')
-            .update({ 
-              is_featured: featuredEvents.includes(eventId),
-              is_hidden: hiddenEvents.includes(eventId),
-              is_festival: festivalEvents.includes(eventId)
-            })
-            .eq('id', eventId);
-            
-          if (error) {
-            console.error('Error updating event:', eventId, error);
-            throw error;
-          }
+        console.log(`Updating event ${event.id}: featured=${isFeatured}, hidden=${isHidden}, festival=${isFestival}`);
+        
+        const { error } = await supabase
+          .from('events')
+          .update({ 
+            is_featured: isFeatured,
+            is_hidden: isHidden,
+            is_festival: isFestival
+          })
+          .eq('id', event.id);
+          
+        if (error) {
+          console.error('Error updating event:', event.id, error);
+          throw error;
         }
       }
       
@@ -117,9 +115,12 @@ export const useFeaturedEventsLogic = () => {
   };
 
   const toggleEventVisibility = (id: string) => {
-    setHiddenEvents(prev => 
-      prev.includes(id) ? prev.filter(eventId => eventId !== id) : [...prev, id]
-    );
+    console.log('Toggling visibility for event:', id);
+    setHiddenEvents(prev => {
+      const newHidden = prev.includes(id) ? prev.filter(eventId => eventId !== id) : [...prev, id];
+      console.log('New hidden events:', newHidden);
+      return newHidden;
+    });
   };
 
   const toggleFeature = (id: string) => {
@@ -132,9 +133,12 @@ export const useFeaturedEventsLogic = () => {
   };
 
   const toggleFestival = (id: string) => {
-    setFestivalEvents(prev => 
-      prev.includes(id) ? prev.filter(eventId => eventId !== id) : [...prev, id]
-    );
+    console.log('Toggling festival for event:', id);
+    setFestivalEvents(prev => {
+      const newFestival = prev.includes(id) ? prev.filter(eventId => eventId !== id) : [...prev, id];
+      console.log('New festival events:', newFestival);
+      return newFestival;
+    });
   };
 
   const getSortedEvents = (events: EventCardProps[]) => {
