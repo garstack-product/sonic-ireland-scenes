@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getFestivalReviews } from '@/services/festivalReviewService';
@@ -66,12 +67,23 @@ const FestivalReviewDetail = () => {
   return (
     <div className="min-h-screen bg-dark-400">
       <div className="w-full">
-        {/* Gradient Header Section */}
-        <div className="w-full h-96 bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">{review.title}</h1>
-            <h2 className="text-xl md:text-2xl text-gray-200 mb-2">{review.artist}</h2>
-            <p className="text-gray-300">{review.venue} • {review.start_date} - {review.end_date}</p>
+        {/* Festival Crowd Header Section */}
+        <div 
+          className="w-full h-96 relative flex items-center justify-center"
+          style={{
+            backgroundImage: 'url(/lovable-uploads/e3c81d4a-b2d9-4a04-a38c-8d5bb9671ec6.png)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat'
+          }}
+        >
+          {/* Dark overlay for text readability */}
+          <div className="absolute inset-0 bg-black bg-opacity-40"></div>
+          
+          <div className="text-center relative z-10">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">{review.title}</h1>
+            <h2 className="text-xl md:text-2xl text-gray-200 mb-2 drop-shadow-md">{review.artist}</h2>
+            <p className="text-gray-300 drop-shadow-md">{review.venue} • {review.start_date} - {review.end_date}</p>
           </div>
         </div>
 
