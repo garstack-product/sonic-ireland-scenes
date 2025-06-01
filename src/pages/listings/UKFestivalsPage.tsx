@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
@@ -21,8 +20,6 @@ const UKFestivalsPage = () => {
     setSearchTerm,
     selectedGenre,
     setSelectedGenre,
-    priceRange,
-    setPriceRange,
     genres,
     dateRange,
     setDateRange,
@@ -142,8 +139,8 @@ const UKFestivalsPage = () => {
         selectedGenre={selectedGenre}
         setSelectedGenre={setSelectedGenre}
         genres={genres}
-        priceRange={priceRange}
-        setPriceRange={setPriceRange}
+        priceRange={[0, 500]}
+        setPriceRange={() => {}}
         dateRange={dateRange}
         setDateRange={setDateRange}
         showDatePicker={showDatePicker}
