@@ -1,6 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import ShareMenu from "@/components/events/ShareMenu";
 
 export interface EventCardProps {
   id: string;
@@ -38,9 +39,11 @@ const EventCard = ({ id, title, artist, venue, date, imageUrl, type, category }:
     return `/listings/${type}s/${id}`;
   };
 
+  const detailPath = getRoute();
+
   return (
-    <Link to={getRoute()} className="h-full block">
-      <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer bg-dark-300 border-gray-700 hover:border-gray-600 h-full flex flex-col">
+    <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer bg-dark-300 border-gray-700 hover:border-gray-600 h-full flex flex-col relative">
+      <Link to={detailPath} className="h-full block">
         <div className="aspect-video overflow-hidden rounded-t-lg flex-shrink-0">
           <img 
             src={imageUrl} 
@@ -56,10 +59,22 @@ const EventCard = ({ id, title, artist, venue, date, imageUrl, type, category }:
             <p className="text-gray-300 text-sm mb-1 line-clamp-1">{artist}</p>
             <p className="text-gray-400 text-sm mb-2 line-clamp-1">{venue}</p>
           </div>
-          <p className="text-gray-500 text-xs mt-auto">{date}</p>
+          <div className="flex justify-between items-end mt-auto">
+            <p className="text-gray-500 text-xs">{date}</p>
+          </div>
         </CardContent>
-      </Card>
-    </Link>
+      </Link>
+      
+      {/* Social Share Icons - positioned in lower left */}
+      <div className="absolute bottom-4 left-4 z-10" onClick={(e) => e.stopPropagation()}>
+        <ShareMenu 
+          title={title}
+          artist={artist}
+          type={type}
+          detailPath={detailPath}
+        />
+      </div>
+    </Card>
   );
 };
 
