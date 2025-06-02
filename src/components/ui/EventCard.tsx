@@ -1,5 +1,4 @@
 
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import ShareMenu from "@/components/events/ShareMenu";
@@ -25,6 +24,7 @@ export interface EventCardProps {
   venue_id?: string;
   is_featured?: boolean;
   is_hidden?: boolean;
+  is_festival?: boolean;
   rawData?: any;
   start_price?: number;
   max_price?: number;
@@ -80,4 +80,3 @@ const EventCard = ({ id, title, artist, venue, date, imageUrl, type, category }:
 };
 
 export default EventCard;
-
