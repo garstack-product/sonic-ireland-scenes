@@ -15,7 +15,7 @@ const MainLayout = () => {
   return (
     <div className="flex flex-col min-h-screen bg-dark-400">
       <Header onMenuToggle={toggleMobileMenu} />
-      <MobileMenu isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      <MobileMenu />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <Outlet />
