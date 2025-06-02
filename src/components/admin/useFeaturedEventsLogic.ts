@@ -20,18 +20,39 @@ export const useFeaturedEventsLogic = () => {
     try {
       setIsLoading(true);
       
-      const events = await fetchAllEvents();
-      setAllEvents(events);
-      
+      // Fetch events directly from database instead of API to ensure we have the correct flags
       const { data: eventsData, error } = await supabase
         .from('events')
-        .select('id, is_hidden, is_featured, is_festival');
+        .select('*')
+        .order('raw_date', { ascending: true });
       
       if (error) {
         throw error;
       }
-        
+      
       if (eventsData) {
+        // Map database events to EventCardProps format
+        const mappedEvents: EventCardProps[] = eventsData.map(event => ({
+          id: event.id,
+          title: event.title,
+          artist: event.artist || '',
+          venue: event.venue || '',
+          date: event.date || '',
+          time: event.time || '',
+          imageUrl: event.image_url || '/placeholder.svg',
+          type: (event.type as 'concert' | 'festival') || 'concert',
+          category: 'listing' as const,
+          genre: event.genre || undefined,
+          subgenre: event.subgenre || undefined,
+          price: event.price || undefined,
+          ticketUrl: event.ticket_url || undefined,
+          rawDate: event.raw_date || undefined,
+          onSaleDate: event.on_sale_date || null
+        }));
+        
+        setAllEvents(mappedEvents);
+        
+        // Set the flags based on database values
         const hiddenIds = eventsData.filter(event => event.is_hidden).map(event => event.id);
         const featuredIds = eventsData.filter(event => event.is_featured).map(event => event.id);
         const festivalIds = eventsData.filter(event => event.is_festival).map(event => event.id);
@@ -89,29 +110,63 @@ export const useFeaturedEventsLogic = () => {
       console.log('Saving changes - Hidden events:', hiddenEvents);
       console.log('Saving changes - Festival events:', festivalEvents);
       
-      // Update each event individually to ensure proper handling
-      for (const event of allEvents) {
-        const isFeatured = featuredEvents.includes(event.id);
-        const isHidden = hiddenEvents.includes(event.id);
-        const isFestival = festivalEvents.includes(event.id);
-        
-        console.log(`Updating event ${event.id}: featured=${isFeatured}, hidden=${isHidden}, festival=${isFestival}`);
-        
-        const { error } = await supabase
-          .from('events')
-          .update({ 
-            is_featured: isFeatured,
-            is_hidden: isHidden,
-            is_festival: isFestival
-          })
-          .eq('id', event.id);
-          
-        if (error) {
-          console.error('Error updating event:', event.id, error);
-          throw error;
+      // First, reset all flags to false for all events
+      const { error: resetError } = await supabase
+        .from('events')
+        .update({ 
+          is_featured: false,
+          is_hidden: false,
+          is_festival: false
+        })
+        .in('id', allEvents.map(event => event.id));
+      
+      if (resetError) {
+        console.error('Error resetting event flags:', resetError);
+        throw resetError;
+      }
+      
+      // Then set the flags to true for the selected events
+      const updates = [];
+      
+      if (featuredEvents.length > 0) {
+        updates.push(
+          supabase
+            .from('events')
+            .update({ is_featured: true })
+            .in('id', featuredEvents)
+        );
+      }
+      
+      if (hiddenEvents.length > 0) {
+        updates.push(
+          supabase
+            .from('events')
+            .update({ is_hidden: true })
+            .in('id', hiddenEvents)
+        );
+      }
+      
+      if (festivalEvents.length > 0) {
+        updates.push(
+          supabase
+            .from('events')
+            .update({ is_festival: true })
+            .in('id', festivalEvents)
+        );
+      }
+      
+      // Execute all updates
+      const results = await Promise.all(updates);
+      
+      // Check for errors
+      for (const result of results) {
+        if (result.error) {
+          console.error('Error updating event flags:', result.error);
+          throw result.error;
         }
       }
       
+      console.log('All updates completed successfully');
       toast.success("Events updated successfully!");
       
       // Force reload the events state from database to ensure synchronization
