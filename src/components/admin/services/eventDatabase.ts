@@ -55,72 +55,45 @@ export const updateEventFlags = async (
   festivalEvents: string[]
 ) => {
   console.log('Updating event flags in database...');
+  console.log('All event IDs being managed:', allEventIds);
   console.log('Featured events to set:', featuredEvents);
   console.log('Hidden events to set:', hiddenEvents);
   console.log('Festival events to set:', festivalEvents);
   
-  // First, reset all flags to false for all events we're managing
-  const { error: resetError } = await supabase
-    .from('events')
-    .update({ 
-      is_featured: false,
-      is_hidden: false,
-      is_festival: false
-    })
-    .in('id', allEventIds);
-  
-  if (resetError) {
-    console.error('Error resetting event flags:', resetError);
-    throw resetError;
-  }
-  
-  // Then set the flags to true for the selected events
-  const updates = [];
-  
-  if (featuredEvents.length > 0) {
-    console.log('Setting featured flags for events:', featuredEvents);
-    updates.push(
-      supabase
+  try {
+    // Process each event individually to set the correct flags
+    const updatePromises = allEventIds.map(async (eventId) => {
+      const isFeatured = featuredEvents.includes(eventId);
+      const isHidden = hiddenEvents.includes(eventId);
+      const isFestival = festivalEvents.includes(eventId);
+      
+      console.log(`Updating event ${eventId}: featured=${isFeatured}, hidden=${isHidden}, festival=${isFestival}`);
+      
+      const { error } = await supabase
         .from('events')
-        .update({ is_featured: true })
-        .in('id', featuredEvents)
-    );
-  }
-  
-  if (hiddenEvents.length > 0) {
-    console.log('Setting hidden flags for events:', hiddenEvents);
-    updates.push(
-      supabase
-        .from('events')
-        .update({ is_hidden: true })
-        .in('id', hiddenEvents)
-    );
-  }
-  
-  if (festivalEvents.length > 0) {
-    console.log('Setting festival flags for events:', festivalEvents);
-    updates.push(
-      supabase
-        .from('events')
-        .update({ is_festival: true })
-        .in('id', festivalEvents)
-    );
-  }
-  
-  // Execute all updates
-  if (updates.length > 0) {
-    const results = await Promise.all(updates);
-    
-    // Check for errors
-    for (const result of results) {
-      if (result.error) {
-        console.error('Error updating event flags:', result.error);
-        throw result.error;
+        .update({
+          is_featured: isFeatured,
+          is_hidden: isHidden,
+          is_festival: isFestival
+        })
+        .eq('id', eventId);
+      
+      if (error) {
+        console.error(`Error updating event ${eventId}:`, error);
+        throw error;
       }
-    }
+      
+      console.log(`Successfully updated event ${eventId}`);
+    });
+    
+    // Wait for all updates to complete
+    await Promise.all(updatePromises);
+    
+    console.log('All event flags updated successfully');
+  } catch (error) {
+    console.error('Error updating event flags:', error);
+    throw error;
   }
-  
-  console.log('Event flags updated successfully');
 };
 
 export const fetchCacheMetadata = async (): Promise<string> => {
