@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { fetchAllEvents } from "@/services/api";
@@ -31,9 +32,17 @@ export const useFeaturedEventsLogic = () => {
       }
         
       if (eventsData) {
-        setHiddenEvents(eventsData.filter(event => event.is_hidden).map(event => event.id));
-        setFeaturedEvents(eventsData.filter(event => event.is_featured).map(event => event.id));
-        setFestivalEvents(eventsData.filter(event => event.is_festival).map(event => event.id));
+        const hiddenIds = eventsData.filter(event => event.is_hidden).map(event => event.id);
+        const featuredIds = eventsData.filter(event => event.is_featured).map(event => event.id);
+        const festivalIds = eventsData.filter(event => event.is_festival).map(event => event.id);
+        
+        console.log('Loading events - Featured IDs from DB:', featuredIds);
+        console.log('Loading events - Hidden IDs from DB:', hiddenIds);
+        console.log('Loading events - Festival IDs from DB:', festivalIds);
+        
+        setHiddenEvents(hiddenIds);
+        setFeaturedEvents(featuredIds);
+        setFestivalEvents(festivalIds);
       }
       
       setIsLoading(false);
@@ -76,9 +85,9 @@ export const useFeaturedEventsLogic = () => {
     try {
       setIsSubmitting(true);
       
-      console.log('Updating events with featured status:', featuredEvents);
-      console.log('Updating events with hidden status:', hiddenEvents);
-      console.log('Updating events with festival status:', festivalEvents);
+      console.log('Saving changes - Featured events:', featuredEvents);
+      console.log('Saving changes - Hidden events:', hiddenEvents);
+      console.log('Saving changes - Festival events:', festivalEvents);
       
       // Update each event individually to ensure proper handling
       for (const event of allEvents) {
@@ -104,8 +113,11 @@ export const useFeaturedEventsLogic = () => {
       }
       
       toast.success("Events updated successfully!");
-      // Reload events to reflect changes
+      
+      // Force reload the events state from database to ensure synchronization
+      console.log('Reloading events after save...');
       await loadEvents();
+      
     } catch (error) {
       console.error('Error saving event settings:', error);
       toast.error('Failed to save event settings');
