@@ -22,7 +22,9 @@ export const fetchFutureEventsFromDatabase = async (): Promise<EventCardProps[]>
     return [];
   }
   
-  // Map database events to EventCardProps format
+  console.log('Got', eventsData.length, 'future events from database');
+  
+  // Map database events to EventCardProps format and ensure flags are included
   return eventsData.map(event => ({
     id: event.id,
     title: event.title,
@@ -39,8 +41,10 @@ export const fetchFutureEventsFromDatabase = async (): Promise<EventCardProps[]>
     ticketUrl: event.ticket_url || undefined,
     rawDate: event.raw_date || undefined,
     onSaleDate: event.on_sale_date || null,
-    is_featured: event.is_featured,
-    is_hidden: event.is_hidden
+    // Include the flags that are needed for the admin dashboard
+    is_featured: event.is_featured || false,
+    is_hidden: event.is_hidden || false,
+    is_festival: event.is_festival || false
   }));
 };
 
@@ -50,6 +54,11 @@ export const updateEventFlags = async (
   hiddenEvents: string[],
   festivalEvents: string[]
 ) => {
+  console.log('Updating event flags in database...');
+  console.log('Featured events to set:', featuredEvents);
+  console.log('Hidden events to set:', hiddenEvents);
+  console.log('Festival events to set:', festivalEvents);
+  
   // First, reset all flags to false for all events we're managing
   const { error: resetError } = await supabase
     .from('events')
@@ -69,6 +78,7 @@ export const updateEventFlags = async (
   const updates = [];
   
   if (featuredEvents.length > 0) {
+    console.log('Setting featured flags for events:', featuredEvents);
     updates.push(
       supabase
         .from('events')
@@ -78,6 +88,7 @@ export const updateEventFlags = async (
   }
   
   if (hiddenEvents.length > 0) {
+    console.log('Setting hidden flags for events:', hiddenEvents);
     updates.push(
       supabase
         .from('events')
@@ -87,6 +98,7 @@ export const updateEventFlags = async (
   }
   
   if (festivalEvents.length > 0) {
+    console.log('Setting festival flags for events:', festivalEvents);
     updates.push(
       supabase
         .from('events')
@@ -107,6 +119,8 @@ export const updateEventFlags = async (
       }
     }
   }
+  
+  console.log('Event flags updated successfully');
 };
 
 export const fetchCacheMetadata = async (): Promise<string> => {

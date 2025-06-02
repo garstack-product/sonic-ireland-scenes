@@ -1,6 +1,7 @@
+
 import { EventCardProps } from "@/components/ui/EventCard";
 
-export const extractEventFlags = (events: any[]) => {
+export const extractEventFlags = (events: EventCardProps[]) => {
   const hiddenIds = events.filter(event => event.is_hidden).map(event => event.id);
   const featuredIds = events.filter(event => event.is_featured).map(event => event.id);
   const festivalIds = events.filter(event => event.is_festival).map(event => event.id);
