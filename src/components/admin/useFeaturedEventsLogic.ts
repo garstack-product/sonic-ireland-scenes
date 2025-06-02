@@ -1,6 +1,6 @@
-
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { EventCardProps } from "@/components/ui/EventCard";
 import { useEventState } from "./hooks/useEventState";
 import { fetchFutureEventsFromDatabase, updateEventFlags, fetchCacheMetadata } from "./services/eventDatabase";
 import { extractEventFlags, getSortedEvents, createToggleFunction } from "./utils/eventUtils";

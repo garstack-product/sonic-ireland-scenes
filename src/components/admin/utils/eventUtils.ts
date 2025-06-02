@@ -1,4 +1,3 @@
-
 import { EventCardProps } from "@/components/ui/EventCard";
 
 export const extractEventFlags = (events: any[]) => {
@@ -52,7 +51,7 @@ export const getSortedEvents = (
 
 export const createToggleFunction = (
   currentItems: string[],
-  setItems: (items: string[]) => void,
+  setItems: React.Dispatch<React.SetStateAction<string[]>>,
   logPrefix: string
 ) => {
   return (id: string) => {
