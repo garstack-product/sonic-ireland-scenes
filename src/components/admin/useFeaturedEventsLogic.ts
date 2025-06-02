@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { EventCardProps } from "@/components/ui/EventCard";
@@ -41,6 +42,8 @@ export const useFeaturedEventsLogic = () => {
       setFeaturedEvents(featuredIds);
       setFestivalEvents(festivalIds);
       
+      console.log('Events loaded - Featured:', featuredIds, 'Hidden:', hiddenIds, 'Festival:', festivalIds);
+      
       setIsLoading(false);
     } catch (error) {
       console.error('Error loading events:', error);
@@ -59,18 +62,23 @@ export const useFeaturedEventsLogic = () => {
     try {
       setIsSubmitting(true);
       
-      console.log('Saving changes - Featured events:', featuredEvents);
-      console.log('Saving changes - Hidden events:', hiddenEvents);
-      console.log('Saving changes - Festival events:', festivalEvents);
+      console.log('=== SAVING CHANGES ===');
+      console.log('Current state - Featured events:', featuredEvents);
+      console.log('Current state - Hidden events:', hiddenEvents);
+      console.log('Current state - Festival events:', festivalEvents);
       
       const allEventIds = allEvents.map(event => event.id);
+      console.log('All event IDs:', allEventIds);
+      
       await updateEventFlags(allEventIds, featuredEvents, hiddenEvents, festivalEvents);
       
-      console.log('All updates completed successfully');
+      console.log('Database update completed successfully');
       toast.success("Events updated successfully!");
       
-      // Reload the events to ensure UI is in sync with database
-      await loadEvents();
+      // Don't reload immediately - give a moment for the database to update
+      setTimeout(async () => {
+        await loadEvents();
+      }, 500);
       
     } catch (error) {
       console.error('Error saving event settings:', error);
