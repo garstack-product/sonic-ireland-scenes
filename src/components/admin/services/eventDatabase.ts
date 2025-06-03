@@ -54,20 +54,24 @@ export const updateEventFlags = async (
   hiddenEvents: string[],
   festivalEvents: string[]
 ) => {
-  console.log('Updating event flags in database...');
+  console.log('=== UPDATING EVENT FLAGS IN DATABASE ===');
   console.log('All event IDs being managed:', allEventIds);
   console.log('Featured events to set:', featuredEvents);
   console.log('Hidden events to set:', hiddenEvents);
   console.log('Festival events to set:', festivalEvents);
   
   try {
-    // Process each event individually to set the correct flags
+    // Create update promises for each event with their specific flags
     const updatePromises = allEventIds.map(async (eventId) => {
       const isFeatured = featuredEvents.includes(eventId);
       const isHidden = hiddenEvents.includes(eventId);
       const isFestival = festivalEvents.includes(eventId);
       
-      console.log(`Updating event ${eventId}: featured=${isFeatured}, hidden=${isHidden}, festival=${isFestival}`);
+      console.log(`Updating event ${eventId}:`, {
+        is_featured: isFeatured,
+        is_hidden: isHidden,
+        is_festival: isFestival
+      });
       
       const { error } = await supabase
         .from('events')
@@ -79,19 +83,34 @@ export const updateEventFlags = async (
         .eq('id', eventId);
       
       if (error) {
-        console.error(`Error updating event ${eventId}:`, error);
+        console.error(`Failed to update event ${eventId}:`, error);
         throw error;
       }
       
-      console.log(`Successfully updated event ${eventId}`);
+      console.log(`✅ Successfully updated event ${eventId}`);
+      return eventId;
     });
     
     // Wait for all updates to complete
     await Promise.all(updatePromises);
     
-    console.log('All event flags updated successfully');
+    console.log('=== ALL EVENT FLAGS UPDATED SUCCESSFULLY ===');
+    
+    // Verify the updates by checking a few events
+    console.log('Verifying updates...');
+    if (featuredEvents.length > 0) {
+      const { data: verifyData, error: verifyError } = await supabase
+        .from('events')
+        .select('id, is_featured, is_hidden, is_festival')
+        .in('id', featuredEvents.slice(0, 3)); // Check first 3 featured events
+      
+      if (!verifyError && verifyData) {
+        console.log('Verification - Sample featured events in DB:', verifyData);
+      }
+    }
+    
   } catch (error) {
-    console.error('Error updating event flags:', error);
+    console.error('❌ Error updating event flags:', error);
     throw error;
   }
 };

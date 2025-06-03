@@ -62,27 +62,31 @@ export const useFeaturedEventsLogic = () => {
     try {
       setIsSubmitting(true);
       
-      console.log('=== SAVING CHANGES ===');
-      console.log('Current state - Featured events:', featuredEvents);
-      console.log('Current state - Hidden events:', hiddenEvents);
-      console.log('Current state - Festival events:', festivalEvents);
+      console.log('🚀 FORM SUBMISSION STARTED');
+      console.log('📊 Current state:');
+      console.log('   - Featured events:', featuredEvents);
+      console.log('   - Hidden events:', hiddenEvents);
+      console.log('   - Festival events:', festivalEvents);
       
       const allEventIds = allEvents.map(event => event.id);
-      console.log('All event IDs:', allEventIds);
+      console.log('   - Total events to manage:', allEventIds.length);
       
+      // Perform the database update
       await updateEventFlags(allEventIds, featuredEvents, hiddenEvents, festivalEvents);
       
-      console.log('Database update completed successfully');
+      console.log('✅ Database update completed successfully');
       toast.success("Events updated successfully!");
       
-      // Don't reload immediately - give a moment for the database to update
+      // Reload events after a brief delay to ensure database consistency
+      console.log('🔄 Reloading events to verify changes...');
       setTimeout(async () => {
         await loadEvents();
-      }, 500);
+        console.log('🎉 Events reloaded successfully');
+      }, 1000);
       
     } catch (error) {
-      console.error('Error saving event settings:', error);
-      toast.error('Failed to save event settings');
+      console.error('❌ Error saving event settings:', error);
+      toast.error('Failed to save event settings. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
