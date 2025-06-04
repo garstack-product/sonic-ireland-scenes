@@ -2,22 +2,44 @@
 import { EventCardProps } from "@/components/ui/EventCard";
 
 export const extractEventFlags = (events: EventCardProps[]) => {
+  console.log('=== EXTRACTING EVENT FLAGS FROM DATABASE ===');
+  console.log('Total events to process:', events.length);
+  
+  // Extract events that have each flag set to true
   const hiddenIds = events
-    .filter(event => event.is_hidden === true)
+    .filter(event => {
+      const isHidden = event.is_hidden === true;
+      if (isHidden) {
+        console.log(`Found hidden event: ${event.id} - ${event.title}`);
+      }
+      return isHidden;
+    })
     .map(event => event.id);
     
   const featuredIds = events
-    .filter(event => event.is_featured === true)
+    .filter(event => {
+      const isFeatured = event.is_featured === true;
+      if (isFeatured) {
+        console.log(`Found featured event: ${event.id} - ${event.title}`);
+      }
+      return isFeatured;
+    })
     .map(event => event.id);
     
   const festivalIds = events
-    .filter(event => event.is_festival === true)
+    .filter(event => {
+      const isFestival = event.is_festival === true;
+      if (isFestival) {
+        console.log(`Found festival event: ${event.id} - ${event.title}`);
+      }
+      return isFestival;
+    })
     .map(event => event.id);
   
-  console.log('Extracting flags from events:');
-  console.log('- Featured IDs from DB:', featuredIds);
-  console.log('- Hidden IDs from DB:', hiddenIds);
-  console.log('- Festival IDs from DB:', festivalIds);
+  console.log('=== EXTRACTION RESULTS ===');
+  console.log('Hidden IDs:', hiddenIds);
+  console.log('Featured IDs:', featuredIds);
+  console.log('Festival IDs:', festivalIds);
   
   return { hiddenIds, featuredIds, festivalIds };
 };
@@ -65,13 +87,19 @@ export const createToggleFunction = (
   logPrefix: string
 ) => {
   return (id: string) => {
-    console.log(`${logPrefix} for event:`, id);
+    console.log(`=== ${logPrefix.toUpperCase()} ===`);
+    console.log(`Event ID: ${id}`);
+    console.log(`Current items before toggle:`, currentItems);
+    
     setItems(prev => {
       const isCurrentlySelected = prev.includes(id);
       const newItems = isCurrentlySelected 
         ? prev.filter(eventId => eventId !== id) 
         : [...prev, id];
-      console.log(`${logPrefix} - New ${logPrefix.toLowerCase()} events:`, newItems);
+      
+      console.log(`Was selected: ${isCurrentlySelected}`);
+      console.log(`New items after toggle:`, newItems);
+      
       return newItems;
     });
   };

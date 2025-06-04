@@ -31,22 +31,31 @@ export const useFeaturedEventsLogic = () => {
   const loadEvents = async () => {
     try {
       setIsLoading(true);
+      console.log('🔄 LOADING EVENTS FROM DATABASE...');
       
       const mappedEvents = await fetchFutureEventsFromDatabase();
+      console.log(`📊 Loaded ${mappedEvents.length} events from database`);
+      
+      // Set all events first
       setAllEvents(mappedEvents);
       
-      // Set the flags based on database values
+      // Extract flags from the fresh database data
       const { hiddenIds, featuredIds, festivalIds } = extractEventFlags(mappedEvents);
+      
+      // Update the state with the database values
+      console.log('🎯 SETTING UI STATE FROM DATABASE:');
+      console.log('Setting hidden events:', hiddenIds);
+      console.log('Setting featured events:', featuredIds);
+      console.log('Setting festival events:', festivalIds);
       
       setHiddenEvents(hiddenIds);
       setFeaturedEvents(featuredIds);
       setFestivalEvents(festivalIds);
       
-      console.log('Events loaded - Featured:', featuredIds, 'Hidden:', hiddenIds, 'Festival:', festivalIds);
-      
+      console.log('✅ Events and flags loaded successfully');
       setIsLoading(false);
     } catch (error) {
-      console.error('Error loading events:', error);
+      console.error('❌ Error loading events:', error);
       toast.error('Failed to load events');
       setIsLoading(false);
     }
@@ -63,7 +72,7 @@ export const useFeaturedEventsLogic = () => {
       setIsSubmitting(true);
       
       console.log('🚀 FORM SUBMISSION STARTED');
-      console.log('📊 Current state:');
+      console.log('📊 Current UI state at submission:');
       console.log('   - Featured events:', featuredEvents);
       console.log('   - Hidden events:', hiddenEvents);
       console.log('   - Festival events:', festivalEvents);
@@ -81,7 +90,7 @@ export const useFeaturedEventsLogic = () => {
       console.log('🔄 Reloading events to verify changes...');
       setTimeout(async () => {
         await loadEvents();
-        console.log('🎉 Events reloaded successfully');
+        console.log('🎉 Events reloaded and UI state updated');
       }, 1000);
       
     } catch (error) {
@@ -114,7 +123,16 @@ export const useFeaturedEventsLogic = () => {
     return getSortedEvents(events, sortBy, hiddenEvents, featuredEvents, festivalEvents);
   };
 
+  // Debug current state
   useEffect(() => {
+    console.log('🔍 Current UI state changed:');
+    console.log('Featured events in state:', featuredEvents);
+    console.log('Hidden events in state:', hiddenEvents);
+    console.log('Festival events in state:', festivalEvents);
+  }, [featuredEvents, hiddenEvents, festivalEvents]);
+
+  useEffect(() => {
+    console.log('🏁 Component mounted - loading initial events');
     loadEvents();
   }, []);
 
