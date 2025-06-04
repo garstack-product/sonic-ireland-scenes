@@ -2,7 +2,6 @@
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import DateRangeFilter from "./DateRangeFilter";
 
 interface EventFiltersProps {
@@ -25,8 +24,6 @@ const EventFilters = ({
   selectedGenre,
   setSelectedGenre,
   genres,
-  priceRange,
-  setPriceRange,
   dateRange,
   setDateRange,
   showDatePicker,
@@ -52,7 +49,7 @@ const EventFilters = ({
 
   return (
     <div className="space-y-6">
-      {/* Search and Filters */}
+      {/* Search, Genre, and Date Range in one row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Search Input */}
         <div className="relative">
@@ -91,30 +88,14 @@ const EventFilters = ({
           </SelectContent>
         </Select>
         
-        {/* Price Range Slider */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm text-gray-400">
-            <span>Price Range: €{priceRange[0]} - €{priceRange[1]}</span>
-          </div>
-          <Slider
-            defaultValue={[0, 500]}
-            min={0}
-            max={500}
-            step={10}
-            value={priceRange}
-            onValueChange={setPriceRange}
-            className="py-2"
-          />
-        </div>
+        {/* Date Range Filter */}
+        <DateRangeFilter
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          showDatePicker={showDatePicker}
+          setShowDatePicker={setShowDatePicker}
+        />
       </div>
-      
-      {/* Date Range Filter */}
-      <DateRangeFilter
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        showDatePicker={showDatePicker}
-        setShowDatePicker={setShowDatePicker}
-      />
     </div>
   );
 };

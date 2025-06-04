@@ -1,43 +1,55 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { fetchAllEvents } from "@/services/api";
 import { EventCardProps } from "@/components/ui/EventCard";
-import { supabase } from "@/integrations/supabase/client";
+import { useEventState } from "./hooks/useEventState";
+import { fetchFutureEventsFromDatabase, updateEventFlags, fetchCacheMetadata } from "./services/eventDatabase";
+import { extractEventFlags, getSortedEvents } from "./utils/eventUtils";
 
 export const useFeaturedEventsLogic = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [featuredEvents, setFeaturedEvents] = useState<string[]>([]); 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [allEvents, setAllEvents] = useState<EventCardProps[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [lastSyncInfo, setLastSyncInfo] = useState<string>("");
-  const [sortBy, setSortBy] = useState<string>("date");
-  const [hiddenEvents, setHiddenEvents] = useState<string[]>([]);
-  const [festivalEvents, setFestivalEvents] = useState<string[]>([]);
+  const {
+    searchTerm,
+    setSearchTerm,
+    featuredEvents,
+    setFeaturedEvents,
+    isSubmitting,
+    setIsSubmitting,
+    allEvents,
+    setAllEvents,
+    isLoading,
+    setIsLoading,
+    lastSyncInfo,
+    setLastSyncInfo,
+    sortBy,
+    setSortBy,
+    hiddenEvents,
+    setHiddenEvents,
+    festivalEvents,
+    setFestivalEvents
+  } = useEventState();
 
   const loadEvents = async () => {
     try {
       setIsLoading(true);
+      console.log('Loading events from database...');
       
-      const events = await fetchAllEvents();
-      setAllEvents(events);
+      const mappedEvents = await fetchFutureEventsFromDatabase();
+      setAllEvents(mappedEvents);
       
-      const { data: eventsData, error } = await supabase
-        .from('events')
-        .select('id, is_hidden, is_featured, is_festival');
+      // Set the flags based on database values
+      const { hiddenIds, featuredIds, festivalIds } = extractEventFlags(mappedEvents);
       
-      if (error) {
-        throw error;
-      }
-        
-      if (eventsData) {
-        setHiddenEvents(eventsData.filter(event => event.is_hidden).map(event => event.id));
-        setFeaturedEvents(eventsData.filter(event => event.is_featured).map(event => event.id));
-        setFestivalEvents(eventsData.filter(event => event.is_festival).map(event => event.id));
-      }
+      console.log('Setting state from database:');
+      console.log('- Hidden IDs:', hiddenIds);
+      console.log('- Featured IDs:', featuredIds);
+      console.log('- Festival IDs:', festivalIds);
+      
+      setHiddenEvents(hiddenIds);
+      setFeaturedEvents(featuredIds);
+      setFestivalEvents(festivalIds);
       
       setIsLoading(false);
+      console.log('Events loaded successfully');
     } catch (error) {
       console.error('Error loading events:', error);
       toast.error('Failed to load events');
@@ -46,30 +58,8 @@ export const useFeaturedEventsLogic = () => {
   };
 
   const getLastSyncInfo = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('cache_metadata')
-        .select('last_updated, record_count')
-        .eq('id', 'ticketmaster')
-        .single();
-      
-      if (error) {
-        console.error("Error fetching last sync info:", error);
-        setLastSyncInfo("No sync information available");
-        return;
-      }
-      
-      if (data) {
-        const lastSyncDate = new Date(data.last_updated);
-        const formattedDate = lastSyncDate.toLocaleString();
-        setLastSyncInfo(`Last synced: ${formattedDate} (${data.record_count} events)`);
-      } else {
-        setLastSyncInfo("No sync information available");
-      }
-    } catch (error) {
-      console.error("Error fetching sync info:", error);
-      setLastSyncInfo("Error fetching sync info");
-    }
+    const syncInfo = await fetchCacheMetadata();
+    setLastSyncInfo(syncInfo);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,37 +67,27 @@ export const useFeaturedEventsLogic = () => {
     try {
       setIsSubmitting(true);
       
-      console.log('Updating events with featured status:', featuredEvents);
-      console.log('Updating events with hidden status:', hiddenEvents);
-      console.log('Updating events with festival status:', festivalEvents);
+      console.log('=== FORM SUBMISSION STARTED ===');
+      console.log('Current state when submitting:');
+      console.log('- Featured events:', featuredEvents);
+      console.log('- Hidden events:', hiddenEvents);
+      console.log('- Festival events:', festivalEvents);
       
-      // Update events in batches to avoid hitting limits
-      const batchSize = 50;
-      const eventIds = allEvents.map(event => event.id);
+      const allEventIds = allEvents.map(event => event.id);
+      console.log('- All event IDs:', allEventIds);
       
-      for (let i = 0; i < eventIds.length; i += batchSize) {
-        const batch = eventIds.slice(i, i + batchSize);
-        
-        for (const eventId of batch) {
-          const { error } = await supabase
-            .from('events')
-            .update({ 
-              is_featured: featuredEvents.includes(eventId),
-              is_hidden: hiddenEvents.includes(eventId),
-              is_festival: festivalEvents.includes(eventId)
-            })
-            .eq('id', eventId);
-            
-          if (error) {
-            console.error('Error updating event:', eventId, error);
-            throw error;
-          }
-        }
-      }
+      // Call the database update function
+      await updateEventFlags(allEventIds, featuredEvents, hiddenEvents, festivalEvents);
       
+      console.log('Database update completed - showing success message');
       toast.success("Events updated successfully!");
-      // Reload events to reflect changes
-      await loadEvents();
+      
+      // Reload events after a short delay to ensure database consistency
+      console.log('Reloading events to verify changes...');
+      setTimeout(async () => {
+        await loadEvents();
+      }, 1000);
+      
     } catch (error) {
       console.error('Error saving event settings:', error);
       toast.error('Failed to save event settings');
@@ -116,61 +96,92 @@ export const useFeaturedEventsLogic = () => {
     }
   };
 
-  const toggleEventVisibility = (id: string) => {
-    setHiddenEvents(prev => 
-      prev.includes(id) ? prev.filter(eventId => eventId !== id) : [...prev, id]
-    );
-  };
-
-  const toggleFeature = (id: string) => {
-    console.log('Toggling feature for event:', id);
-    setFeaturedEvents(prev => {
-      const newFeatured = prev.includes(id) ? prev.filter(eventId => eventId !== id) : [...prev, id];
-      console.log('New featured events:', newFeatured);
-      return newFeatured;
-    });
-  };
-
-  const toggleFestival = (id: string) => {
-    setFestivalEvents(prev => 
-      prev.includes(id) ? prev.filter(eventId => eventId !== id) : [...prev, id]
-    );
-  };
-
-  const getSortedEvents = (events: EventCardProps[]) => {
-    return [...events].sort((a, b) => {
-      switch (sortBy) {
-        case "visibility":
-          const aHidden = hiddenEvents.includes(a.id);
-          const bHidden = hiddenEvents.includes(b.id);
-          if (aHidden !== bHidden) return aHidden ? 1 : -1;
-          break;
-        case "featured":
-          const aFeatured = featuredEvents.includes(a.id);
-          const bFeatured = featuredEvents.includes(b.id);
-          if (aFeatured !== bFeatured) return aFeatured ? -1 : 1;
-          break;
-        case "festival":
-          const aFestival = festivalEvents.includes(a.id);
-          const bFestival = festivalEvents.includes(b.id);
-          if (aFestival !== bFestival) return aFestival ? -1 : 1;
-          break;
-        case "date":
-        default:
-          const aDate = new Date(a.rawDate || a.date);
-          const bDate = new Date(b.rawDate || b.date);
-          return aDate.getTime() - bDate.getTime();
+  // Fixed toggle functions with proper state management
+  const toggleEventVisibility = useCallback((id: string) => {
+    console.log('=== TOGGLING VISIBILITY ===');
+    console.log(`Event ID: ${id}`);
+    
+    setHiddenEvents(current => {
+      const isHidden = current.includes(id);
+      let newState;
+      
+      if (isHidden) {
+        newState = current.filter(eventId => eventId !== id);
+        console.log(`Removing ${id} from hidden events`);
+      } else {
+        newState = [...current, id];
+        console.log(`Adding ${id} to hidden events`);
       }
-      // Default secondary sort by date
-      const aDate = new Date(a.rawDate || a.date);
-      const bDate = new Date(b.rawDate || b.date);
-      return aDate.getTime() - bDate.getTime();
+      
+      console.log(`Previous hidden state: ${isHidden}`);
+      console.log(`New hidden events:`, newState);
+      
+      return newState;
     });
+  }, [setHiddenEvents]);
+
+  const toggleFeature = useCallback((id: string) => {
+    console.log('=== TOGGLING FEATURE ===');
+    console.log(`Event ID: ${id}`);
+    
+    setFeaturedEvents(current => {
+      const isFeatured = current.includes(id);
+      let newState;
+      
+      if (isFeatured) {
+        newState = current.filter(eventId => eventId !== id);
+        console.log(`Removing ${id} from featured events`);
+      } else {
+        newState = [...current, id];
+        console.log(`Adding ${id} to featured events`);
+      }
+      
+      console.log(`Previous featured state: ${isFeatured}`);
+      console.log(`New featured events:`, newState);
+      
+      return newState;
+    });
+  }, [setFeaturedEvents]);
+
+  const toggleFestival = useCallback((id: string) => {
+    console.log('=== TOGGLING FESTIVAL ===');
+    console.log(`Event ID: ${id}`);
+    
+    setFestivalEvents(current => {
+      const isFestival = current.includes(id);
+      let newState;
+      
+      if (isFestival) {
+        newState = current.filter(eventId => eventId !== id);
+        console.log(`Removing ${id} from festival events`);
+      } else {
+        newState = [...current, id];
+        console.log(`Adding ${id} to festival events`);
+      }
+      
+      console.log(`Previous festival state: ${isFestival}`);
+      console.log(`New festival events:`, newState);
+      
+      return newState;
+    });
+  }, [setFestivalEvents]);
+
+  const getSortedEventsWrapper = (events: EventCardProps[]) => {
+    return getSortedEvents(events, sortBy, hiddenEvents, featuredEvents, festivalEvents);
   };
 
   useEffect(() => {
+    console.log('Component mounted - loading initial events');
     loadEvents();
   }, []);
+
+  // Debug current state changes
+  useEffect(() => {
+    console.log('=== STATE CHANGED ===');
+    console.log('Featured events:', featuredEvents);
+    console.log('Hidden events:', hiddenEvents);
+    console.log('Festival events:', festivalEvents);
+  }, [featuredEvents, hiddenEvents, festivalEvents]);
 
   return {
     searchTerm,
@@ -190,6 +201,6 @@ export const useFeaturedEventsLogic = () => {
     toggleEventVisibility,
     toggleFeature,
     toggleFestival,
-    getSortedEvents
+    getSortedEvents: getSortedEventsWrapper
   };
 };

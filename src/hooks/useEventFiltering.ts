@@ -10,7 +10,6 @@ interface UseEventFilteringProps {
 export const useEventFiltering = ({ events, initialVisibleCount = 80 }: UseEventFilteringProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("All Genres");
-  const [priceRange, setPriceRange] = useState([0, 500]);
   const [genres, setGenres] = useState<string[]>(["All Genres"]);
   const [dateRange, setDateRange] = useState<{from: Date | undefined; to: Date | undefined}>({
     from: undefined,
@@ -66,7 +65,7 @@ export const useEventFiltering = ({ events, initialVisibleCount = 80 }: UseEvent
     setGenres(genreArray);
   }, [events]);
 
-  // Filter events based on criteria
+  // Filter events based on criteria (removed price filtering)
   useEffect(() => {
     const filtered = events.filter(event => {
       const matchesSearch = 
@@ -75,12 +74,6 @@ export const useEventFiltering = ({ events, initialVisibleCount = 80 }: UseEvent
         event.venue?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesGenre = selectedGenre === "All Genres" || event.genre === selectedGenre;
-      
-      // Price filtering logic
-      const matchesPrice = 
-        !event.price || 
-        (event.price >= priceRange[0] && 
-         (event.maxPrice ? event.maxPrice <= priceRange[1] : event.price <= priceRange[1]));
       
       // Date range filtering
       let matchesDateRange = true;
@@ -96,12 +89,12 @@ export const useEventFiltering = ({ events, initialVisibleCount = 80 }: UseEvent
         }
       }
       
-      return matchesSearch && matchesGenre && matchesPrice && matchesDateRange;
+      return matchesSearch && matchesGenre && matchesDateRange;
     });
     
     setFilteredEvents(filtered);
     setVisibleItemCount(initialVisibleCount);
-  }, [events, searchTerm, selectedGenre, priceRange, dateRange, initialVisibleCount]);
+  }, [events, searchTerm, selectedGenre, dateRange, initialVisibleCount]);
   
   // Update displayed events based on visible count
   useEffect(() => {
@@ -117,8 +110,6 @@ export const useEventFiltering = ({ events, initialVisibleCount = 80 }: UseEvent
     setSearchTerm,
     selectedGenre,
     setSelectedGenre,
-    priceRange,
-    setPriceRange,
     genres,
     dateRange,
     setDateRange,

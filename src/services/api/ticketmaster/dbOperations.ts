@@ -41,7 +41,11 @@ export const fetchEventsFromDatabase = async (): Promise<EventCardProps[] | null
       price: event.price || undefined,
       ticketUrl: event.ticket_url || undefined,
       rawDate: event.raw_date || undefined,
-      onSaleDate: event.on_sale_date || null
+      onSaleDate: event.on_sale_date || null,
+      // Include the admin flags
+      is_featured: event.is_featured || false,
+      is_hidden: event.is_hidden || false,
+      is_festival: event.is_festival || false
     }));
   } catch (error) {
     console.error("Database fetch failed:", error);
@@ -77,7 +81,11 @@ export const fetchEventFromDatabase = async (eventId: string): Promise<EventCard
       price: event.price || undefined,
       ticketUrl: event.ticket_url || undefined,
       rawDate: event.raw_date || undefined,
-      onSaleDate: event.on_sale_date || null
+      onSaleDate: event.on_sale_date || null,
+      // Include the admin flags
+      is_featured: event.is_featured || false,
+      is_hidden: event.is_hidden || false,
+      is_festival: event.is_festival || false
     };
   } catch (error) {
     console.error("Error fetching event from database:", error);

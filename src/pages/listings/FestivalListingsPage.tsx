@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
@@ -19,11 +18,16 @@ const FestivalListingsPage = () => {
       try {
         setIsLoading(true);
         
+        // Get current date for filtering
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of today
+        
         const { data: events, error } = await supabase
           .from('events')
           .select('*')
           .eq('country', 'Ireland')
           .eq('is_festival', true)
+          .gte('raw_date', today.toISOString()) // Only get future events
           .order('raw_date', { ascending: true });
 
         if (error) throw error;
@@ -90,8 +94,6 @@ const FestivalListingsPage = () => {
     setSearchTerm,
     selectedGenre,
     setSelectedGenre,
-    priceRange,
-    setPriceRange,
     genres,
     dateRange,
     setDateRange,
@@ -115,8 +117,8 @@ const FestivalListingsPage = () => {
         selectedGenre={selectedGenre}
         setSelectedGenre={setSelectedGenre}
         genres={genres}
-        priceRange={priceRange}
-        setPriceRange={setPriceRange}
+        priceRange={[0, 500]}
+        setPriceRange={() => {}}
         dateRange={dateRange}
         setDateRange={setDateRange}
         showDatePicker={showDatePicker}
@@ -125,7 +127,7 @@ const FestivalListingsPage = () => {
       
       <div className="mb-6">
         <p className="text-gray-400">
-          {isLoading ? "Loading festivals..." : `${filteredListings.length} festivals found`}
+          {isLoading ? "Loading festivals..." : `${filteredListings.length} upcoming festivals found`}
         </p>
       </div>
       
@@ -137,7 +139,7 @@ const FestivalListingsPage = () => {
         <>
           <EventGrid 
             events={displayedListings} 
-            emptyMessage="No festivals found matching your filters. Try adjusting your search."
+            emptyMessage="No upcoming festivals found matching your filters. Try adjusting your search."
           />
           
           <EventListingsStatus

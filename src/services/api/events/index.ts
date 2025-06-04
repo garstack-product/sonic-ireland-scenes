@@ -7,3 +7,4 @@ export {
   fetchFeaturedEvents,
   fetchVenueEvents 
 } from './filterService';
+export { fetchPresaleEvents } from './presaleService';
