@@ -15,6 +15,7 @@ export const fetchFutureEventsFromDatabase = async (): Promise<EventCardProps[]>
     .order('raw_date', { ascending: true });
   
   if (error) {
+    console.error('Database error:', error);
     throw error;
   }
   
@@ -42,9 +43,9 @@ export const fetchFutureEventsFromDatabase = async (): Promise<EventCardProps[]>
     rawDate: event.raw_date || undefined,
     onSaleDate: event.on_sale_date || null,
     // Include the flags that are needed for the admin dashboard
-    is_featured: event.is_featured || false,
-    is_hidden: event.is_hidden || false,
-    is_festival: event.is_festival || false
+    is_featured: Boolean(event.is_featured),
+    is_hidden: Boolean(event.is_hidden),
+    is_festival: Boolean(event.is_festival)
   }));
 };
 
@@ -54,14 +55,14 @@ export const updateEventFlags = async (
   hiddenEvents: string[],
   festivalEvents: string[]
 ) => {
-  console.log('=== UPDATING EVENT FLAGS IN DATABASE ===');
-  console.log('All event IDs being managed:', allEventIds);
+  console.log('=== STARTING DATABASE UPDATE ===');
+  console.log('All event IDs:', allEventIds.length);
   console.log('Featured events to set:', featuredEvents);
   console.log('Hidden events to set:', hiddenEvents);
   console.log('Festival events to set:', festivalEvents);
   
   try {
-    // Create update promises for each event with their specific flags
+    // Update each event individually to ensure proper flag setting
     const updatePromises = allEventIds.map(async (eventId) => {
       const isFeatured = featuredEvents.includes(eventId);
       const isHidden = hiddenEvents.includes(eventId);
@@ -87,30 +88,16 @@ export const updateEventFlags = async (
         throw error;
       }
       
-      console.log(`✅ Successfully updated event ${eventId}`);
       return eventId;
     });
     
     // Wait for all updates to complete
     await Promise.all(updatePromises);
     
-    console.log('=== ALL EVENT FLAGS UPDATED SUCCESSFULLY ===');
-    
-    // Verify the updates by checking a few events
-    console.log('Verifying updates...');
-    if (featuredEvents.length > 0) {
-      const { data: verifyData, error: verifyError } = await supabase
-        .from('events')
-        .select('id, is_featured, is_hidden, is_festival')
-        .in('id', featuredEvents.slice(0, 3)); // Check first 3 featured events
-      
-      if (!verifyError && verifyData) {
-        console.log('Verification - Sample featured events in DB:', verifyData);
-      }
-    }
+    console.log('=== DATABASE UPDATE COMPLETED SUCCESSFULLY ===');
     
   } catch (error) {
-    console.error('❌ Error updating event flags:', error);
+    console.error('Error updating event flags:', error);
     throw error;
   }
 };

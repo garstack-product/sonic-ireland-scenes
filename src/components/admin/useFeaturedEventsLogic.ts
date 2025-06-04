@@ -1,10 +1,10 @@
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { useEventState } from "./hooks/useEventState";
 import { fetchFutureEventsFromDatabase, updateEventFlags, fetchCacheMetadata } from "./services/eventDatabase";
-import { extractEventFlags, getSortedEvents, createToggleFunction } from "./utils/eventUtils";
+import { extractEventFlags, getSortedEvents } from "./utils/eventUtils";
 
 export const useFeaturedEventsLogic = () => {
   const {
@@ -31,31 +31,27 @@ export const useFeaturedEventsLogic = () => {
   const loadEvents = async () => {
     try {
       setIsLoading(true);
-      console.log('🔄 LOADING EVENTS FROM DATABASE...');
+      console.log('Loading events from database...');
       
       const mappedEvents = await fetchFutureEventsFromDatabase();
-      console.log(`📊 Loaded ${mappedEvents.length} events from database`);
-      
-      // Set all events first
       setAllEvents(mappedEvents);
       
-      // Extract flags from the fresh database data
+      // Set the flags based on database values
       const { hiddenIds, featuredIds, festivalIds } = extractEventFlags(mappedEvents);
       
-      // Update the state with the database values
-      console.log('🎯 SETTING UI STATE FROM DATABASE:');
-      console.log('Setting hidden events:', hiddenIds);
-      console.log('Setting featured events:', featuredIds);
-      console.log('Setting festival events:', festivalIds);
+      console.log('Setting state from database:');
+      console.log('- Hidden IDs:', hiddenIds);
+      console.log('- Featured IDs:', featuredIds);
+      console.log('- Festival IDs:', festivalIds);
       
       setHiddenEvents(hiddenIds);
       setFeaturedEvents(featuredIds);
       setFestivalEvents(festivalIds);
       
-      console.log('✅ Events and flags loaded successfully');
       setIsLoading(false);
+      console.log('Events loaded successfully');
     } catch (error) {
-      console.error('❌ Error loading events:', error);
+      console.error('Error loading events:', error);
       toast.error('Failed to load events');
       setIsLoading(false);
     }
@@ -71,70 +67,103 @@ export const useFeaturedEventsLogic = () => {
     try {
       setIsSubmitting(true);
       
-      console.log('🚀 FORM SUBMISSION STARTED');
-      console.log('📊 Current UI state at submission:');
-      console.log('   - Featured events:', featuredEvents);
-      console.log('   - Hidden events:', hiddenEvents);
-      console.log('   - Festival events:', festivalEvents);
+      console.log('=== FORM SUBMISSION STARTED ===');
+      console.log('Current state when submitting:');
+      console.log('- Featured events:', featuredEvents);
+      console.log('- Hidden events:', hiddenEvents);
+      console.log('- Festival events:', festivalEvents);
       
       const allEventIds = allEvents.map(event => event.id);
-      console.log('   - Total events to manage:', allEventIds.length);
+      console.log('- All event IDs:', allEventIds);
       
-      // Perform the database update
+      // Call the database update function
       await updateEventFlags(allEventIds, featuredEvents, hiddenEvents, festivalEvents);
       
-      console.log('✅ Database update completed successfully');
+      console.log('Database update completed - showing success message');
       toast.success("Events updated successfully!");
       
-      // Reload events after a brief delay to ensure database consistency
-      console.log('🔄 Reloading events to verify changes...');
+      // Reload events after a short delay to ensure database consistency
+      console.log('Reloading events to verify changes...');
       setTimeout(async () => {
         await loadEvents();
-        console.log('🎉 Events reloaded and UI state updated');
       }, 1000);
       
     } catch (error) {
-      console.error('❌ Error saving event settings:', error);
-      toast.error('Failed to save event settings. Please try again.');
+      console.error('Error saving event settings:', error);
+      toast.error('Failed to save event settings');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const toggleEventVisibility = createToggleFunction(
-    hiddenEvents,
-    setHiddenEvents,
-    'Toggling visibility'
-  );
+  // Fix the toggle functions to use useCallback and current state
+  const toggleEventVisibility = useCallback((id: string) => {
+    console.log('=== TOGGLING VISIBILITY ===');
+    console.log(`Event ID: ${id}`);
+    
+    setHiddenEvents(prev => {
+      const isCurrentlyHidden = prev.includes(id);
+      const newItems = isCurrentlyHidden 
+        ? prev.filter(eventId => eventId !== id) 
+        : [...prev, id];
+      
+      console.log(`Was hidden: ${isCurrentlyHidden}`);
+      console.log(`New hidden events:`, newItems);
+      
+      return newItems;
+    });
+  }, []);
 
-  const toggleFeature = createToggleFunction(
-    featuredEvents,
-    setFeaturedEvents,
-    'Toggling feature'
-  );
+  const toggleFeature = useCallback((id: string) => {
+    console.log('=== TOGGLING FEATURE ===');
+    console.log(`Event ID: ${id}`);
+    
+    setFeaturedEvents(prev => {
+      const isCurrentlyFeatured = prev.includes(id);
+      const newItems = isCurrentlyFeatured 
+        ? prev.filter(eventId => eventId !== id) 
+        : [...prev, id];
+      
+      console.log(`Was featured: ${isCurrentlyFeatured}`);
+      console.log(`New featured events:`, newItems);
+      
+      return newItems;
+    });
+  }, []);
 
-  const toggleFestival = createToggleFunction(
-    festivalEvents,
-    setFestivalEvents,
-    'Toggling festival'
-  );
+  const toggleFestival = useCallback((id: string) => {
+    console.log('=== TOGGLING FESTIVAL ===');
+    console.log(`Event ID: ${id}`);
+    
+    setFestivalEvents(prev => {
+      const isCurrentlyFestival = prev.includes(id);
+      const newItems = isCurrentlyFestival 
+        ? prev.filter(eventId => eventId !== id) 
+        : [...prev, id];
+      
+      console.log(`Was festival: ${isCurrentlyFestival}`);
+      console.log(`New festival events:`, newItems);
+      
+      return newItems;
+    });
+  }, []);
 
   const getSortedEventsWrapper = (events: EventCardProps[]) => {
     return getSortedEvents(events, sortBy, hiddenEvents, featuredEvents, festivalEvents);
   };
 
-  // Debug current state
   useEffect(() => {
-    console.log('🔍 Current UI state changed:');
-    console.log('Featured events in state:', featuredEvents);
-    console.log('Hidden events in state:', hiddenEvents);
-    console.log('Festival events in state:', festivalEvents);
-  }, [featuredEvents, hiddenEvents, festivalEvents]);
-
-  useEffect(() => {
-    console.log('🏁 Component mounted - loading initial events');
+    console.log('Component mounted - loading initial events');
     loadEvents();
   }, []);
+
+  // Debug current state changes
+  useEffect(() => {
+    console.log('=== STATE CHANGED ===');
+    console.log('Featured events:', featuredEvents);
+    console.log('Hidden events:', hiddenEvents);
+    console.log('Festival events:', festivalEvents);
+  }, [featuredEvents, hiddenEvents, festivalEvents]);
 
   return {
     searchTerm,
