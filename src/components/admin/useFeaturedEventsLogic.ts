@@ -96,27 +96,27 @@ export const useFeaturedEventsLogic = () => {
     }
   };
 
-  // Simplified toggle functions that directly use setters
+  // Fixed toggle functions with proper state management
   const toggleEventVisibility = useCallback((id: string) => {
     console.log('=== TOGGLING VISIBILITY ===');
     console.log(`Event ID: ${id}`);
     
-    setHiddenEvents(currentHidden => {
-      const isCurrentlyHidden = currentHidden.includes(id);
-      let newHidden;
+    setHiddenEvents(current => {
+      const isHidden = current.includes(id);
+      let newState;
       
-      if (isCurrentlyHidden) {
-        newHidden = currentHidden.filter(eventId => eventId !== id);
+      if (isHidden) {
+        newState = current.filter(eventId => eventId !== id);
         console.log(`Removing ${id} from hidden events`);
       } else {
-        newHidden = [...currentHidden, id];
+        newState = [...current, id];
         console.log(`Adding ${id} to hidden events`);
       }
       
-      console.log(`Was hidden: ${isCurrentlyHidden}`);
-      console.log(`New hidden events:`, newHidden);
+      console.log(`Previous hidden state: ${isHidden}`);
+      console.log(`New hidden events:`, newState);
       
-      return newHidden;
+      return newState;
     });
   }, [setHiddenEvents]);
 
@@ -124,22 +124,22 @@ export const useFeaturedEventsLogic = () => {
     console.log('=== TOGGLING FEATURE ===');
     console.log(`Event ID: ${id}`);
     
-    setFeaturedEvents(currentFeatured => {
-      const isCurrentlyFeatured = currentFeatured.includes(id);
-      let newFeatured;
+    setFeaturedEvents(current => {
+      const isFeatured = current.includes(id);
+      let newState;
       
-      if (isCurrentlyFeatured) {
-        newFeatured = currentFeatured.filter(eventId => eventId !== id);
+      if (isFeatured) {
+        newState = current.filter(eventId => eventId !== id);
         console.log(`Removing ${id} from featured events`);
       } else {
-        newFeatured = [...currentFeatured, id];
+        newState = [...current, id];
         console.log(`Adding ${id} to featured events`);
       }
       
-      console.log(`Was featured: ${isCurrentlyFeatured}`);
-      console.log(`New featured events:`, newFeatured);
+      console.log(`Previous featured state: ${isFeatured}`);
+      console.log(`New featured events:`, newState);
       
-      return newFeatured;
+      return newState;
     });
   }, [setFeaturedEvents]);
 
@@ -147,22 +147,22 @@ export const useFeaturedEventsLogic = () => {
     console.log('=== TOGGLING FESTIVAL ===');
     console.log(`Event ID: ${id}`);
     
-    setFestivalEvents(currentFestival => {
-      const isCurrentlyFestival = currentFestival.includes(id);
-      let newFestival;
+    setFestivalEvents(current => {
+      const isFestival = current.includes(id);
+      let newState;
       
-      if (isCurrentlyFestival) {
-        newFestival = currentFestival.filter(eventId => eventId !== id);
+      if (isFestival) {
+        newState = current.filter(eventId => eventId !== id);
         console.log(`Removing ${id} from festival events`);
       } else {
-        newFestival = [...currentFestival, id];
+        newState = [...current, id];
         console.log(`Adding ${id} to festival events`);
       }
       
-      console.log(`Was festival: ${isCurrentlyFestival}`);
-      console.log(`New festival events:`, newFestival);
+      console.log(`Previous festival state: ${isFestival}`);
+      console.log(`New festival events:`, newState);
       
-      return newFestival;
+      return newState;
     });
   }, [setFestivalEvents]);
 
