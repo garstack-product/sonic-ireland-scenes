@@ -96,57 +96,75 @@ export const useFeaturedEventsLogic = () => {
     }
   };
 
-  // Fix the toggle functions to use useCallback and current state
+  // Simplified toggle functions that directly use setters
   const toggleEventVisibility = useCallback((id: string) => {
     console.log('=== TOGGLING VISIBILITY ===');
     console.log(`Event ID: ${id}`);
     
-    setHiddenEvents(prev => {
-      const isCurrentlyHidden = prev.includes(id);
-      const newItems = isCurrentlyHidden 
-        ? prev.filter(eventId => eventId !== id) 
-        : [...prev, id];
+    setHiddenEvents(currentHidden => {
+      const isCurrentlyHidden = currentHidden.includes(id);
+      let newHidden;
+      
+      if (isCurrentlyHidden) {
+        newHidden = currentHidden.filter(eventId => eventId !== id);
+        console.log(`Removing ${id} from hidden events`);
+      } else {
+        newHidden = [...currentHidden, id];
+        console.log(`Adding ${id} to hidden events`);
+      }
       
       console.log(`Was hidden: ${isCurrentlyHidden}`);
-      console.log(`New hidden events:`, newItems);
+      console.log(`New hidden events:`, newHidden);
       
-      return newItems;
+      return newHidden;
     });
-  }, []);
+  }, [setHiddenEvents]);
 
   const toggleFeature = useCallback((id: string) => {
     console.log('=== TOGGLING FEATURE ===');
     console.log(`Event ID: ${id}`);
     
-    setFeaturedEvents(prev => {
-      const isCurrentlyFeatured = prev.includes(id);
-      const newItems = isCurrentlyFeatured 
-        ? prev.filter(eventId => eventId !== id) 
-        : [...prev, id];
+    setFeaturedEvents(currentFeatured => {
+      const isCurrentlyFeatured = currentFeatured.includes(id);
+      let newFeatured;
+      
+      if (isCurrentlyFeatured) {
+        newFeatured = currentFeatured.filter(eventId => eventId !== id);
+        console.log(`Removing ${id} from featured events`);
+      } else {
+        newFeatured = [...currentFeatured, id];
+        console.log(`Adding ${id} to featured events`);
+      }
       
       console.log(`Was featured: ${isCurrentlyFeatured}`);
-      console.log(`New featured events:`, newItems);
+      console.log(`New featured events:`, newFeatured);
       
-      return newItems;
+      return newFeatured;
     });
-  }, []);
+  }, [setFeaturedEvents]);
 
   const toggleFestival = useCallback((id: string) => {
     console.log('=== TOGGLING FESTIVAL ===');
     console.log(`Event ID: ${id}`);
     
-    setFestivalEvents(prev => {
-      const isCurrentlyFestival = prev.includes(id);
-      const newItems = isCurrentlyFestival 
-        ? prev.filter(eventId => eventId !== id) 
-        : [...prev, id];
+    setFestivalEvents(currentFestival => {
+      const isCurrentlyFestival = currentFestival.includes(id);
+      let newFestival;
+      
+      if (isCurrentlyFestival) {
+        newFestival = currentFestival.filter(eventId => eventId !== id);
+        console.log(`Removing ${id} from festival events`);
+      } else {
+        newFestival = [...currentFestival, id];
+        console.log(`Adding ${id} to festival events`);
+      }
       
       console.log(`Was festival: ${isCurrentlyFestival}`);
-      console.log(`New festival events:`, newItems);
+      console.log(`New festival events:`, newFestival);
       
-      return newItems;
+      return newFestival;
     });
-  }, []);
+  }, [setFestivalEvents]);
 
   const getSortedEventsWrapper = (events: EventCardProps[]) => {
     return getSortedEvents(events, sortBy, hiddenEvents, featuredEvents, festivalEvents);
