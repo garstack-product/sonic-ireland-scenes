@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +9,7 @@ import ManageFeaturedEvents from "./ManageFeaturedEvents";
 import ManageRssFeeds from "./ManageRssFeeds";
 import ManageNewsItems from "./ManageNewsItems";
 import AddEvent from "./AddEvent";
+import EventPreviewGenerator from "./EventPreviewGenerator";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -75,6 +75,7 @@ const AdminPage = () => {
             {/* Admin only features */}
             {user.isAdmin && (
               <>
+                <TabsTrigger value="event-preview">Event Previews</TabsTrigger>
                 <TabsTrigger value="concert-reviews">Concert Reviews</TabsTrigger>
                 <TabsTrigger value="festival-reviews">Festival Reviews</TabsTrigger>
                 <TabsTrigger value="news">News</TabsTrigger>
@@ -93,6 +94,10 @@ const AdminPage = () => {
           {/* Admin only content */}
           {user.isAdmin && (
             <>
+              <TabsContent value="event-preview">
+                <EventPreviewGenerator />
+              </TabsContent>
+              
               <TabsContent value="concert-reviews">
                 <AddConcertReview />
               </TabsContent>
