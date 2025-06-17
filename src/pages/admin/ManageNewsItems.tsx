@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Search, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Search, Edit, Trash2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { getNewsItems } from "@/services/newsService";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +28,9 @@ const ManageNewsItems = () => {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingItem, setEditingItem] = useState<NewsItem | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const loadNewsItems = async () => {
     try {
@@ -58,6 +63,50 @@ const ManageNewsItems = () => {
     } catch (error) {
       console.error('Error deleting news item:', error);
       toast.error('Failed to delete news item');
+    }
+  };
+
+  const startEditing = (item: NewsItem) => {
+    setEditingItem({ ...item });
+    setIsEditDialogOpen(true);
+  };
+
+  const saveEditedItem = async () => {
+    if (!editingItem) return;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('news_items')
+        .update({
+          title: editingItem.title,
+          content: editingItem.content,
+          excerpt: editingItem.excerpt,
+          author: editingItem.author,
+          category: editingItem.category,
+          image_url: editingItem.image_url,
+          tags: editingItem.tags,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', editingItem.id);
+
+      if (error) throw error;
+
+      toast.success('News item updated successfully');
+      setIsEditDialogOpen(false);
+      setEditingItem(null);
+      await loadNewsItems();
+    } catch (error) {
+      console.error('Error updating news item:', error);
+      toast.error('Failed to update news item');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const updateEditingField = (field: keyof NewsItem, value: any) => {
+    if (editingItem) {
+      setEditingItem({ ...editingItem, [field]: value });
     }
   };
 
@@ -107,6 +156,14 @@ const ManageNewsItems = () => {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => startEditing(item)}
+                      className="text-blue-400 hover:text-blue-300 hover:bg-blue-900/20"
+                    >
+                      <Edit size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => deleteNewsItem(item.id)}
                       className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
                     >
@@ -145,6 +202,129 @@ const ManageNewsItems = () => {
           )}
         </div>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="bg-dark-300 border-gray-700 max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-white">Edit News Item</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Make changes to your news item. You can re-publish or share after editing.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingItem && (
+            <div className="space-y-4 mt-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Title
+                </label>
+                <Input
+                  value={editingItem.title}
+                  onChange={(e) => updateEditingField('title', e.target.value)}
+                  className="bg-dark-200 border-gray-700 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Excerpt
+                </label>
+                <Textarea
+                  value={editingItem.excerpt || ''}
+                  onChange={(e) => updateEditingField('excerpt', e.target.value)}
+                  className="bg-dark-200 border-gray-700 text-white min-h-[80px]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Content ({editingItem.content.split(' ').length} words)
+                </label>
+                <Textarea
+                  value={editingItem.content}
+                  onChange={(e) => updateEditingField('content', e.target.value)}
+                  className="bg-dark-200 border-gray-700 text-white min-h-[300px]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Author
+                  </label>
+                  <Input
+                    value={editingItem.author || ''}
+                    onChange={(e) => updateEditingField('author', e.target.value)}
+                    className="bg-dark-200 border-gray-700 text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Category
+                  </label>
+                  <Input
+                    value={editingItem.category || ''}
+                    onChange={(e) => updateEditingField('category', e.target.value)}
+                    className="bg-dark-200 border-gray-700 text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Image URL
+                </label>
+                <Input
+                  value={editingItem.image_url || ''}
+                  onChange={(e) => updateEditingField('image_url', e.target.value)}
+                  className="bg-dark-200 border-gray-700 text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Tags (comma separated)
+                </label>
+                <Input
+                  value={editingItem.tags?.join(', ') || ''}
+                  onChange={(e) => updateEditingField('tags', e.target.value.split(',').map(tag => tag.trim()).filter(Boolean))}
+                  className="bg-dark-200 border-gray-700 text-white"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditDialogOpen(false)}
+                  disabled={isSaving}
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Cancel
+                </Button>
+                <Button
+                  onClick={saveEditedItem}
+                  disabled={isSaving}
+                  className="flex items-center gap-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" />
+                      Save Changes
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

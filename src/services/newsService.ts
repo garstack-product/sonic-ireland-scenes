@@ -55,3 +55,25 @@ export const addNewsItem = async (
   
   return data;
 };
+
+export const updateNewsItem = async (
+  id: string,
+  updates: Partial<Omit<NewsItem, 'id' | 'created_at'>>
+): Promise<NewsItem> => {
+  const { data, error } = await supabase
+    .from('news_items')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error updating news item:', error);
+    throw new Error('Failed to update news item');
+  }
+  
+  return data;
+};
