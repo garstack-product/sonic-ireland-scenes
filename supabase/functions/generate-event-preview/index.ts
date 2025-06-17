@@ -52,8 +52,8 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        title,
-        preview,
+        title: decodeHtmlEntities(title),
+        preview: decodeHtmlEntities(preview),
         images: images.slice(0, 5), // Limit to 5 images
         originalUrl: url
       }),
@@ -76,6 +76,36 @@ serve(async (req) => {
     );
   }
 });
+
+function decodeHtmlEntities(text: string): string {
+  if (!text) return text;
+  
+  return text
+    // Common HTML entities
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    // Common unicode entities
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&#8211;/g, "–")
+    .replace(/&#8212;/g, "—")
+    .replace(/&#8230;/g, "...")
+    // Generic numeric entities (fallback)
+    .replace(/&#(\d+);/g, (match, dec) => {
+      return String.fromCharCode(dec);
+    })
+    // Generic hex entities (fallback)
+    .replace(/&#x([0-9a-f]+);/gi, (match, hex) => {
+      return String.fromCharCode(parseInt(hex, 16));
+    });
+}
 
 function extractTitleFromHTML(html: string): string {
   // Try title tag first
