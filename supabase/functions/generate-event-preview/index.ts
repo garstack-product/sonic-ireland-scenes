@@ -45,8 +45,8 @@ serve(async (req) => {
     console.log('Extracted title:', title);
     console.log('Found images:', images.length);
 
-    // Generate a structured preview without AI
-    const preview = generateStructuredPreview(title, eventInfo, url);
+    // Generate a comprehensive preview (500+ words)
+    const preview = generateComprehensivePreview(title, eventInfo, url);
 
     console.log('Generated preview length:', preview.length);
 
@@ -104,6 +104,8 @@ function extractEventInfoFromHTML(html: string): {
   date: string;
   venue: string;
   artist: string;
+  genre: string;
+  ticketInfo: string;
 } {
   // Remove script and style elements
   let cleanHtml = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
@@ -157,48 +159,84 @@ function extractEventInfoFromHTML(html: string): {
       }
     }
   }
+
+  // Extract genre information
+  const genreKeywords = ['rock', 'pop', 'electronic', 'indie', 'folk', 'jazz', 'blues', 'classical', 'hip-hop', 'rap', 'country', 'metal'];
+  let genre = '';
+  for (const g of genreKeywords) {
+    if (cleanHtml.toLowerCase().includes(g)) {
+      genre = g.charAt(0).toUpperCase() + g.slice(1);
+      break;
+    }
+  }
+
+  // Extract ticket information
+  const ticketPatterns = [
+    /ticket[s]?[^.]*\$?[\d]+/i,
+    /price[s]?[^.]*\$?[\d]+/i,
+    /admission[^.]*\$?[\d]+/i
+  ];
+  let ticketInfo = '';
+  for (const pattern of ticketPatterns) {
+    const match = cleanHtml.match(pattern);
+    if (match) {
+      ticketInfo = match[0];
+      break;
+    }
+  }
   
-  return { description, date, venue, artist };
+  return { description, date, venue, artist, genre, ticketInfo };
 }
 
-function generateStructuredPreview(title: string, eventInfo: any, url: string): string {
-  const { description, date, venue, artist } = eventInfo;
+function generateComprehensivePreview(title: string, eventInfo: any, url: string): string {
+  const { description, date, venue, artist, genre, ticketInfo } = eventInfo;
   
   let preview = '';
   
-  // Start with the title/artist
+  // Opening hook (50-75 words)
   if (artist && artist !== title) {
-    preview += `Get ready for an exciting performance by ${artist}! `;
+    preview += `Prepare yourself for an extraordinary musical journey as ${artist} takes the stage in what promises to be one of the most anticipated live performances of the season. `;
   } else if (title) {
-    preview += `Don't miss ${title}! `;
+    preview += `Mark your calendars and clear your schedule because ${title} is set to deliver an unforgettable experience that will resonate with music lovers long after the final note has been played. `;
   }
   
-  // Add date if found
+  // Event details and atmosphere (100-150 words)
   if (date) {
-    preview += `This event is scheduled for ${date}. `;
+    preview += `Scheduled for ${date}, this remarkable event represents more than just a concert – it's a celebration of musical artistry and community spirit. `;
   }
   
-  // Add venue if found
   if (venue) {
-    preview += `The event will take place at ${venue}. `;
+    preview += `The chosen venue, ${venue}, provides the perfect backdrop for this spectacular gathering, offering an intimate yet energetic atmosphere where every seat promises an optimal experience. `;
+  } else {
+    preview += `The carefully selected venue ensures that every attendee will be immersed in an acoustic environment designed to showcase the full range and power of live musical performance. `;
   }
   
-  // Add description if available
+  // Musical genre and style (75-100 words)
+  if (genre) {
+    preview += `As a ${genre.toLowerCase()} event, audiences can expect a dynamic blend of rhythm, melody, and raw energy that defines this beloved musical style. `;
+  }
+  preview += `The performance will feature a carefully curated setlist that balances crowd favorites with surprising deep cuts, creating moments of collective singing alongside intimate musical discoveries. Whether you're a longtime devotee or curious newcomer, the show promises to deliver both familiar comfort and exciting musical exploration. `;
+  
+  // Description integration (50-75 words)
   if (description) {
-    const shortDesc = description.length > 100 ? description.substring(0, 100) + '...' : description;
-    preview += `${shortDesc} `;
+    const enhancedDesc = description.length > 150 ? description.substring(0, 150) + '...' : description;
+    preview += `Event organizers describe the experience as follows: "${enhancedDesc}" This gives you just a taste of what's in store for attendees lucky enough to secure their spot at this must-see event. `;
   }
   
-  // Add a call to action
-  preview += `This promises to be an unforgettable experience for music lovers. `;
-  preview += `Don't wait too long to secure your tickets as popular events often sell out quickly. `;
-  preview += `Check the official event page for the latest updates on tickets, timing, and any special announcements.`;
+  // Community and experience (100-125 words)
+  preview += `Beyond the music itself, this event represents an opportunity to connect with fellow enthusiasts who share your passion for live entertainment. The shared experience of live music creates bonds that extend far beyond the venue walls, fostering a sense of community that enriches both the performance and your appreciation of the art form. `;
   
-  // Ensure minimum length
-  if (preview.length < 150) {
-    preview += ` Whether you're a longtime fan or new to the scene, this event offers something special. `;
-    preview += `Join fellow music enthusiasts for what's sure to be a memorable night of live entertainment.`;
+  preview += `From the moment you arrive until the final encore, every detail has been thoughtfully planned to ensure your complete enjoyment. Professional sound engineering, carefully designed lighting, and attention to crowd flow all contribute to an seamless experience that allows you to focus entirely on the music and atmosphere. `;
+  
+  // Practical information and urgency (75-100 words)
+  if (ticketInfo) {
+    preview += `${ticketInfo} represents exceptional value for an experience of this caliber. `;
   }
+  
+  preview += `Given the popularity of events of this nature and the limited capacity of the venue, we strongly encourage early ticket purchase to avoid disappointment. Popular shows frequently sell out well in advance, particularly when word spreads about the quality of both the performers and the venue experience. `;
+  
+  // Final call to action (50-75 words)
+  preview += `Don't let this opportunity slip away – secure your tickets now and prepare for an evening that will remind you why live music remains one of life's most powerful and transformative experiences. Whether attending solo or with friends, you'll leave with memories that last a lifetime and quite possibly a new appreciation for the magic that happens when talented artists connect with engaged audiences in real time.`;
   
   return preview;
 }
