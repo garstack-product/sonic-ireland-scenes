@@ -33,7 +33,7 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch URL: ${response.status}`);
+      throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
     }
 
     const html = await response.text();
@@ -52,6 +52,7 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
 
+    console.log('Making OpenAI request...');
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -75,11 +76,27 @@ serve(async (req) => {
       }),
     });
 
+    console.log('OpenAI response status:', aiResponse.status);
+
     if (!aiResponse.ok) {
-      throw new Error(`OpenAI API error: ${aiResponse.status}`);
+      const errorText = await aiResponse.text();
+      console.error('OpenAI API error:', aiResponse.status, errorText);
+      
+      if (aiResponse.status === 429) {
+        throw new Error('OpenAI API rate limit exceeded. Please try again in a few moments.');
+      } else if (aiResponse.status === 401) {
+        throw new Error('OpenAI API key is invalid or expired.');
+      } else {
+        throw new Error(`OpenAI API error: ${aiResponse.status} - ${errorText}`);
+      }
     }
 
     const aiData = await aiResponse.json();
+    
+    if (!aiData.choices || !aiData.choices[0] || !aiData.choices[0].message) {
+      throw new Error('Invalid response from OpenAI API');
+    }
+
     const preview = aiData.choices[0].message.content;
 
     console.log('Generated preview length:', preview.length);
@@ -99,7 +116,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in generate-event-preview function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'An unexpected error occurred',
+        details: error.toString()
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

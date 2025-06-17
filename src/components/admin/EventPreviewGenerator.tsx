@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Loader2, ExternalLink, Share2, Eye, Save } from "lucide-react";
+import { Loader2, ExternalLink, Share2, Eye, Save, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { addNewsItem } from "@/services/newsService";
 
@@ -24,6 +24,7 @@ const EventPreviewGenerator = () => {
   const [editedPreview, setEditedPreview] = useState("");
   const [selectedImage, setSelectedImage] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const generatePreview = async () => {
     if (!url.trim()) {
@@ -32,14 +33,28 @@ const EventPreviewGenerator = () => {
     }
 
     setIsGenerating(true);
+    setError(null);
+    
     try {
+      console.log('Calling edge function with URL:', url);
+      
       const { data, error } = await supabase.functions.invoke('generate-event-preview', {
         body: { url: url.trim() }
       });
 
+      console.log('Edge function response:', { data, error });
+
       if (error) {
         console.error('Error generating preview:', error);
-        toast.error('Failed to generate preview');
+        setError(error.message || 'Failed to generate preview');
+        toast.error('Failed to generate preview: ' + (error.message || 'Unknown error'));
+        return;
+      }
+
+      if (data.error) {
+        console.error('API error:', data.error);
+        setError(data.error);
+        toast.error(data.error);
         return;
       }
 
@@ -51,7 +66,9 @@ const EventPreviewGenerator = () => {
 
     } catch (error) {
       console.error('Error generating preview:', error);
-      toast.error('Failed to generate preview');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setError(errorMessage);
+      toast.error('Failed to generate preview: ' + errorMessage);
     } finally {
       setIsGenerating(false);
     }
@@ -109,6 +126,7 @@ const EventPreviewGenerator = () => {
       setEditedTitle("");
       setEditedPreview("");
       setSelectedImage("");
+      setError(null);
 
     } catch (error) {
       console.error('Error publishing preview:', error);
@@ -150,6 +168,13 @@ const EventPreviewGenerator = () => {
               )}
             </Button>
           </div>
+
+          {error && (
+            <div className="flex items-center gap-2 p-3 bg-red-900/20 border border-red-700 rounded-lg">
+              <AlertCircle className="h-4 w-4 text-red-400" />
+              <span className="text-red-300 text-sm">{error}</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 
