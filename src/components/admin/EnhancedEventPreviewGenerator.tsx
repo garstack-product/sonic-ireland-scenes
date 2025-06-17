@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,10 +21,13 @@ import {
   Calendar as CalendarIcon,
   Facebook,
   Twitter,
-  Send
+  Send,
+  Upload,
+  X
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { addNewsItem } from "@/services/newsService";
+import { uploadImage, uploadMultipleImages } from "@/services/imageUploadService";
 import SocialShareButtons from "@/components/ui/SocialShareButtons";
 import { format } from "date-fns";
 
@@ -54,6 +56,13 @@ const EnhancedEventPreviewGenerator = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Image upload state
+  const [featuredImage, setFeaturedImage] = useState<File | null>(null);
+  const [additionalImages, setAdditionalImages] = useState<File[]>([]);
+  const [uploadedFeaturedImageUrl, setUploadedFeaturedImageUrl] = useState<string>("");
+  const [uploadedAdditionalImageUrls, setUploadedAdditionalImageUrls] = useState<string[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   
   // Publishing state management
   const [publishStatus, setPublishStatus] = useState<'draft' | 'published' | 'shared'>('draft');
@@ -109,6 +118,67 @@ const EnhancedEventPreviewGenerator = () => {
       toast.error('Failed to generate preview: ' + errorMessage);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleFeaturedImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFeaturedImage(file);
+      
+      setIsUploadingImages(true);
+      try {
+        const imageUrl = await uploadImage(file, 'event-previews', 'featured');
+        setUploadedFeaturedImageUrl(imageUrl);
+        setSelectedImage(imageUrl);
+        toast.success("Featured image uploaded successfully!");
+      } catch (error) {
+        console.error('Error uploading featured image:', error);
+        toast.error("Failed to upload featured image");
+      } finally {
+        setIsUploadingImages(false);
+      }
+    }
+  };
+
+  const handleAdditionalImagesUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setAdditionalImages(files);
+      
+      setIsUploadingImages(true);
+      try {
+        const imageUrls = await uploadMultipleImages(files, 'event-previews', 'additional');
+        setUploadedAdditionalImageUrls(imageUrls);
+        
+        // Add uploaded images to the preview images array
+        if (preview) {
+          setPreview({
+            ...preview,
+            images: [...preview.images, ...imageUrls]
+          });
+        }
+        
+        toast.success(`${files.length} additional images uploaded successfully!`);
+      } catch (error) {
+        console.error('Error uploading additional images:', error);
+        toast.error("Failed to upload additional images");
+      } finally {
+        setIsUploadingImages(false);
+      }
+    }
+  };
+
+  const removeAdditionalImage = (indexToRemove: number) => {
+    const newImages = uploadedAdditionalImageUrls.filter((_, index) => index !== indexToRemove);
+    setUploadedAdditionalImageUrls(newImages);
+    
+    if (preview) {
+      const filteredImages = preview.images.filter((_, index) => index !== indexToRemove);
+      setPreview({
+        ...preview,
+        images: filteredImages
+      });
     }
   };
 
@@ -171,6 +241,8 @@ const EnhancedEventPreviewGenerator = () => {
 
     setIsPublishing(true);
     try {
+      const imageUrl = uploadedFeaturedImageUrl || selectedImage || '/placeholder.svg';
+      
       await addNewsItem({
         title: editedTitle,
         content: editedPreview,
@@ -178,7 +250,7 @@ const EnhancedEventPreviewGenerator = () => {
         author: 'Admin',
         date: new Date().toISOString().split('T')[0],
         category: 'Event Preview',
-        image_url: selectedImage || '/placeholder.svg',
+        image_url: imageUrl,
         tags: ['Event Preview', 'Generated'],
         url: preview.originalUrl
       });
@@ -206,6 +278,13 @@ const EnhancedEventPreviewGenerator = () => {
     });
     toast.success(`Shared to ${selectedPlatforms.length} platforms!`);
   };
+
+  // Get all images including uploaded ones
+  const allImages = [
+    ...(preview?.images || []),
+    ...(uploadedFeaturedImageUrl ? [uploadedFeaturedImageUrl] : []),
+    ...uploadedAdditionalImageUrls
+  ].filter((url, index, array) => array.indexOf(url) === index); // Remove duplicates
 
   return (
     <div className="space-y-6">
@@ -321,14 +400,80 @@ const EnhancedEventPreviewGenerator = () => {
               )}
             </div>
 
-            {/* Image Selection */}
-            {preview.images.length > 0 && (
+            {/* Image Upload Section */}
+            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Featured Image
                 </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFeaturedImageUpload}
+                    className="bg-dark-200 border-gray-700 text-white flex-1"
+                    disabled={isUploadingImages}
+                  />
+                  {isUploadingImages && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+                </div>
+                {uploadedFeaturedImageUrl && (
+                  <div className="mt-2">
+                    <img
+                      src={uploadedFeaturedImageUrl}
+                      alt="Featured upload"
+                      className="w-24 h-24 object-cover rounded border-2 border-primary"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Additional Images
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleAdditionalImagesUpload}
+                    className="bg-dark-200 border-gray-700 text-white flex-1"
+                    disabled={isUploadingImages}
+                  />
+                  {isUploadingImages && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
+                </div>
+                {uploadedAdditionalImageUrls.length > 0 && (
+                  <div className="mt-2 grid grid-cols-4 gap-2">
+                    {uploadedAdditionalImageUrls.map((url, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={url}
+                          alt={`Additional upload ${index + 1}`}
+                          className="w-full aspect-square object-cover rounded"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-1 right-1 h-6 w-6 p-0"
+                          onClick={() => removeAdditionalImage(index)}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Image Selection */}
+            {allImages.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Select Featured Image
+                </label>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                  {preview.images.map((image, index) => (
+                  {allImages.map((image, index) => (
                     <div
                       key={index}
                       className={`relative aspect-video rounded-lg overflow-hidden cursor-pointer border-2 ${
