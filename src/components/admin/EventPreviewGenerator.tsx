@@ -140,9 +140,9 @@ const EventPreviewGenerator = () => {
     <div className="space-y-6">
       <Card className="bg-dark-300 border-gray-700">
         <CardHeader>
-          <CardTitle className="text-white">AI Event Preview Generator</CardTitle>
+          <CardTitle className="text-white">Free Event Preview Generator</CardTitle>
           <CardDescription className="text-gray-300">
-            Enter an event URL to generate an AI-powered preview with images
+            Enter an event URL to generate a structured preview with images (no AI costs)
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -175,6 +175,10 @@ const EventPreviewGenerator = () => {
               <span className="text-red-300 text-sm">{error}</span>
             </div>
           )}
+
+          <div className="text-sm text-gray-400 bg-blue-900/20 border border-blue-700 rounded-lg p-3">
+            💡 <strong>Free Version:</strong> This generates previews by extracting and structuring content from the webpage without using AI services.
+          </div>
         </CardContent>
       </Card>
 

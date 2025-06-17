@@ -1,7 +1,6 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -38,66 +37,16 @@ serve(async (req) => {
 
     const html = await response.text();
     
-    // Extract text content and images from HTML
-    const textContent = extractTextFromHTML(html);
-    const images = extractImagesFromHTML(html, url);
+    // Extract content from HTML
     const title = extractTitleFromHTML(html);
+    const eventInfo = extractEventInfoFromHTML(html);
+    const images = extractImagesFromHTML(html, url);
     
-    console.log('Extracted content length:', textContent.length);
+    console.log('Extracted title:', title);
     console.log('Found images:', images.length);
 
-    // Generate AI preview using OpenAI
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
-    }
-
-    console.log('Making OpenAI request...');
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a music journalist who creates engaging event previews. Generate a compelling 150-250 word preview for concerts, festivals, or music events based on the provided content. Focus on the artist(s), venue, date, what makes this event special, and why people should attend. Write in an engaging, informative style suitable for music fans.'
-          },
-          {
-            role: 'user',
-            content: `Create an event preview based on this content from ${url}:\n\nTitle: ${title}\n\nContent: ${textContent.substring(0, 3000)}`
-          }
-        ],
-        max_tokens: 400,
-        temperature: 0.7,
-      }),
-    });
-
-    console.log('OpenAI response status:', aiResponse.status);
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error('OpenAI API error:', aiResponse.status, errorText);
-      
-      if (aiResponse.status === 429) {
-        throw new Error('OpenAI API rate limit exceeded. Please try again in a few moments.');
-      } else if (aiResponse.status === 401) {
-        throw new Error('OpenAI API key is invalid or expired.');
-      } else {
-        throw new Error(`OpenAI API error: ${aiResponse.status} - ${errorText}`);
-      }
-    }
-
-    const aiData = await aiResponse.json();
-    
-    if (!aiData.choices || !aiData.choices[0] || !aiData.choices[0].message) {
-      throw new Error('Invalid response from OpenAI API');
-    }
-
-    const preview = aiData.choices[0].message.content;
+    // Generate a structured preview without AI
+    const preview = generateStructuredPreview(title, eventInfo, url);
 
     console.log('Generated preview length:', preview.length);
 
@@ -128,23 +77,10 @@ serve(async (req) => {
   }
 });
 
-function extractTextFromHTML(html: string): string {
-  // Remove script and style elements
-  let text = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-  text = text.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
-  
-  // Remove HTML tags
-  text = text.replace(/<[^>]+>/g, ' ');
-  
-  // Clean up whitespace
-  text = text.replace(/\s+/g, ' ').trim();
-  
-  return text;
-}
-
 function extractTitleFromHTML(html: string): string {
+  // Try title tag first
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-  if (titleMatch) {
+  if (titleMatch && titleMatch[1].trim()) {
     return titleMatch[1].trim();
   }
   
@@ -154,7 +90,117 @@ function extractTitleFromHTML(html: string): string {
     return metaTitleMatch[1].trim();
   }
   
+  // Try h1 tags
+  const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+  if (h1Match) {
+    return h1Match[1].replace(/<[^>]+>/g, '').trim();
+  }
+  
   return 'Event Preview';
+}
+
+function extractEventInfoFromHTML(html: string): {
+  description: string;
+  date: string;
+  venue: string;
+  artist: string;
+} {
+  // Remove script and style elements
+  let cleanHtml = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  cleanHtml = cleanHtml.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+  
+  // Extract meta description
+  const metaDescMatch = cleanHtml.match(/<meta[^>]*name=["\']description["\'][^>]*content=["\']([^"\']+)["\'][^>]*>/i);
+  const ogDescMatch = cleanHtml.match(/<meta[^>]*property=["\']og:description["\'][^>]*content=["\']([^"\']+)["\'][^>]*>/i);
+  
+  const description = metaDescMatch?.[1] || ogDescMatch?.[1] || '';
+  
+  // Try to find date patterns
+  const datePatterns = [
+    /\b(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})\b/,
+    /\b(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{2,4})\b/i,
+    /\b((?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{2,4})\b/i
+  ];
+  
+  let date = '';
+  for (const pattern of datePatterns) {
+    const match = cleanHtml.match(pattern);
+    if (match) {
+      date = match[1];
+      break;
+    }
+  }
+  
+  // Try to find venue information
+  const venueKeywords = ['venue', 'location', 'address', 'where'];
+  let venue = '';
+  
+  for (const keyword of venueKeywords) {
+    const venuePattern = new RegExp(`${keyword}[^>]*>([^<]+)<`, 'i');
+    const match = cleanHtml.match(venuePattern);
+    if (match && match[1].trim().length > 3) {
+      venue = match[1].trim();
+      break;
+    }
+  }
+  
+  // Try to find artist/performer information from headings
+  const headingMatches = cleanHtml.match(/<h[1-6][^>]*>([^<]+)<\/h[1-6]>/gi);
+  let artist = '';
+  
+  if (headingMatches) {
+    for (const heading of headingMatches.slice(0, 3)) {
+      const text = heading.replace(/<[^>]+>/g, '').trim();
+      if (text.length > 5 && text.length < 50 && !text.toLowerCase().includes('event')) {
+        artist = text;
+        break;
+      }
+    }
+  }
+  
+  return { description, date, venue, artist };
+}
+
+function generateStructuredPreview(title: string, eventInfo: any, url: string): string {
+  const { description, date, venue, artist } = eventInfo;
+  
+  let preview = '';
+  
+  // Start with the title/artist
+  if (artist && artist !== title) {
+    preview += `Get ready for an exciting performance by ${artist}! `;
+  } else if (title) {
+    preview += `Don't miss ${title}! `;
+  }
+  
+  // Add date if found
+  if (date) {
+    preview += `This event is scheduled for ${date}. `;
+  }
+  
+  // Add venue if found
+  if (venue) {
+    preview += `The event will take place at ${venue}. `;
+  }
+  
+  // Add description if available
+  if (description) {
+    const shortDesc = description.length > 100 ? description.substring(0, 100) + '...' : description;
+    preview += `${shortDesc} `;
+  }
+  
+  // Add a call to action
+  preview += `This promises to be an unforgettable experience for music lovers. `;
+  preview += `Don't wait too long to secure your tickets as popular events often sell out quickly. `;
+  preview += `Check the official event page for the latest updates on tickets, timing, and any special announcements.`;
+  
+  // Ensure minimum length
+  if (preview.length < 150) {
+    preview += ` Whether you're a longtime fan or new to the scene, this event offers something special. `;
+    preview += `Join fellow music enthusiasts for what's sure to be a memorable night of live entertainment.`;
+  }
+  
+  return preview;
 }
 
 function extractImagesFromHTML(html: string, baseUrl: string): string[] {
