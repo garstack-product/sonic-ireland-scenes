@@ -41,10 +41,10 @@ const FeaturedEventsSection = ({ featuredEvents, isLoading }: FeaturedEventsSect
     <section className="py-8">
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl font-bold text-white">Featured Events</h2>
-        <Link to="/listings/concerts" className="flex items-center text-gray-400 hover:text-white transition-colors">
-          <span className="mr-2">All Events</span>
+        <a href="/listings/featured" target="_blank" rel="noopener noreferrer" className="flex items-center text-gray-400 hover:text-white transition-colors">
+          <span className="mr-2">All Featured Events</span>
           <ArrowRight size={16} />
-        </Link>
+        </a>
       </div>
       
       {isLoading ? (

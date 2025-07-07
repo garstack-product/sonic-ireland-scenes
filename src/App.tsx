@@ -33,6 +33,7 @@ import SpainFestivalsPage from "./pages/listings/SpainFestivalsPage";
 import GermanyFestivalsPage from "./pages/listings/GermanyFestivalsPage";
 import NetherlandsFestivalsPage from "./pages/listings/NetherlandsFestivalsPage";
 import IrelandFestivalsPage from "./pages/listings/IrelandFestivalsPage";
+import FeaturedEventsPage from "./pages/listings/FeaturedEventsPage";
 import ConcertReviewDetail from "./pages/reviews/ConcertReviewDetail";
 import FestivalReviewDetail from "./pages/reviews/FestivalReviewDetail";
 
@@ -67,6 +68,7 @@ const App = () => (
               
               {/* Listings Routes */}
               <Route path="/listings/concerts" element={<ConcertListingsPage />} />
+              <Route path="/listings/featured" element={<FeaturedEventsPage />} />
               <Route path="/listings/festivals" element={<FestivalListingsPage />} />
               <Route path="/listings/festivals/ireland" element={<IrelandFestivalsPage />} />
               <Route path="/listings/festivals/uk" element={<UKFestivalsPage />} />
