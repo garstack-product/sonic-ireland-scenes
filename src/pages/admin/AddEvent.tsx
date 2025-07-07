@@ -20,6 +20,8 @@ const AddEvent = () => {
   const [ticketUrl, setTicketUrl] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [eventType, setEventType] = useState<"concert" | "festival">("concert");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -48,12 +50,20 @@ const AddEvent = () => {
     setIsSubmitting(true);
 
     try {
-      // Format date for raw_date - fixed timestamp handling
+      // Format date for raw_date - handle both concert and festival dates
       let rawDate = null;
+      let displayDate = "";
       
-      if (date) {
-        // Create a proper date object with the time (or midnight if no time)
+      if (eventType === 'concert' && date) {
         rawDate = new Date(`${date}T${time || "00:00:00"}`);
+        displayDate = formatDateForDisplay(date);
+      } else if (eventType === 'festival' && startDate) {
+        rawDate = new Date(`${startDate}T${time || "00:00:00"}`);
+        if (endDate && endDate !== startDate) {
+          displayDate = `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}`;
+        } else {
+          displayDate = formatDateForDisplay(startDate);
+        }
       }
       
       // Create event object
@@ -62,7 +72,7 @@ const AddEvent = () => {
         title,
         artist,
         venue,
-        date: formatDateForDisplay(date),
+        date: displayDate,
         time: time || undefined,
         image_url: imageUrl || '/placeholder.svg',
         type: eventType,
@@ -70,7 +80,7 @@ const AddEvent = () => {
         subgenre: subgenre || undefined,
         price: price ? parseFloat(price) : null,
         ticket_url: ticketUrl || undefined,
-        raw_date: rawDate ? rawDate.toISOString() : null, // Properly handle the date
+        raw_date: rawDate ? rawDate.toISOString() : null,
         is_featured: isFeatured,
         is_festival: eventType === 'festival',
         description,
@@ -87,7 +97,7 @@ const AddEvent = () => {
 
       // Use custom RPC function to insert event
       const { error } = await supabase.rpc('admin_add_event', { 
-        event_data: JSON.stringify(eventData) 
+        event_data: eventData 
       });
 
       if (error) {
@@ -121,6 +131,8 @@ const AddEvent = () => {
     setArtist("");
     setVenue("");
     setDate("");
+    setStartDate("");
+    setEndDate("");
     setTime("");
     setDescription("");
     setGenre("");
@@ -180,19 +192,50 @@ const AddEvent = () => {
             />
           </div>
           
-          <div>
-            <label htmlFor="date" className="block text-sm font-medium text-gray-300 mb-1">
-              Date*
-            </label>
-            <Input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-              className="bg-dark-200 border-gray-700 text-white"
-            />
-          </div>
+          {eventType === 'concert' ? (
+            <div>
+              <label htmlFor="date" className="block text-sm font-medium text-gray-300 mb-1">
+                Date*
+              </label>
+              <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                required
+                className="bg-dark-200 border-gray-700 text-white"
+              />
+            </div>
+          ) : (
+            <>
+              <div>
+                <label htmlFor="startDate" className="block text-sm font-medium text-gray-300 mb-1">
+                  Start Date*
+                </label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  required
+                  className="bg-dark-200 border-gray-700 text-white"
+                />
+              </div>
+              <div>
+                <label htmlFor="endDate" className="block text-sm font-medium text-gray-300 mb-1">
+                  End Date*
+                </label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  required
+                  className="bg-dark-200 border-gray-700 text-white"
+                />
+              </div>
+            </>
+          )}
           
           <div>
             <label htmlFor="time" className="block text-sm font-medium text-gray-300 mb-1">

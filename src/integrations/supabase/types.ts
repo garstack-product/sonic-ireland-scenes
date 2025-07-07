@@ -446,7 +446,7 @@ export type Database = {
     }
     Functions: {
       admin_add_event: {
-        Args: { event_data: Json } | { event_data: string }
+        Args: { event_data: Json }
         Returns: undefined
       }
       should_update_cache: {
