@@ -89,7 +89,7 @@ const HomePage = () => {
         title="This Week's Events"
         events={upcomingEvents}
         isLoading={isLoading}
-        linkPath="/listings/concerts"
+        linkPath="/listings/this-week"
         useCarousel={true}
       />
       
@@ -98,7 +98,7 @@ const HomePage = () => {
         title="Recent Reviews"
         events={recentReviews}
         isLoading={false}
-        linkPath="/reviews/concerts"
+        linkPath="/reviews/all"
       />
       
       {/* Newsletter */}

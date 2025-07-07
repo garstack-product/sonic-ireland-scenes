@@ -34,6 +34,8 @@ import GermanyFestivalsPage from "./pages/listings/GermanyFestivalsPage";
 import NetherlandsFestivalsPage from "./pages/listings/NetherlandsFestivalsPage";
 import IrelandFestivalsPage from "./pages/listings/IrelandFestivalsPage";
 import FeaturedEventsPage from "./pages/listings/FeaturedEventsPage";
+import ThisWeekEventsPage from "./pages/listings/ThisWeekEventsPage";
+import AllReviewsPage from "./pages/reviews/AllReviewsPage";
 import ConcertReviewDetail from "./pages/reviews/ConcertReviewDetail";
 import FestivalReviewDetail from "./pages/reviews/FestivalReviewDetail";
 
@@ -65,10 +67,12 @@ const App = () => (
               <Route path="/reviews/concerts/:id" element={<ConcertReviewDetail />} />
               <Route path="/reviews/festivals" element={<FestivalReviewsPage />} />
               <Route path="/reviews/festivals/:id" element={<FestivalReviewDetail />} />
+              <Route path="/reviews/all" element={<AllReviewsPage />} />
               
               {/* Listings Routes */}
               <Route path="/listings/concerts" element={<ConcertListingsPage />} />
               <Route path="/listings/featured" element={<FeaturedEventsPage />} />
+              <Route path="/listings/this-week" element={<ThisWeekEventsPage />} />
               <Route path="/listings/festivals" element={<FestivalListingsPage />} />
               <Route path="/listings/festivals/ireland" element={<IrelandFestivalsPage />} />
               <Route path="/listings/festivals/uk" element={<UKFestivalsPage />} />
