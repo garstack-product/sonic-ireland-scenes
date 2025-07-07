@@ -3,7 +3,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import EventGrid from "@/components/ui/EventGrid";
 import { EventCardProps } from "@/components/ui/EventCard";
 import { toast } from "sonner";
-import { fetchTicketmasterEvents } from "@/services/api";
+import { fetchAllEvents } from "@/services/api";
 import EventFilters from "@/components/events/filters/EventFilters";
 import EventListingsStatus from "@/components/events/EventListingsStatus";
 import { useEventFiltering } from "@/hooks/useEventFiltering";
@@ -34,13 +34,19 @@ const ConcertListingsPage = () => {
     const loadConcerts = async () => {
       try {
         setIsLoading(true);
-        const events = await fetchTicketmasterEvents();
+        const events = await fetchAllEvents();
         
-        // Filter for Ireland events only and future events only
+        // Filter for Ireland events and exclude sports events (same logic as filterService)
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set to start of today
+        today.setHours(0, 0, 0, 0);
         
         const irelandFutureConcerts = events.filter(event => {
+          // Skip sports events
+          if (event.genre === 'GAA' || event.genre === 'Sports' || 
+              event.subgenre === 'GAA' || event.subgenre === 'Sports') {
+            return false;
+          }
+          
           // Check if event is in Ireland
           const isIreland = event.country === 'Ireland' || 
                            event.venue?.toLowerCase().includes('dublin') ||
@@ -53,21 +59,11 @@ const ConcertListingsPage = () => {
                            event.venue?.toLowerCase().includes('derry') ||
                            event.venue?.toLowerCase().includes('ireland');
           
-          // Check if event is in the future
-          let isFuture = false;
-          if (event.rawDate) {
-            const eventDate = new Date(event.rawDate);
-            isFuture = eventDate >= today;
-          } else if (event.date) {
-            // Try to parse the formatted date as fallback
-            const eventDate = new Date(event.date);
-            isFuture = !isNaN(eventDate.getTime()) && eventDate >= today;
-          }
-          
-          return isIreland && isFuture;
+          // Check if event is in the future (already handled by fetchAllEvents)
+          return isIreland;
         });
         
-        // Sort events by date (earliest first)
+        // Sort events by date (earliest first)  
         const sortedEvents = sortEventsByDate(irelandFutureConcerts);
         setConcertListings(sortedEvents);
         console.log(`Loaded ${sortedEvents.length} future concerts in Ireland`);
