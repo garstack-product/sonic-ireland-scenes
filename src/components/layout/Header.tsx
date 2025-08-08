@@ -59,7 +59,7 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
                       <Heart className="mr-2 h-4 w-4" />
                       Saved Events
                     </DropdownMenuItem>
-                    {user.isAdmin && (
+                    {(user.isAdmin || user.isContributor) && (
                       <DropdownMenuItem onClick={() => navigate('/admin')} className="text-gray-300 cursor-pointer hover:bg-dark-300">
                         <User className="mr-2 h-4 w-4" />
                         Admin Dashboard
@@ -100,7 +100,7 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
                         <Heart className="mr-2 h-4 w-4" />
                         Saved Events
                       </DropdownMenuItem>
-                      {user.isAdmin && (
+                      {(user.isAdmin || user.isContributor) && (
                         <DropdownMenuItem onClick={() => navigate('/admin')} className="text-gray-300 cursor-pointer hover:bg-dark-300">
                           <User className="mr-2 h-4 w-4" />
                           Admin Dashboard
