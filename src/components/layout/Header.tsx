@@ -84,8 +84,13 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
           ) : (
             <div className="flex items-center w-full">
               <NavMenu />
-              {user && (
-                <div className="ml-auto">
+              <div className="ml-auto flex items-center gap-2">
+                {!user && (
+                  <Button variant="ghost" className="text-white hover:bg-dark-400" onClick={() => navigate('/login')}>
+                    Login
+                  </Button>
+                )}
+                {user && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="text-white hover:bg-dark-400">
@@ -113,8 +118,8 @@ const Header = ({ onMenuToggle }: HeaderProps) => {
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </div>

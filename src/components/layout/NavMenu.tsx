@@ -1,9 +1,10 @@
 
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const NavMenu = () => {
   const location = useLocation();
-
+  const { user } = useAuth();
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
     if (path !== "/" && location.pathname.startsWith(path)) return true;
@@ -79,6 +80,17 @@ const NavMenu = () => {
       >
         About
       </Link>
+
+      {user && (user.isAdmin || user.isContributor) && (
+        <Link 
+          to="/admin" 
+          className={`text-sm font-medium transition-colors hover:text-green-400 ${
+            isActive("/admin") ? "text-green-400" : "text-gray-300"
+          }`}
+        >
+          Admin
+        </Link>
+      )}
     </nav>
   );
 };

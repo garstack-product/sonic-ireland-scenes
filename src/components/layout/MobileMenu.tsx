@@ -3,10 +3,11 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const MobileMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const { user } = useAuth();
   return (
     <div className="md:hidden">
       <Button
@@ -105,6 +106,16 @@ const MobileMenu = () => {
             >
               About
             </Link>
+
+            {user && (user.isAdmin || user.isContributor) && (
+              <Link 
+                to="/admin" 
+                className="block py-2 text-sm text-gray-300 hover:text-green-400"
+                onClick={() => setIsOpen(false)}
+              >
+                Admin
+              </Link>
+            )}
           </div>
         </div>
       )}
